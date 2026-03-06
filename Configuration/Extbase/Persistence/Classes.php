@@ -1,10 +1,13 @@
 <?php declare(strict_types=1);
 
+use PwTeaserTeam\PwTeaser\Domain\Model\Content;
+use PwTeaserTeam\PwTeaser\Domain\Model\Page;
+
 // This configuration is used for TYPO3 10 and later
 // Previous versions use "ext_typoscript_setup.txt" file in root of extension.
 
 return [
-    PwTeaserTeam\PwTeaser\Domain\Model\Page::class => [
+    Page::class => [
         'tableName' => 'pages',
         'properties' => [
             'navTitle' => ['fieldName' => 'nav_title'],
@@ -19,7 +22,7 @@ return [
             'l18nConfiguration' => ['fieldName' => 'l18n_cfg'],
         ]
     ],
-    \PwTeaserTeam\PwTeaser\Domain\Model\Content::class => [
+    Content::class => [
         'tableName' => 'tt_content',
         'properties' => [
             'pid' => ['fieldName' => 'pid'],

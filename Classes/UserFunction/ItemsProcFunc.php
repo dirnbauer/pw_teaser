@@ -14,19 +14,14 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 final class ItemsProcFunc
 {
-    private ConfigurationManagerInterface $configurationManager;
-
-    public function __construct(ConfigurationManagerInterface $configurationManager)
-    {
-        $this->configurationManager = $configurationManager;
-    }
+    public function __construct(private ConfigurationManagerInterface $configurationManager) {}
 
     public function getAvailableTemplatePresets(array &$parameters): void
     {
         $config = $this->configurationManager->getConfiguration(ConfigurationManager::CONFIGURATION_TYPE_FULL_TYPOSCRIPT);
         $presets = $config['plugin.']['tx_pwteaser.']['view.']['presets.'] ?? [];
         foreach ($presets as $key => $preset) {
-            $parameters['items'][] = [$preset['label'], rtrim($key, '.')];
+            $parameters['items'][] = [$preset['label'], rtrim((string)$key, '.')];
         }
     }
 }

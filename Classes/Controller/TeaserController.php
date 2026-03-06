@@ -215,18 +215,13 @@ class TeaserController extends ActionController
     /**
      * Function to sort given pages by recursiveRootLineOrdering string
      *
-     * @param \PwTeaserTeam\PwTeaser\Domain\Model\Page $a
-     * @param \PwTeaserTeam\PwTeaser\Domain\Model\Page $b
+     * @param Page $a
+     * @param Page $b
      * @return integer
      */
-    protected function sortByRecursivelySorting(
-        \PwTeaserTeam\PwTeaser\Domain\Model\Page $a,
-        \PwTeaserTeam\PwTeaser\Domain\Model\Page $b
-    ) {
-        if ($a->getRecursiveRootLineOrdering() == $b->getRecursiveRootLineOrdering()) {
-            return 0;
-        }
-        return ($a->getRecursiveRootLineOrdering() < $b->getRecursiveRootLineOrdering()) ? -1 : 1;
+    protected function sortByRecursivelySorting(Page $a, Page $b)
+    {
+        return $a->getRecursiveRootLineOrdering() <=> $b->getRecursiveRootLineOrdering();
     }
 
     /**
@@ -382,7 +377,7 @@ class TeaserController extends ActionController
     /**
      * Performs special orderings like "random" or "sorting"
      *
-     * @param array <Pages> $pages
+     * @param array<Page> $pages
      * @return array
      */
     protected function performSpecialOrderings(array $pages)
@@ -395,7 +390,7 @@ class TeaserController extends ActionController
             }
         }
 
-        if ($this->settings['orderBy'] === 'sorting' && strpos($this->settings['source'], 'Recursively') !== false) {
+        if ($this->settings['orderBy'] === 'sorting' && str_contains((string)$this->settings['source'], 'Recursively')) {
             usort($pages, [$this, 'sortByRecursivelySorting']);
             if (strtolower($this->settings['orderDirection']) === strtolower(QueryInterface::ORDER_DESCENDING)) {
                 $pages = array_reverse($pages);
@@ -412,9 +407,9 @@ class TeaserController extends ActionController
     /**
      * Converts given pages array (flat) to nested one
      *
-     * @param array <Pages> $pages
+     * @param array<Page> $pages
      * @param string $rootPageUids Comma separated list of page uids
-     * @return array<Pages>
+     * @return array<Page>
      */
     protected function convertFlatToNestedPagesArray($pages, $rootPageUids)
     {
@@ -431,9 +426,9 @@ class TeaserController extends ActionController
     /**
      * Fills given parentPage's childPages attribute recursively with pages
      *
-     * @param \PwTeaserTeam\PwTeaser\Domain\Model\Page $parentPage
+     * @param Page $parentPage
      * @param array $pages
-     * @return \PwTeaserTeam\PwTeaser\Domain\Model\Page
+     * @return Page
      */
     protected function fillChildPagesRecursivley($parentPage, array $pages)
     {
@@ -446,12 +441,7 @@ class TeaserController extends ActionController
             }
         }
 
-        usort($childPages, function (Page $a, Page $b) {
-            if ($a->getSorting() === $b->getSorting()) {
-                return 0;
-            }
-            return ($a->getSorting() < $b->getSorting()) ? -1 : 1;
-        });
+        usort($childPages, fn(Page $a, Page $b) => $a->getSorting() <=> $b->getSorting());
 
         $parentPage->setChildPages($childPages);
         return $parentPage;

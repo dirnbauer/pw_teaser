@@ -18,15 +18,12 @@ final class ModifyPagesEvent
      */
     private array $pages;
 
-    private TeaserController $teaserController;
-
     /**
      * @param array<int, mixed> $pages
      */
-    public function __construct(array $pages, TeaserController $teaserController)
+    public function __construct(array $pages, private readonly TeaserController $teaserController)
     {
         $this->pages = $pages;
-        $this->teaserController = $teaserController;
     }
 
     /**
