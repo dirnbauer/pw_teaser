@@ -11,6 +11,11 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use TYPO3\CMS\Extbase\Annotation\Validate;
+use TYPO3\CMS\Extbase\Domain\Model\Category;
+use TYPO3\CMS\Extbase\Domain\Model\FileReference;
+use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
+use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -23,7 +28,7 @@ use TYPO3\CMS\Core\Utility\RootlineUtility;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
+class Page extends AbstractEntity
 {
     /** Translation constant: Show page always */
     const L18N_SHOW_ALWAYS = 0;
@@ -52,8 +57,8 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
      * title
      *
      * @var string
-     * @TYPO3\CMS\Extbase\Annotation\Validate("NotEmpty")
      */
+    #[Validate(['validator' => 'NotEmpty'])]
     protected $title;
 
     /**
@@ -101,7 +106,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * media
      *
-     * @var \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference>
+     * @var ObjectStorage<FileReference>
      */
     protected $media;
 
@@ -171,14 +176,14 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * contents
      *
-     * @var array<\PwTeaserTeam\PwTeaser\Domain\Model\Content>
+     * @var array<Content>
      */
     protected $contents;
 
     /**
      * Categories
      *
-     * @var \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\Category>
+     * @var ObjectStorage<Category>
      */
     protected $categories;
 
@@ -208,12 +213,6 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
      * @var array
      */
     protected $pageRow = null;
-
-    /**
-     * @var \TYPO3\CMS\Core\Resource\FileRepository
-     * @TYPO3\CMS\Extbase\Annotation\Inject
-     */
-    protected $fileRepository;
 
     /**
      * Sets a custom attribute
@@ -296,7 +295,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
      */
     public function __call($name, $arguments)
     {
-        if (substr(strtolower($name), 0, 3) === 'get' && strlen($name) > 3) {
+        if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
             $attributeName = lcfirst(substr($name, 3));
             return $this->getGet()[$attributeName];
         }
@@ -307,14 +306,14 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
      */
     public function __construct()
     {
-        $this->categories = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
-        $this->media = new \TYPO3\CMS\Extbase\Persistence\ObjectStorage();
+        $this->categories = new ObjectStorage();
+        $this->media = new ObjectStorage();
     }
 
     /**
      * Setter for contents
      *
-     * @param array <\PwTeaserTeam\PwTeaser\Domain\Model\Content> $contents array of contents
+     * @param array<Content> $contents array of contents
      * @return void
      */
     public function setContents($contents)
@@ -325,7 +324,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Getter for contents
      *
-     * @return array<\PwTeaserTeam\PwTeaser\Domain\Model\Content> contents
+     * @return array<Content> contents
      */
     public function getContents()
     {
@@ -534,10 +533,10 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Setter for media
      *
-     * @param \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference> $media
+     * @param ObjectStorage<FileReference> $media
      * @return void
      */
-    public function setMedia(\TYPO3\CMS\Extbase\Persistence\ObjectStorage $media)
+    public function setMedia(ObjectStorage $media)
     {
         $this->media = $media;
     }
@@ -545,7 +544,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Getter for media (returns FileReference objects)
      *
-     * @return \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference>
+     * @return ObjectStorage<FileReference>
      */
     public function getMedia()
     {
@@ -555,10 +554,10 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Add single medium
      *
-     * @param \TYPO3\CMS\Extbase\Domain\Model\FileReference $medium
+     * @param FileReference $medium
      * @return void
      */
-    public function addMedium(\TYPO3\CMS\Extbase\Domain\Model\FileReference $medium)
+    public function addMedium(FileReference $medium)
     {
         $this->media->attach($medium);
     }
@@ -566,10 +565,10 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Removes single medium
      *
-     * @param \TYPO3\CMS\Extbase\Domain\Model\FileReference $medium
+     * @param FileReference $medium
      * @return void
      */
-    public function removeMedium(\TYPO3\CMS\Extbase\Domain\Model\FileReference $medium)
+    public function removeMedium(FileReference $medium)
     {
         $this->media->detach($medium);
     }
@@ -793,7 +792,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Getter for categories
      *
-     * @return \TYPO3\CMS\Extbase\Persistence\ObjectStorage
+     * @return ObjectStorage<Category>
      */
     public function getCategories()
     {
@@ -803,7 +802,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Setter for categories
      *
-     * @param \TYPO3\CMS\Extbase\Persistence\ObjectStorage $categories
+     * @param ObjectStorage<Category> $categories
      * @return void
      */
     public function setCategories($categories)
@@ -814,10 +813,10 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Add category
      *
-     * @param \TYPO3\CMS\Extbase\Domain\Model\Category $category
+     * @param Category $category
      * @return void
      */
-    public function addCategory(\TYPO3\CMS\Extbase\Domain\Model\Category $category)
+    public function addCategory(Category $category)
     {
         $this->categories->attach($category);
     }
@@ -825,10 +824,10 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Remove category
      *
-     * @param \TYPO3\CMS\Extbase\Domain\Model\Category $category
+     * @param Category $category
      * @return void
      */
-    public function removeCategory(\TYPO3\CMS\Extbase\Domain\Model\Category $category)
+    public function removeCategory(Category $category)
     {
         $this->categories->detach($category);
     }
@@ -866,7 +865,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     {
         $recursiveOrdering = [];
         foreach ($this->getRootLine() as $pageRootPart) {
-            array_unshift($recursiveOrdering, str_pad($pageRootPart['sorting'], 11, '0', STR_PAD_LEFT));
+            array_unshift($recursiveOrdering, str_pad((string)$pageRootPart['sorting'], 11, '0', STR_PAD_LEFT));
         }
         return implode('-', $recursiveOrdering);
     }
@@ -915,7 +914,7 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     /**
      * Setter for child pages
      *
-     * @param array <Page> $childPages
+     * @param array<Page> $childPages
      * @return void
      */
     public function setChildPages(array $childPages)
