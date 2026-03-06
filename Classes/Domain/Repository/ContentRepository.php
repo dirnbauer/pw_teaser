@@ -1,9 +1,12 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Domain\Repository;
 
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
-use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
+use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -28,7 +31,7 @@ class ContentRepository extends Repository
      *
      * @return void
      */
-    public function initializeObject()
+    public function initializeObject(): void
     {
         $querySettings = $this->createQuery()->getQuerySettings();
         $querySettings->setRespectStoragePage(false);
@@ -40,10 +43,10 @@ class ContentRepository extends Repository
      * overwritten method exists, to perform sorting
      *
      * @param integer $pid Pid to search for
-     * @return QueryResult All found objects, will be
+     * @return QueryResultInterface All found objects, will be
      *         empty if there are no objects
      */
-    public function findByPid($pid)
+    public function findByPid(int $pid): QueryResultInterface
     {
         $query = $this->createQuery();
         $query->matching($query->equals('pid', $pid));
@@ -60,24 +63,25 @@ class ContentRepository extends Repository
      * given pages
      *
      * @param array<Page> $pages Pages to get content elements
-     * @return QueryResult All found objects, will be
+     * @param array<Page> $pages
+     * @return QueryResultInterface All found objects, will be
      *         empty if there are no objects
      */
-    public function findByPages($pages)
+    public function findByPages(array $pages): QueryResultInterface
     {
         $query = $this->createQuery();
-        $constraint = [];
+        $constraints = [];
 
         foreach ($pages as $page) {
-            $constraint[] = $query->equals('pid', $page->getUid());
+            $constraints[] = $query->equals('pid', $page->getUid());
         }
 
-        if ($constraint === []) {
+        if ($constraints === []) {
             $query->matching($query->equals('pid', -1));
             return $query->execute();
         }
 
-        $query->matching($query->logicalOr(...$constraint));
+        $query->matching($query->logicalOr(...$constraints));
 
         return $query->execute();
     }

@@ -31,9 +31,6 @@ final class StripTagsViewHelper extends AbstractViewHelper
     {
         if ($string === null) {
             $string = html_entity_decode((string)$this->renderChildren());
-            if ($string === null) {
-                return '';
-            }
         }
         return strip_tags($string);
     }
