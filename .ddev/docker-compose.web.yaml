@@ -1,20 +1,6 @@
-version: "3.6"
 services:
     web:
-        environment:
-            - EXTENSION_KEY=pw_teaser
-            - PACKAGE_NAME=t3/pw_teaser
-
-            - TYPO3_INSTALL_ADMIN_USER=admin
-            - TYPO3_INSTALL_ADMIN_PASSWORD=password
-            - TYPO3_INSTALL_SITE_NAME=EXT:pw_teaser Dev Environment
-            - TYPO3_INSTALL_SITE_SETUP_TYPE=site
-            - TYPO3_INSTALL_WEB_SERVER_CONFIG=apache
         volumes:
-            - type: bind
-              source: ../
-              target: /var/www/pw_teaser
-              consistency: cached
             - v13-data:/var/www/html/v13
 volumes:
     v13-data:

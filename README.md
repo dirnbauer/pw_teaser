@@ -39,9 +39,12 @@ In case you can't provide code but want to support pw_teaser anyway, here is my
 
 ### DDEV Environment
 
-pw_teaser ships a DDEV configuration for TYPO3 13 with PHP 8.2.
+pw_teaser ships a mostly standard DDEV configuration for TYPO3 extension
+development with PHP 8.2 and an isolated TYPO3 13 instance in a dedicated
+`v13` data volume.
 
-See https://github.com/a-r-m-i-n/ddev-for-typo3-extensions for more information.
+Start the environment with `ddev start` and create the TYPO3 13 test instance
+with `ddev install-v13`.
 
 
 ## Links
