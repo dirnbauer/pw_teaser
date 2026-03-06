@@ -42,30 +42,13 @@ class TeaserController extends ActionController
 
     protected int $currentPageUid = 0;
 
-    /**
-     * @var PageRepository
-     */
-    protected $pageRepository;
+    protected PageRepository $pageRepository;
 
-    /**
-     * @var ContentRepository
-     */
-    protected $contentRepository;
+    protected ContentRepository $contentRepository;
 
-    /**
-     * @var CategoryRepository
-     */
-    protected $categoryRepository;
+    protected CategoryRepository $categoryRepository;
 
-    /**
-     * @var Settings
-     */
-    protected $settingsUtility;
-
-    /**
-     * @var ContentObjectRenderer
-     */
-    protected $contentObject = null;
+    protected Settings $settingsUtility;
 
     /**
      * @var TemplateView
