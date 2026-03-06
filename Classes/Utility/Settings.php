@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Utility;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -16,17 +19,11 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class Settings
+final class Settings
 {
-    /**
-     * @var ContentObjectRenderer
-     */
-    protected $contentObject;
+    private ?ContentObjectRenderer $contentObject = null;
 
-    /**
-     * @var ConfigurationManager
-     */
-    protected $configurationManager = null;
+    private ConfigurationManager $configurationManager;
 
     public function __construct(ConfigurationManager $configurationManager)
     {
@@ -38,7 +35,7 @@ class Settings
      *
      * @return void
      */
-    public function initializeObject()
+    public function initializeObject(): void
     {
         $this->contentObject = $this->configurationManager->getContentObject();
     }
@@ -51,7 +48,7 @@ class Settings
      * @param string $section
      * @return array the configuration array with the rendered typoscript
      */
-    public function renderConfigurationArray(array $settings, string $section = 'settings.')
+    public function renderConfigurationArray(array $settings, string $section = 'settings.'): array
     {
         $settings = $this->enhanceSettingsWithTypoScript($this->makeConfigurationArrayRenderable($settings), $section);
         $result = [];
@@ -60,6 +57,9 @@ class Settings
             if (substr($key, -1) === '.') {
                 $keyWithoutDot = substr($key, 0, -1);
                 if (array_key_exists($keyWithoutDot, $settings)) {
+                    if ($this->contentObject === null) {
+                        continue;
+                    }
                     $result[$keyWithoutDot] = $this->contentObject->cObjGetSingle($settings[$keyWithoutDot], $value);
                 } else {
                     $result[$keyWithoutDot] = $this->renderConfigurationArray($value);
@@ -85,7 +85,7 @@ class Settings
         array $settings,
         string $section = 'settings.',
         string $extKey = 'tx_pwteaser'
-    ) {
+    ): array {
         $typoscript = $this->configurationManager->getConfiguration(
             ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
         );
@@ -110,7 +110,7 @@ class Settings
      * @param array $configuration settings array to make renderable
      * @return array the renderable settings
      */
-    protected function makeConfigurationArrayRenderable(array $configuration)
+    protected function makeConfigurationArrayRenderable(array $configuration): array
     {
         $dottedConfiguration = [];
         foreach ($configuration as $key => $value) {

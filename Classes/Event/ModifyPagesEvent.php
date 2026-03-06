@@ -1,4 +1,7 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Event;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -11,26 +14,32 @@ use PwTeaserTeam\PwTeaser\Controller\TeaserController;
 final class ModifyPagesEvent
 {
     /**
-     * @var array
+     * @var array<int, mixed>
      */
-    private $pages;
+    private array $pages;
+
+    private TeaserController $teaserController;
 
     /**
-     * @var TeaserController
+     * @param array<int, mixed> $pages
      */
-    private $teaserController;
-
-    public function __construct(array $pages, TeaserController $newsController)
+    public function __construct(array $pages, TeaserController $teaserController)
     {
         $this->pages = $pages;
-        $this->teaserController = $newsController;
+        $this->teaserController = $teaserController;
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     public function getPages(): array
     {
         return $this->pages;
     }
 
+    /**
+     * @param array<int, mixed> $pages
+     */
     public function setPages(array $pages): void
     {
         $this->pages = $pages;

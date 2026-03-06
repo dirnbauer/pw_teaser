@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\UserFunction;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -9,12 +12,9 @@ namespace PwTeaserTeam\PwTeaser\UserFunction;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
-class ItemsProcFunc
+final class ItemsProcFunc
 {
-    /**
-     * @var ConfigurationManagerInterface
-     */
-    private $configurationManager;
+    private ConfigurationManagerInterface $configurationManager;
 
     public function __construct(ConfigurationManagerInterface $configurationManager)
     {
