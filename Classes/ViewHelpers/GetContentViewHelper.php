@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\ViewHelpers;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -16,7 +19,7 @@ namespace PwTeaserTeam\PwTeaser\ViewHelpers;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper
+final class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper
 {
 
     protected $escapeOutput = false;
@@ -24,7 +27,7 @@ class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractVie
     /**
      * @return void
      */
-    public function initializeArguments()
+    public function initializeArguments(): void
     {
         parent::initializeArguments();
         $this->registerArgument('contents', 'array', 'Content elements');
@@ -34,7 +37,7 @@ class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractVie
         $this->registerArgument('index', 'integer', 'limits the output to n-th element');
     }
 
-    public function render()
+    public function render(): string
     {
         $contents = $this->arguments['contents'];
         if ($contents === null) {
@@ -46,6 +49,8 @@ class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractVie
         $breakNow = false;
         $asHasBeenSet = false;
 
+        $variableProvider = $this->renderingContext->getVariableProvider();
+
         /** @var $content \PwTeaserTeam\PwTeaser\Domain\Model\Content */
         foreach ($contents as $content) {
             $contentCtype = $content->getCtype();
@@ -54,11 +59,11 @@ class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractVie
             if ($contentColPos == $this->arguments['colPos']) {
                 if ($this->arguments['cType'] === null || $contentCtype == $this->arguments['cType']) {
                     if ($this->arguments['index'] === null) {
-                        $this->templateVariableContainer->add($this->arguments['as'], $content);
+                        $variableProvider->add($this->arguments['as'], $content);
                         $asHasBeenSet = true;
                     } else {
                         if ($indexCount == $this->arguments['index']) {
-                            $this->templateVariableContainer->add($this->arguments['as'], $content);
+                            $variableProvider->add($this->arguments['as'], $content);
                             $asHasBeenSet = true;
                             $breakNow = true;
                         }
@@ -68,7 +73,7 @@ class GetContentViewHelper extends \TYPO3Fluid\Fluid\Core\ViewHelper\AbstractVie
 
             if ($asHasBeenSet) {
                 $output .= $this->renderChildren();
-                $this->templateVariableContainer->remove($this->arguments['as']);
+                $variableProvider->remove($this->arguments['as']);
                 $asHasBeenSet = false;
             }
 

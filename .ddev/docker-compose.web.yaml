@@ -5,13 +5,6 @@ services:
             - EXTENSION_KEY=pw_teaser
             - PACKAGE_NAME=t3/pw_teaser
 
-            - TYPO3_INSTALL_DB_DRIVER=mysqli
-            - TYPO3_INSTALL_DB_USER=root
-            - TYPO3_INSTALL_DB_PASSWORD=root
-            - TYPO3_INSTALL_DB_HOST=db
-            - TYPO3_INSTALL_DB_PORT=3306
-            - TYPO3_INSTALL_DB_UNIX_SOCKET=
-            - TYPO3_INSTALL_DB_USE_EXISTING=0
             - TYPO3_INSTALL_ADMIN_USER=admin
             - TYPO3_INSTALL_ADMIN_PASSWORD=password
             - TYPO3_INSTALL_SITE_NAME=EXT:pw_teaser Dev Environment
@@ -22,10 +15,7 @@ services:
               source: ../
               target: /var/www/pw_teaser
               consistency: cached
-            - v10-data:/var/www/html/v10
-            - v11-data:/var/www/html/v11
+            - v13-data:/var/www/html/v13
 volumes:
-    v10-data:
-        name: "${DDEV_SITENAME}-v10-data"
-    v11-data:
-        name: "${DDEV_SITENAME}-v11-data"
+    v13-data:
+        name: "${DDEV_SITENAME}-v13-data"

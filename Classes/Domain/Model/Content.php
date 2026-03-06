@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Domain\Model;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -8,12 +11,13 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
 use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
-use TYPO3\CMS\Frontend\Page\PageRepository;
 
 /**
  * Content model
@@ -345,11 +349,24 @@ class Content extends AbstractEntity
             $attributeName = lcfirst(substr($name, 3));
 
             if (empty($this->contentRow)) {
-                /** @var PageRepository $pageSelect */
-                $pageSelect = $GLOBALS['TSFE']->sys_page;
-                $contentRow = $pageSelect->getRawRecord('tt_content', $this->getUid());
+                /** @var ConnectionPool $pool */
+                $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+                $queryBuilder = $pool->getQueryBuilderForTable('tt_content');
+                $contentRow = $queryBuilder
+                    ->select('*')
+                    ->from('tt_content')
+                    ->where(
+                        $queryBuilder->expr()->eq(
+                            'uid',
+                            $queryBuilder->createNamedParameter($this->getUid(), Connection::PARAM_INT)
+                        )
+                    )
+                    ->setMaxResults(1)
+                    ->executeQuery()
+                    ->fetchAssociative() ?: [];
+                $this->contentRow = [];
                 foreach ($contentRow as $key => $value) {
-                    $this->contentRow[GeneralUtility::underscoredToLowerCamelCase($key)] = $value;
+                    $this->contentRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
                 }
             }
             if (isset($this->contentRow[$attributeName])) {

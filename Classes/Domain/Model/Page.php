@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Domain\Model;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -9,6 +12,8 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
 
@@ -254,11 +259,24 @@ class Page extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     public function getGet(): array
     {
         if (empty($this->pageRow)) {
-            /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageSelect */
-            $pageSelect = $GLOBALS['TSFE']->sys_page;
-            $pageRow = $pageSelect->getPage($this->getUid());
+            /** @var ConnectionPool $pool */
+            $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+            $queryBuilder = $pool->getQueryBuilderForTable('pages');
+            $pageRow = $queryBuilder
+                ->select('*')
+                ->from('pages')
+                ->where(
+                    $queryBuilder->expr()->eq(
+                        'uid',
+                        $queryBuilder->createNamedParameter($this->getUid(), Connection::PARAM_INT)
+                    )
+                )
+                ->setMaxResults(1)
+                ->executeQuery()
+                ->fetchAssociative() ?: [];
+            $this->pageRow = [];
             foreach ($pageRow as $key => $value) {
-                $this->pageRow[GeneralUtility::underscoredToLowerCamelCase($key)] = $value;
+                $this->pageRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
             }
         }
         return array_merge($this->customAttributes, $this->pageRow);

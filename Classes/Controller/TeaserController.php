@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Controller;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -34,15 +37,9 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
  */
 class TeaserController extends ActionController
 {
-    /**
-     * @var array
-     */
-    protected $settings = [];
+    protected array $settings = [];
 
-    /**
-     * @var integer
-     */
-    protected $currentPageUid = null;
+    protected int $currentPageUid = 0;
 
     /**
      * @var PageRepository
@@ -96,7 +93,7 @@ class TeaserController extends ActionController
      *
      * @return void
      */
-    public function initializeAction()
+    public function initializeAction(): void
     {
         $this->settings = $this->settingsUtility->renderConfigurationArray($this->settings);
 
@@ -113,11 +110,10 @@ class TeaserController extends ActionController
     /**
      * Displays teasers
      *
-     * @return ResponseInterface|void
      */
-    public function indexAction()
+    public function indexAction(): ResponseInterface
     {
-        $this->currentPageUid = $GLOBALS['TSFE']->id;
+        $this->currentPageUid = $this->resolveCurrentPageUid();
 
         $this->performTemplatePathAndFilename();
         $this->setOrderingAndLimitation();
@@ -198,11 +194,22 @@ class TeaserController extends ActionController
             ]);
         }
 
-        if (isset($this->responseFactory)) {
-            return $this->responseFactory->createResponse()
-                ->withAddedHeader('Content-Type', 'text/html; charset=utf-8')
-                ->withBody($this->streamFactory->createStream($this->view->render()));
+        return $this->htmlResponse();
+    }
+
+    protected function resolveCurrentPageUid(): int
+    {
+        $pageInformation = $this->request->getAttribute('frontend.page.information');
+        if (is_object($pageInformation) && method_exists($pageInformation, 'getId')) {
+            return (int)$pageInformation->getId();
         }
+
+        $routing = $this->request->getAttribute('routing');
+        if (is_object($routing) && method_exists($routing, 'getPageId')) {
+            return (int)$routing->getPageId();
+        }
+
+        return 0;
     }
 
     /**

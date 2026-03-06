@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PwTeaserTeam\PwTeaser\Domain\Repository;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -10,6 +13,7 @@ namespace PwTeaserTeam\PwTeaser\Domain\Repository;
  */
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -92,7 +96,7 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      */
     public function findByPidRecursively($pid, $recursionDepthFrom, $recursionDepth)
     {
-        return $this->findChildrenRecursivelyByPidList($pid, $recursionDepthFrom, $recursionDepth);
+        return $this->findChildrenRecursivelyByPidList((string)$pid, $recursionDepthFrom, $recursionDepth);
     }
 
     /**
@@ -209,11 +213,18 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             $queryBuilder = $pool->getQueryBuilderForTable('pages');
             $translatedRow = $queryBuilder->select('*')
                 ->from('pages')
-                ->where('l10n_parent = :pid AND sys_language_uid = :lang')
-                ->setParameter('pid', $pid)
-                ->setParameter('lang', $languageUid)
+                ->where(
+                    $queryBuilder->expr()->eq(
+                        'l10n_parent',
+                        $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)
+                    ),
+                    $queryBuilder->expr()->eq(
+                        'sys_language_uid',
+                        $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
+                    )
+                )
                 ->setMaxResults(1)
-                ->execute()
+                ->executeQuery()
                 ->fetchAssociative();
             if ($translatedRow) {
                 $translatedPidList[$pid] = $translatedRow['uid'];
@@ -323,21 +334,22 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                     $displayedPages[] = $page;
                 }
             } else {
-                /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageSelect */
-                $pageSelect = $GLOBALS['TSFE']->sys_page;
-                $pageRowWithOverlays = $pageSelect->getPage($page->getUid());
+                $translationExists = $this->pageHasTranslation($page->getUid(), $currentLangUid);
+                $requiresTranslation = in_array(
+                    $page->getL18nConfiguration(),
+                    [
+                        Page::L18N_HIDE_IF_NO_TRANSLATION_EXISTS,
+                        Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS,
+                    ],
+                    true
+                );
 
                 if ((boolean)$GLOBALS['TYPO3_CONF_VARS']['FE']['hidePagesIfNotTranslatedByDefault'] === false) {
-                    if (!($page->getL18nConfiguration() === Page::L18N_HIDE_IF_NO_TRANSLATION_EXISTS ||
-                            $page->getL18nConfiguration() === Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS) ||
-                        isset($pageRowWithOverlays['_PAGES_OVERLAY'])) {
+                    if (!$requiresTranslation || $translationExists) {
                         $displayedPages[] = $page;
                     }
                 } else {
-                    if (($page->getL18nConfiguration() === Page::L18N_HIDE_IF_NO_TRANSLATION_EXISTS ||
-                            $page->getL18nConfiguration() === Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS) &&
-                        !isset($pageRowWithOverlays['_PAGES_OVERLAY']) ||
-                        isset($pageRowWithOverlays['_PAGES_OVERLAY'])) {
+                    if (($requiresTranslation && !$translationExists) || $translationExists) {
                         $displayedPages[] = $page;
                     }
                 }
@@ -356,17 +368,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      */
     protected function getRecursivePageList($pidlist, $recursionDepthFrom, $recursionDepth)
     {
-        /** @var \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer $contentObjectRenderer */
-        $contentObjectRenderer = GeneralUtility::makeInstance('TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer');
-
         $pagePids = [];
         $pids = GeneralUtility::intExplode(',', $pidlist, true);
         foreach ($pids as $pid) {
-            $pageList = GeneralUtility::intExplode(
-                ',',
-                $contentObjectRenderer->getTreeList($pid, $recursionDepth, $recursionDepthFrom),
-                true
-            );
+            $pageList = $this->collectRecursivePageIds($pid, (int)$recursionDepthFrom, (int)$recursionDepth);
             $pagePids = array_merge($pagePids, $pageList);
             if ($recursionDepthFrom === 0) {
                 array_unshift($pagePids, $pid);
@@ -477,5 +482,96 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
         $this->query = $this->createQuery();
         unset($this->queryConstraints);
         $this->queryConstraints = [];
+    }
+
+    protected function pageHasTranslation(int $pageUid, int $languageUid): bool
+    {
+        /** @var ConnectionPool $pool */
+        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $pool->getQueryBuilderForTable('pages');
+
+        $translatedRow = $queryBuilder
+            ->select('uid')
+            ->from('pages')
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'l10n_parent',
+                    $queryBuilder->createNamedParameter($pageUid, Connection::PARAM_INT)
+                ),
+                $queryBuilder->expr()->eq(
+                    'sys_language_uid',
+                    $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
+                )
+            )
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchOne();
+
+        return $translatedRow !== false;
+    }
+
+    /**
+     * @return array<int>
+     */
+    protected function collectRecursivePageIds(int $rootPid, int $recursionDepthFrom, int $recursionDepth): array
+    {
+        if ($recursionDepth < 1) {
+            return [];
+        }
+
+        $pageIds = [];
+        $this->collectDescendantPageIds($rootPid, 1, $recursionDepthFrom, $recursionDepth, $pageIds);
+
+        return $pageIds;
+    }
+
+    /**
+     * @param array<int> $pageIds
+     */
+    protected function collectDescendantPageIds(
+        int $parentPid,
+        int $currentDepth,
+        int $recursionDepthFrom,
+        int $recursionDepth,
+        array &$pageIds
+    ): void {
+        if ($currentDepth > $recursionDepth) {
+            return;
+        }
+
+        foreach ($this->getDirectChildPageIds($parentPid) as $childPid) {
+            if ($currentDepth >= $recursionDepthFrom) {
+                $pageIds[] = $childPid;
+            }
+            $this->collectDescendantPageIds($childPid, $currentDepth + 1, $recursionDepthFrom, $recursionDepth, $pageIds);
+        }
+    }
+
+    /**
+     * @return array<int>
+     */
+    protected function getDirectChildPageIds(int $parentPid): array
+    {
+        /** @var ConnectionPool $pool */
+        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $pool->getQueryBuilderForTable('pages');
+
+        $childPageIds = $queryBuilder
+            ->select('uid')
+            ->from('pages')
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'pid',
+                    $queryBuilder->createNamedParameter($parentPid, Connection::PARAM_INT)
+                ),
+                $queryBuilder->expr()->eq(
+                    'deleted',
+                    $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
+                )
+            )
+            ->executeQuery()
+            ->fetchFirstColumn();
+
+        return array_map('intval', $childPageIds);
     }
 }

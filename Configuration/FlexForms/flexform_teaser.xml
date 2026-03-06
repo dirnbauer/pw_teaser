@@ -2,13 +2,10 @@
 	<sheets>
 		<generalsheet>
 			<ROOT>
-				<TCEforms>
 					<sheetTitle>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:general</sheetTitle>
-				</TCEforms>
 				<type>array</type>
 				<el>
 					<settings.source>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:sourceLabel</label>
 							<onChange>reload</onChange>
 							<config>
@@ -43,10 +40,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.source>
 					<settings.customPages>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:customPages</label>
 							<displayCond>FIELD:settings.source:IN:custom,customChildren,customChildrenRecursively</displayCond>
 							<config>
@@ -58,10 +53,8 @@
 								<minitems>0</minitems>
 								<show_thumbs>1</show_thumbs>
 							</config>
-						</TCEforms>
 					</settings.customPages>
 					<settings.recursionDepthFrom>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:recursionDepthFrom</label>
 							<displayCond>
 								<OR>
@@ -75,10 +68,8 @@
 								<default>0</default>
 								<size>5</size>
 							</config>
-						</TCEforms>
 					</settings.recursionDepthFrom>
 					<settings.recursionDepth>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:recursionDepth</label>
 							<displayCond>FIELD:settings.source:IN:thisChildrenRecursively,customChildrenRecursively</displayCond>
 							<config>
@@ -87,10 +78,8 @@
 								<default>255</default>
 								<size>5</size>
 							</config>
-						</TCEforms>
 					</settings.recursionDepth>
 					<settings.orderByPlugin>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:orderByPlugin</label>
 							<displayCond>FIELD:settings.source:IN:custom</displayCond>
 							<config>
@@ -113,10 +102,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.orderByPlugin>
 					<settings.loadContents>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:loadContents</label>
 							<config>
 								<type>select</type>
@@ -138,10 +125,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.loadContents>
 					<settings.pageMode>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:pageMode</label>
 							<onChange>reload</onChange>
 							<displayCond>FIELD:settings.source:!IN:custom</displayCond>
@@ -165,10 +150,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.pageMode>
 					<settings.enablePagination>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:enablePagination</label>
 							<onChange>reload</onChange>
 							<config>
@@ -188,10 +171,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.enablePagination>
 					<settings.itemsPerPage>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:itemsPerPage</label>
 							<displayCond>FIELD:settings.enablePagination:!=:0</displayCond>
 							<config>
@@ -200,20 +181,16 @@
 								<default>10</default>
 								<size>5</size>
 							</config>
-						</TCEforms>
 					</settings.itemsPerPage>
 				</el>
 			</ROOT>
 		</generalsheet>
 		<orderingsheet>
 			<ROOT>
-				<TCEforms>
 					<sheetTitle>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:ordering</sheetTitle>
-				</TCEforms>
 				<type>array</type>
 				<el>
 					<settings.orderBy>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:order</label>
 							<onChange>reload</onChange>
 							<config>
@@ -263,10 +240,8 @@
 								</items>
 								<maxitems>1</maxitems>
 							</config>
-						</TCEforms>
 					</settings.orderBy>
 					<settings.orderByCustomField>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:orderByCustomField</label>
 							<displayCond>FIELD:settings.orderBy:IN:customField</displayCond>
 							<config>
@@ -275,10 +250,8 @@
 								<default></default>
 								<size>16</size>
 							</config>
-						</TCEforms>
 					</settings.orderByCustomField>
 					<settings.orderDirection>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:orderDirection</label>
 							<displayCond>FIELD:settings.orderBy:IN:title,sorting,crdate,tstamp,starttime,endtime,customField</displayCond>
 							<config>
@@ -301,10 +274,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.orderDirection>
 					<settings.limit>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:limit</label>
 							<config>
 								<type>input</type>
@@ -312,10 +283,8 @@
 								<default></default>
 								<size>2</size>
 							</config>
-						</TCEforms>
 					</settings.limit>
 					<settings.showNavHiddenItems>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:showNavHiddenItems</label>
 							<config>
 								<type>select</type>
@@ -337,10 +306,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.showNavHiddenItems>
 					<settings.hideCurrentPage>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:hideCurrentPage</label>
 							<config>
 								<type>select</type>
@@ -362,10 +329,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</settings.hideCurrentPage>
 					<settings.showDoktypes>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:showDoktypes</label>
 							<config>
 								<type>input</type>
@@ -373,20 +338,16 @@
 								<size>8</size>
 								<default>1,2</default>
 							</config>
-						</TCEforms>
 					</settings.showDoktypes>
 					<settings.ignoreUids>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:ignoreUids</label>
 							<config>
 								<type>input</type>
 								<eval>trim</eval>
 								<size>16</size>
 							</config>
-						</TCEforms>
 					</settings.ignoreUids>
 					<settings.categoriesList>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:categories</label>
 							<config>
 								<type>select</type>
@@ -405,10 +366,8 @@
 									<parentField>parent</parentField>
 								</treeConfig>
 							</config>
-						</TCEforms>
 					</settings.categoriesList>
 					<settings.categoryMode>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:categoryMode</label>
 							<config>
 								<type>select</type>
@@ -439,20 +398,16 @@
 								<size>1</size>
 								<default></default>
 							</config>
-						</TCEforms>
 					</settings.categoryMode>
 				</el>
 			</ROOT>
 		</orderingsheet>
 		<tempaltesheet>
 			<ROOT>
-				<TCEforms>
 					<sheetTitle>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:template</sheetTitle>
-				</TCEforms>
 				<type>array</type>
 				<el>
 					<view.templateType>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:templateType</label>
 							<onChange>reload</onChange>
 							<config>
@@ -476,10 +431,8 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</view.templateType>
 					<view.templatePreset>
-						<TCEforms>
 							<displayCond>FIELD:view.templateType:IN:preset,</displayCond>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:templatePreset</label>
 							<config>
@@ -495,11 +448,9 @@
 								<maxitems>1</maxitems>
 								<size>1</size>
 							</config>
-						</TCEforms>
 					</view.templatePreset>
 
 					<view.templateRootFile>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:templateRootFile</label>
 							<displayCond>FIELD:view.templateType:IN:file,</displayCond>
 							<config>
@@ -507,10 +458,8 @@
 								<eval>trim</eval>
 								<default></default>
 							</config>
-						</TCEforms>
 					</view.templateRootFile>
 					<view.templateRootPath>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:templateRootPath</label>
 							<displayCond>FIELD:view.templateType:IN:directory</displayCond>
 							<config>
@@ -518,10 +467,8 @@
 								<eval>trim</eval>
 								<default></default>
 							</config>
-						</TCEforms>
 					</view.templateRootPath>
 					<view.partialRootPath>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:partialRootPath</label>
 							<displayCond>FIELD:view.templateType:IN:file,directory</displayCond>
 							<config>
@@ -529,10 +476,8 @@
 								<eval>trim</eval>
 								<default></default>
 							</config>
-						</TCEforms>
 					</view.partialRootPath>
 					<view.layoutRootPath>
-						<TCEforms>
 							<label>LLL:EXT:pw_teaser/Resources/Private/Language/locallang_flexform.xlf:layoutRootPath</label>
 							<displayCond>FIELD:view.templateType:IN:file,directory</displayCond>
 							<config>
@@ -540,7 +485,6 @@
 								<eval>trim</eval>
 								<default></default>
 							</config>
-						</TCEforms>
 					</view.layoutRootPath>
 				</el>
 			</ROOT>
