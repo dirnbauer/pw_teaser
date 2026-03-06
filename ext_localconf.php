@@ -9,8 +9,6 @@ declare(strict_types=1);
  */
 
 use PwTeaserTeam\PwTeaser\Controller\TeaserController;
-use TYPO3\CMS\Core\Imaging\IconProvider\BitmapIconProvider;
-use TYPO3\CMS\Core\Imaging\IconRegistry;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
@@ -36,16 +34,10 @@ ExtensionManagementUtility::addTypoScript(
 
 $rootLineFields = GeneralUtility::trimExplode(
     ',',
-    $GLOBALS['TYPO3_CONF_VARS']['FE']['addRootLineFields'],
+    (string)($GLOBALS['TYPO3_CONF_VARS']['FE']['addRootLineFields'] ?? ''),
     true
 );
-$rootLineFields[] = 'sorting';
+if (!in_array('sorting', $rootLineFields, true)) {
+    $rootLineFields[] = 'sorting';
+}
 $GLOBALS['TYPO3_CONF_VARS']['FE']['addRootLineFields'] = implode(',', $rootLineFields);
-
-/** @var IconRegistry $iconRegistry */
-$iconRegistry = GeneralUtility::makeInstance(IconRegistry::class);
-$iconRegistry->registerIcon(
-    'ext-pwteaser-wizard-icon',
-    BitmapIconProvider::class,
-    ['source' => 'EXT:pw_teaser/Resources/Public/Icons/Extension_x2.png']
-);

@@ -391,7 +391,7 @@ class Page extends AbstractEntity
      */
     public function getKeywords()
     {
-        return (GeneralUtility::trimExplode(',', $this->keywords, true));
+        return GeneralUtility::trimExplode(',', (string)$this->keywords, true);
     }
 
     /**

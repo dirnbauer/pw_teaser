@@ -83,15 +83,40 @@ class TeaserController extends ActionController
         $this->settingsUtility->setContentObject(
             $contentObject instanceof ContentObjectRenderer ? $contentObject : null
         );
-        $this->settings = $this->settingsUtility->renderConfigurationArray($this->settings);
+        $this->settings = array_replace(
+            [
+                'source' => 'thisChildren',
+                'customPages' => '',
+                'recursionDepthFrom' => 0,
+                'recursionDepth' => 255,
+                'orderByPlugin' => '',
+                'loadContents' => '',
+                'pageMode' => '',
+                'enablePagination' => 1,
+                'itemsPerPage' => 10,
+                'orderBy' => '',
+                'orderByCustomField' => '',
+                'orderDirection' => '',
+                'limit' => '',
+                'showNavHiddenItems' => '',
+                'hideCurrentPage' => '',
+                'showDoktypes' => '',
+                'ignoreUids' => '',
+                'categoriesList' => '',
+                'categoryMode' => '',
+            ],
+            $this->settingsUtility->renderConfigurationArray($this->settings)
+        );
 
         $frameworkSettings = $this->configurationManager->getConfiguration(
             ConfigurationManagerInterface::CONFIGURATION_TYPE_FRAMEWORK
         );
-        $viewSettings = $frameworkSettings['view'];
-        $presets = $viewSettings['presets'] ?? [];
+        $viewSettings = is_array($frameworkSettings['view'] ?? null) ? $frameworkSettings['view'] : [];
+        $presets = is_array($viewSettings['presets'] ?? null) ? $viewSettings['presets'] : [];
         unset($viewSettings['presets']);
-        $this->viewSettings = $this->settingsUtility->renderConfigurationArray($viewSettings, 'view.');
+        $this->viewSettings = $viewSettings !== []
+            ? $this->settingsUtility->renderConfigurationArray($viewSettings, 'view.')
+            : [];
         $this->viewSettings['presets'] = $presets;
     }
 
@@ -231,7 +256,7 @@ class TeaserController extends ActionController
             $this->pageRepository->setOrderDirection($this->settings['orderDirection']);
         }
 
-        if (!empty($this->settings['limit']) && $this->settings['orderBy'] !== 'random') {
+        if (!empty($this->settings['limit']) && ($this->settings['orderBy'] ?? '') !== 'random') {
             $this->pageRepository->setLimit(intval($this->settings['limit']));
         }
     }
@@ -308,11 +333,11 @@ class TeaserController extends ActionController
     protected function performPluginConfigurations()
     {
         // Set ShowNavHiddenItems to TRUE
-        $this->pageRepository->setShowNavHiddenItems(($this->settings['showNavHiddenItems'] == '1'));
+        $this->pageRepository->setShowNavHiddenItems((string)($this->settings['showNavHiddenItems'] ?? '') === '1');
         $this->pageRepository->setFilteredDokType(
             GeneralUtility::trimExplode(
                 ',',
-                $this->settings['showDoktypes'],
+                (string)($this->settings['showDoktypes'] ?? ''),
                 true
             )
         );
@@ -363,14 +388,14 @@ class TeaserController extends ActionController
     protected function performSpecialOrderings(array $pages)
     {
         // Make random if selected on queryResult, cause Extbase doesn't support it
-        if ($this->settings['orderBy'] === 'random') {
+        if (($this->settings['orderBy'] ?? '') === 'random') {
             shuffle($pages);
             if (!empty($this->settings['limit'])) {
                 $pages = array_slice($pages, 0, $this->settings['limit']);
             }
         }
 
-        if ($this->settings['orderBy'] === 'sorting' && str_contains((string)$this->settings['source'], 'Recursively')) {
+        if (($this->settings['orderBy'] ?? '') === 'sorting' && str_contains((string)($this->settings['source'] ?? ''), 'Recursively')) {
             usort($pages, $this->sortByRecursivelySorting(...));
             if (strtolower((string)$this->settings['orderDirection']) === strtolower(QueryInterface::ORDER_DESCENDING)) {
                 $pages = array_reverse($pages);

@@ -23,7 +23,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  */
 final class GetContentViewHelper extends AbstractViewHelper
 {
-    protected bool $escapeOutput = false;
+    protected $escapeOutput = false;
 
     /**
      * @return void

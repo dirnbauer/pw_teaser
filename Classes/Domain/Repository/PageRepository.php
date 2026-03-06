@@ -569,6 +569,10 @@ class PageRepository extends Repository
                 $queryBuilder->expr()->eq(
                     'deleted',
                     $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
+                ),
+                $queryBuilder->expr()->eq(
+                    'sys_language_uid',
+                    $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                 )
             )
             ->executeQuery()
