@@ -221,6 +221,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                     $queryBuilder->expr()->eq(
                         'sys_language_uid',
                         $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
+                    ),
+                    $queryBuilder->expr()->eq(
+                        'deleted',
+                        $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                     )
                 )
                 ->setMaxResults(1)
@@ -501,6 +505,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
                 $queryBuilder->expr()->eq(
                     'sys_language_uid',
                     $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
+                ),
+                $queryBuilder->expr()->eq(
+                    'deleted',
+                    $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                 )
             )
             ->setMaxResults(1)

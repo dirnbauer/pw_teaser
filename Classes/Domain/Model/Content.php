@@ -359,6 +359,10 @@ class Content extends AbstractEntity
                         $queryBuilder->expr()->eq(
                             'uid',
                             $queryBuilder->createNamedParameter($this->getUid(), Connection::PARAM_INT)
+                        ),
+                        $queryBuilder->expr()->eq(
+                            'deleted',
+                            $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                         )
                     )
                     ->setMaxResults(1)
