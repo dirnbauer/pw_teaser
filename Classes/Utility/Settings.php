@@ -9,7 +9,6 @@ namespace PwTeaserTeam\PwTeaser\Utility;
  *  |
  *  | (c) 2011-2022 Armin Vieweg <armin@v.ieweg.de>
  */
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -23,21 +22,16 @@ final class Settings
 {
     private ?ContentObjectRenderer $contentObject = null;
 
-    private ConfigurationManager $configurationManager;
+    private ConfigurationManagerInterface $configurationManager;
 
-    public function __construct(ConfigurationManager $configurationManager)
+    public function __construct(ConfigurationManagerInterface $configurationManager)
     {
         $this->configurationManager = $configurationManager;
     }
 
-    /**
-     * Initialize this settings utility
-     *
-     * @return void
-     */
-    public function initializeObject(): void
+    public function setContentObject(?ContentObjectRenderer $contentObject): void
     {
-        $this->contentObject = $this->configurationManager->getContentObject();
+        $this->contentObject = $contentObject;
     }
 
     /**
@@ -54,8 +48,8 @@ final class Settings
         $result = [];
 
         foreach ($settings as $key => $value) {
-            if (substr($key, -1) === '.') {
-                $keyWithoutDot = substr($key, 0, -1);
+            if (substr((string)$key, -1) === '.') {
+                $keyWithoutDot = substr((string)$key, 0, -1);
                 if (array_key_exists($keyWithoutDot, $settings)) {
                     if ($this->contentObject === null) {
                         continue;

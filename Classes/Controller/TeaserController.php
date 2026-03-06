@@ -13,6 +13,7 @@ namespace PwTeaserTeam\PwTeaser\Controller;
  */
 use Psr\Http\Message\ResponseInterface;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
+use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\ContentRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\PageRepository;
 use PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent;
@@ -23,7 +24,6 @@ use TYPO3\CMS\Core\Pagination\PaginatorInterface;
 use TYPO3\CMS\Core\Pagination\SimplePagination;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
-use TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Fluid\View\TemplateView;
@@ -95,6 +95,10 @@ class TeaserController extends ActionController
      */
     public function initializeAction(): void
     {
+        $contentObject = $this->request->getAttribute('currentContentObject');
+        $this->settingsUtility->setContentObject(
+            $contentObject instanceof ContentObjectRenderer ? $contentObject : null
+        );
         $this->settings = $this->settingsUtility->renderConfigurationArray($this->settings);
 
         $frameworkSettings = $this->configurationManager->getConfiguration(
