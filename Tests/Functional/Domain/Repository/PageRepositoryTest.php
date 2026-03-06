@@ -12,10 +12,6 @@ final class PageRepositoryTest extends FunctionalTestCase
 {
     protected array $coreExtensionsToLoad = ['extbase', 'fluid', 'frontend'];
 
-    protected array $pathsToLinkInTestInstance = [
-        __DIR__ . '/../../../../' => 'typo3conf/ext/pw_teaser',
-    ];
-
     protected array $testExtensionsToLoad = [
         'typo3conf/ext/pw_teaser',
     ];

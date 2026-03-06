@@ -44,7 +44,11 @@ development with PHP 8.2 and an isolated TYPO3 13 instance in a dedicated
 `v13` data volume.
 
 Start the environment with `ddev start` and create the TYPO3 13 test instance
-with `ddev install-v13`.
+with `ddev install-v13`. The TYPO3 test instance is then available at
+`https://v13.pw-teaser.ddev.site/`.
+
+Run the automated checks inside DDEV with `ddev test-unit` and
+`ddev test-functional`.
 
 
 ## Links

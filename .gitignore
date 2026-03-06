@@ -1,2 +1,5 @@
 .idea
 Documentation-GENERATED-temp
+public/
+vendor/
+v13/
