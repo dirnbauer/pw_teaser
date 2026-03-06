@@ -1,0 +1,20 @@
+---
+description: TYPO3 13 conformance checks for pw_teaser
+globs: "{composer.json,ext_emconf.php,ext_localconf.php,README.md,Classes/**/*.php,Configuration/**/*,Documentation/**/*,Tests/**/*,.github/workflows/**/*}"
+alwaysApply: false
+---
+
+# TYPO3 13 conformance
+
+- Target TYPO3 13.4 LTS only. Do not introduce TYPO3 14 requirements.
+- Prefer TYPO3 core APIs, DI, PSR-14 events, static TCA, and typed PHP 8.2 code.
+- Keep the extension layout coherent across `Classes/`, `Configuration/`, `Documentation/`, and `Tests/`.
+- Favor `declare(strict_types=1);`, explicit parameter/return types, and `final` on non-extension classes.
+- Remove legacy globals and runtime patterns when a TYPO3 13 API exists.
+- Treat missing tests, missing CI, stale docs, and weak composer metadata as conformance gaps.
+
+## Report loop
+
+- Write findings to `Build/Reports/typo3-conformance-report.md`.
+- Separate findings from fixes. Commit the report first, then commit remediation work.
+- Focus on high-value gaps that also unblock TYPO3 13 compatibility.

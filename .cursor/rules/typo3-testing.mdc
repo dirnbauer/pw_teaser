@@ -1,0 +1,18 @@
+---
+description: TYPO3 13 testing baseline for pw_teaser
+globs: "{composer.json,Classes/**/*.php,Tests/**/*,.github/workflows/**/*,.ddev/**/*}"
+alwaysApply: false
+---
+
+# TYPO3 testing
+
+- Build the smallest credible TYPO3 13 test baseline first, then expand where upgrade risk is highest.
+- Prioritize unit tests for isolated utilities/viewhelpers and one functional or integration-oriented test for upgraded runtime behavior.
+- Keep test setup compatible with TYPO3 13 and PHP 8.2.
+- Add CI only if it is maintainable and reliable for this extension.
+
+## Report loop
+
+- Write findings to `Build/Reports/typo3-testing-report.md`.
+- Commit the report before adding test infrastructure.
+- New tests should cover upgraded behavior, not just increase file counts.

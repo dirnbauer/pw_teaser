@@ -1,0 +1,18 @@
+---
+description: TYPO3 13 documentation maintenance for pw_teaser
+globs: "{README.md,Documentation/**/*,.ddev/docker-compose.docs.yaml}"
+alwaysApply: false
+---
+
+# TYPO3 docs
+
+- Keep documentation accurate for TYPO3 13.4 LTS and aligned with the actual extension behavior.
+- Update install, version, upgrade, and configuration guidance when code or requirements change.
+- Fix broken image references, outdated metadata, and stale documentation build settings.
+- Prefer incremental modernization; keep the current docs setup unless moving to `guides.xml` clearly improves maintainability now.
+
+## Report loop
+
+- Write findings to `Build/Reports/typo3-docs-report.md`.
+- Commit the report before documentation edits.
+- Validate docs with available local tooling when practical.

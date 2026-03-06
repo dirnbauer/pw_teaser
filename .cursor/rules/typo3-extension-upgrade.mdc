@@ -1,0 +1,19 @@
+---
+description: TYPO3 13 upgrade path for pw_teaser
+globs: "{composer.json,ext_emconf.php,ext_localconf.php,.ddev/**/*,Classes/**/*.php,Configuration/**/*,Resources/**/*}"
+alwaysApply: false
+---
+
+# TYPO3 13 upgrade
+
+- Upgrade this extension to TYPO3 13.4 LTS only. Do not keep dual v11/v13 logic unless unavoidable.
+- Update version constraints, PHP requirements, and local dev assumptions for TYPO3 13.
+- Replace removed APIs and legacy patterns such as `TYPO3_MODE`, TSFE-heavy access, outdated Fluid internals, and deprecated page-tree helpers.
+- Prefer TYPO3 13-compatible Extbase controller responses, QueryBuilder/DBAL APIs, and current FlexForm structure.
+- Use automation when helpful, but review and refine generated changes manually.
+
+## Report loop
+
+- Write findings to `Build/Reports/typo3-extension-upgrade-report.md`.
+- Commit the report before code changes.
+- After fixes, validate touched code paths and keep the target strictly TYPO3 13.

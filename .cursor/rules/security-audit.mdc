@@ -1,0 +1,18 @@
+---
+description: OWASP-style PHP security audit for pw_teaser
+globs: "{composer.json,Classes/**/*.php,Configuration/**/*,Resources/Private/**/*,README.md,Documentation/**/*}"
+alwaysApply: false
+---
+
+# Security audit
+
+- Audit this extension with OWASP/PHP priorities: injection, XSS, CSRF, unsafe trust boundaries, secrets exposure, and insecure parsing.
+- Re-check issues already noted by TYPO3-specific security review, but keep only findings not already resolved.
+- Prefer code-level remediations with clear risk reduction and minimal behavior change.
+- Call out cases that are documentation or integrator responsibilities instead of extension code defects.
+
+## Report loop
+
+- Write findings to `Build/Reports/security-audit-report.md`.
+- Commit the report before remediation.
+- If no new actionable issues remain after review, skip the changes commit.

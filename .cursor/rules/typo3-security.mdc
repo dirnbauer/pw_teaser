@@ -1,0 +1,18 @@
+---
+description: TYPO3-specific security review for pw_teaser
+globs: "{ext_localconf.php,Classes/**/*.php,Configuration/**/*,Resources/Private/**/*}"
+alwaysApply: false
+---
+
+# TYPO3 security
+
+- Review only extension-owned security concerns that belong inside a distributable TYPO3 extension.
+- Prefer TYPO3 security primitives: QueryBuilder, FormProtection, Fluid auto-escaping, trusted event/listener APIs, and safe request handling.
+- Flag risky uses of globals, raw SQL, unescaped output, permissive configuration, and unsafe content rendering.
+- Do not bake site-specific production settings into the extension unless the package truly owns that behavior.
+
+## Report loop
+
+- Write findings to `Build/Reports/typo3-security-report.md`.
+- Commit the report before remediation.
+- Fix extension-level issues first; leave deployment-only hardening as documented guidance.
