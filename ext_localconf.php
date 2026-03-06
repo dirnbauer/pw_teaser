@@ -8,6 +8,7 @@ declare(strict_types=1);
  *  | (c) 2011-2022 Armin Vieweg <armin@v.ieweg.de>
  */
 
+use PwTeaserTeam\PwTeaser\Controller\TeaserController;
 use TYPO3\CMS\Core\Imaging\IconProvider\BitmapIconProvider;
 use TYPO3\CMS\Core\Imaging\IconRegistry;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -20,8 +21,17 @@ ExtensionUtility::configurePlugin(
     'pw_teaser',
     'Pi1',
     [
-        \PwTeaserTeam\PwTeaser\Controller\TeaserController::class => 'index',
-    ]
+        TeaserController::class => 'index',
+    ],
+    [],
+    ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
+);
+
+ExtensionManagementUtility::addTypoScript(
+    'pw_teaser',
+    'setup',
+    'tt_content.list.20.pwteaser_pi1 =< tt_content.pwteaser_pi1',
+    'defaultContentRendering'
 );
 
 $rootLineFields = GeneralUtility::trimExplode(
@@ -39,15 +49,3 @@ $iconRegistry->registerIcon(
     BitmapIconProvider::class,
     ['source' => 'EXT:pw_teaser/Resources/Public/Icons/Extension_x2.png']
 );
-
-ExtensionManagementUtility::addPageTSConfig('
-    mod.wizards.newContentElement.wizardItems.plugins.elements.pwteaser {
-        iconIdentifier = ext-pwteaser-wizard-icon
-        title = LLL:EXT:pw_teaser/Resources/Private/Language/locallang.xlf:newContentElementWizardTitle
-        description = LLL:EXT:pw_teaser/Resources/Private/Language/locallang.xlf:newContentElementWizardDescription
-        tt_content_defValues {
-            CType = list
-            list_type = pwteaser_pi1
-        }
-    }
-');
