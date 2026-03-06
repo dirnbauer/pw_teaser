@@ -1,0 +1,9 @@
+"pages"
+,"uid","pid","title","slug","doktype","hidden","deleted","sys_language_uid","l10n_parent","l18n_cfg","sorting"
+,1,0,"Root","/root",1,0,0,0,0,0,256
+,2,1,"Child A","/child-a",1,0,0,0,0,0,256
+,3,1,"Child B","/child-b",1,0,0,0,0,0,512
+,4,2,"Grandchild","/grandchild",1,0,0,0,0,0,256
+,5,1,"Deleted Child","/deleted-child",1,0,1,0,0,0,768
+,6,1,"Child A DE","/de/child-a",1,0,0,1,2,0,256
+,7,1,"Child B DE deleted","/de/child-b",1,0,1,1,3,0,512
