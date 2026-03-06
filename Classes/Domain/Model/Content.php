@@ -91,12 +91,13 @@ class Content extends AbstractEntity
     {
         $this->image = new ObjectStorage();
         $this->assets = new ObjectStorage();
+        $this->categories = new ObjectStorage();
     }
 
     /**
      * Setter for images
      *
-     * @param ObjectStorage $image
+     * @param ObjectStorage<FileReference> $image
      * @return void
      */
     public function setImage(ObjectStorage $image)
@@ -107,7 +108,7 @@ class Content extends AbstractEntity
     /**
      * Getter for images
      *
-     * @return ObjectStorage images
+     * @return ObjectStorage<FileReference> images
      */
     public function getImage()
     {
@@ -154,7 +155,7 @@ class Content extends AbstractEntity
     /**
      * Setter for assets
      *
-     * @param ObjectStorage $assets
+     * @param ObjectStorage<FileReference> $assets
      * @return void
      */
     public function setAssets(ObjectStorage $assets)
@@ -165,7 +166,7 @@ class Content extends AbstractEntity
     /**
      * Getter for assets
      *
-     * @return ObjectStorage assets
+     * @return ObjectStorage<FileReference> assets
      */
     public function getAssets()
     {
@@ -296,7 +297,7 @@ class Content extends AbstractEntity
     /**
      * Getter for categories
      *
-     * @return ObjectStorage
+     * @return ObjectStorage<Category>
      */
     public function getCategories()
     {
@@ -306,10 +307,10 @@ class Content extends AbstractEntity
     /**
      * Setter for categories
      *
-     * @param ObjectStorage $categories
+     * @param ObjectStorage<Category> $categories
      * @return void
      */
-    public function setCategories($categories)
+    public function setCategories(ObjectStorage $categories)
     {
         $this->categories = $categories;
     }
