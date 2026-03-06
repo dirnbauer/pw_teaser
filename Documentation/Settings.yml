@@ -5,10 +5,10 @@
 
 ---
 conf.py:
-  copyright: 2010-2022
+  copyright: 2010-2026
   project: Page Teaser (with Fluid)
-  version: 6.0
-  release: 6.0.3
+  version: main
+  release: main
   latex_documents:
   - - Index
     - pw_teaser.tex
@@ -21,15 +21,15 @@ conf.py:
     preamble: \usepackage{typo3}
   intersphinx_mapping:
     t3api:
-    - http://docs.typo3.org/typo3cms/CoreApiReference/
+    - https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/
     - null
     t3tsref:
-    - http://docs.typo3.org/typo3cms/TyposcriptReference/
+    - https://docs.typo3.org/m/typo3/reference-typoscript/main/en-us/
     - null
     t3start:
-    - http://docs.typo3.org/typo3cms/GettingStartedTutorial/
+    - https://docs.typo3.org/m/typo3/tutorial-getting-started/main/en-us/
     - null
     t3editors:
-    - http://docs.typo3.org/typo3cms/EditorsTutorial/
+    - https://docs.typo3.org/m/typo3/tutorial-editor/main/en-us/
     - null
 ...

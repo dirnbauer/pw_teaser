@@ -11,13 +11,13 @@ Create the first teaser
 
 Go to any page you want to add a teaser list of pages, and **add a new page teaser plugin**:
 
-.. image:: Images/add-plugin.png
-   :alt: pw_teaser in new content element wizard in TYPO3 backend
+In TYPO3 13, the plugin appears in the new content element wizard as
+``Page Teaser (pw_teaser)``.
 
 On tab "Plugin" you see all settings pw_teaser has:
 
-.. image:: Images/plugin-sheet-general.png
-   :alt: General preferences of pw_teaser plugin
+The editor UI groups the available settings into general, visibility, and
+template-related options.
 
 
 Define data source
@@ -33,8 +33,8 @@ First, we define which pages we want to display. We can choose between those **t
 
 When you change the source to "selected pages", a new field **Custom pages** appears after reloading:
 
-.. image:: Images/custom-pages.png
-   :alt: Define custom pages when pw_teaser source is "selected pages"
+TYPO3 then shows a page selector field so editors can choose the source pages
+explicitly from the page tree.
 
 Here you select page(s) from the page tree which should be used as the source for your teaser list.
 
@@ -53,9 +53,7 @@ See the teaser in frontend
 
 In frontend you get a list with pages:
 
-.. image:: Images/default-frontend-output.png
-   :alt: Default frontend output of pw_teaser
-   :width: 50%
-   :class: with-border
+The shipped templates render a linked page list by default and can be replaced
+with custom Fluid templates later on.
 
 Checkout :ref:`templates` for info about how to provide your own templates.

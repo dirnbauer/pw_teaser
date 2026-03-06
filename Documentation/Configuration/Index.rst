@@ -24,9 +24,8 @@ Reference
 General preferences
 ~~~~~~~~~~~~~~~~~~~
 
-.. image:: Images/settings-general.png
-   :alt: General settings in pw_teaser plugin
-   :width: 50%
+These options control where pages are loaded from and how the result set is
+prepared before rendering.
 
 ===================================== ============
 Property                               Type
@@ -198,9 +197,8 @@ itemsPerPage
 Visibility options
 ~~~~~~~~~~~~~~~~~~
 
-.. image:: Images/settings-visibility.png
-   :alt: Visibility settings in pw_teaser plugin
-   :width: 50%
+These options control ordering, filtering, category constraints, and the final
+page selection shown in the teaser output.
 
 ===================================== ============
 Property                               Type
@@ -385,9 +383,8 @@ Template view
 
 See :ref:`templates` for further details.
 
-.. image:: Images/settings-template.png
-   :alt: Template settings in pw_teaser plugin
-   :width: 50%
+These options switch between preset-based templates and custom Fluid template
+paths.
 
 ===================================== ============
 Property                               Type

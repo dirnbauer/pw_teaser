@@ -1,4 +1,4 @@
-﻿.. include:: Includes.txt
+.. include:: Includes.txt
 
 
 .. _start:
@@ -25,7 +25,7 @@ Page Teaser (with Fluid)
 		TYPO3 CMS, teaser, pages, sitemap
 
 	:Copyright:
-		2010-2022
+		2010-2026
 
 	:Author:
 		Armin Vieweg
@@ -40,8 +40,11 @@ Page Teaser (with Fluid)
 	:Rendered:
 		|today|
 
+	This manual documents the TYPO3 13.4 LTS / PHP 8.2 baseline of
+	``pw_teaser``.
+
 	The content of this document is related to TYPO3,
-	a GNU/GPL CMS/Framework available from `www.typo3.org <http://www.typo3.org/>`_.
+	a GNU/GPL CMS/Framework available from `www.typo3.org <https://www.typo3.org/>`_.
 
 
 	**Table of Contents**

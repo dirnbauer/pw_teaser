@@ -6,6 +6,12 @@
 Installation
 ============
 
+Requirements
+------------
+
+- TYPO3 13.4 LTS
+- PHP 8.2 or newer
+
 Download
 --------
 
@@ -14,7 +20,17 @@ You can use the TER (TYPO3 Extension Repository) or Composer to fetch ``t3/pw_te
 - TER: https://extensions.typo3.org/extension/pw_teaser
 - Packagist: https://packagist.org/packages/t3/pw_teaser
 
-Don't forget to enable the extension in Extension Manager!
+For Composer-based installations, run:
+
+.. code-block:: bash
+
+    composer require t3/pw_teaser
+
+After installation, enable the extension in TYPO3 if needed:
+
+.. code-block:: bash
+
+    vendor/bin/typo3 extension:activate pw_teaser
 
 
 TypoScript Setup
@@ -22,8 +38,8 @@ TypoScript Setup
 
 When pw_teaser is successfully installed, you need to **include the provided TypoScript** to your TypoScript template:
 
-.. image:: Images/include-static-typoscript.png
-   :alt: Include static TypoScript of pw_teaser
+In TYPO3 13, include the static TypoScript record :guilabel:`PwTeaser` in your
+site template so the default view configuration and template presets are loaded.
 
 
 .. important::

@@ -6,15 +6,18 @@
 Upgrading from below version 6
 ==============================
 
-Since version 6 of pw_teaser, which is available for TYPO3 10 and 11 only, some changes in Templates occured you need
-to change, when upgrading to version 6.0 or higher.
+Version 6 introduced the pagination and event changes that still matter when
+upgrading older installations to the TYPO3 13.4 baseline.
+Review custom templates and site configuration before switching an older
+project to the current extension version.
 
 
 Pagination
 ----------
 
-pw_teaser used to use the paginate Fluid widget provided by TYPO3 CMS. Those widgets has been removed from core, instead
-you can use the new Pagination API.
+pw_teaser used to rely on the paginate Fluid widget provided by TYPO3 CMS.
+Those widgets have been removed from core, so custom templates must use the
+pagination data prepared by the extension instead.
 
 Here is a minimum example, which replaces the previous ``widget.paginate`` call:
 
@@ -78,5 +81,6 @@ Copy the following routing enhancer config to your site configuration, to get be
 Events
 ------
 
-Previous versions of pw_teaser provided a Signal to programmatically modify the pages result array.
-Since version 6 those Signals has been replaced with `Events <events>`.
+Previous versions of pw_teaser provided a Signal to programmatically modify the
+page result array. Since version 6, those Signals have been replaced with
+`Events <events>`_.

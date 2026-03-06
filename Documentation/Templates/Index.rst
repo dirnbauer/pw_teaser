@@ -55,8 +55,7 @@ pw_teaser provide three presets by default:
 
 In plugin settings, the dropdown let the editor choose, which preset to use in frontend:
 
-.. image:: Images/preset-dropdown.png
-   :alt: Preset selection in pw_teaser plugin settings
+Editors can then choose the configured preset directly in the plugin settings.
 
 
 Type: File
@@ -71,9 +70,9 @@ Type: Directory
 When ``view.templateType`` is set to ``directory``, you also need to provide a ``view.templateRootPath`` (directory).
 In this directory you need to provide the controller/action structure of pw_teaser:
 
-
-.. image:: Images/directory-structure.png
-   :alt: Required directory structure of pw_teaser, when using templateType 'directory'.
+The directory must expose the expected Fluid structure so TYPO3 can resolve the
+``Teaser/Index.html`` template together with matching ``Partials/`` and
+``Layouts/`` folders.
 
 
 .. _writing-templates:
