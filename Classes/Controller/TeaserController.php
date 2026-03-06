@@ -11,6 +11,7 @@ namespace PwTeaserTeam\PwTeaser\Controller;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryRepository;
@@ -282,20 +283,20 @@ class TeaserController extends ActionController
 
         if ($templateType !== 'preset' && $templateRootPaths !== [null] && !empty($templateRootPaths)) {
             if (!file_exists(GeneralUtility::getFileAbsFileName(reset($templateRootPaths)))) {
-                throw new \Exception('Template folder "' . reset($templateRootPaths) . '" not found!');
+                throw new Exception('Template folder "' . reset($templateRootPaths) . '" not found!');
             }
             $this->view->setTemplateRootPaths($templateRootPaths);
         }
 
         if ($layoutRootPaths !== [null] && !empty($layoutRootPaths)) {
             if (!file_exists(GeneralUtility::getFileAbsFileName(reset($layoutRootPaths)))) {
-                throw new \Exception('Layout folder "' . reset($layoutRootPaths) . '" not found!');
+                throw new Exception('Layout folder "' . reset($layoutRootPaths) . '" not found!');
             }
             $this->view->setLayoutRootPaths($layoutRootPaths);
         }
         if ($partialRootPaths !== [null] && !empty($partialRootPaths)) {
             if (!file_exists(GeneralUtility::getFileAbsFileName(reset($partialRootPaths)))) {
-                throw new \Exception('Partial folder "' . reset($partialRootPaths) . '" not found!');
+                throw new Exception('Partial folder "' . reset($partialRootPaths) . '" not found!');
             }
             $this->view->setPartialRootPaths($partialRootPaths);
         }
@@ -339,7 +340,7 @@ class TeaserController extends ActionController
 
         if ($this->settings['ignoreUids'] ?? null) {
             $ignoringUids = GeneralUtility::trimExplode(',', $this->settings['ignoreUids'], true);
-            array_map([$this->pageRepository, 'setIgnoreOfUid'], $ignoringUids);
+            array_map($this->pageRepository->setIgnoreOfUid(...), $ignoringUids);
         }
 
         if (($this->settings['categoriesList'] ?? null) && $this->settings['categoryMode'] ?? null) {
@@ -348,22 +349,14 @@ class TeaserController extends ActionController
                 $categories[] = $this->categoryRepository->findByUid($categoryUid);
             }
 
-            switch ((int)$this->settings['categoryMode']) {
-                case PageRepository::CATEGORY_MODE_OR:
-                case PageRepository::CATEGORY_MODE_OR_NOT:
-                    $isAnd = false;
-                    break;
-                default:
-                    $isAnd = true;
-            }
-            switch ((int)$this->settings['categoryMode']) {
-                case PageRepository::CATEGORY_MODE_AND_NOT:
-                case PageRepository::CATEGORY_MODE_OR_NOT:
-                    $isNot = true;
-                    break;
-                default:
-                    $isNot = false;
-            }
+            $isAnd = match ((int)$this->settings['categoryMode']) {
+                PageRepository::CATEGORY_MODE_OR, PageRepository::CATEGORY_MODE_OR_NOT => false,
+                default => true,
+            };
+            $isNot = match ((int)$this->settings['categoryMode']) {
+                PageRepository::CATEGORY_MODE_AND_NOT, PageRepository::CATEGORY_MODE_OR_NOT => true,
+                default => false,
+            };
             $this->pageRepository->addCategoryConstraint($categories, $isAnd, $isNot);
         }
 
@@ -395,8 +388,8 @@ class TeaserController extends ActionController
         }
 
         if ($this->settings['orderBy'] === 'sorting' && str_contains((string)$this->settings['source'], 'Recursively')) {
-            usort($pages, [$this, 'sortByRecursivelySorting']);
-            if (strtolower($this->settings['orderDirection']) === strtolower(QueryInterface::ORDER_DESCENDING)) {
+            usort($pages, $this->sortByRecursivelySorting(...));
+            if (strtolower((string)$this->settings['orderDirection']) === strtolower(QueryInterface::ORDER_DESCENDING)) {
                 $pages = array_reverse($pages);
             }
             if (!empty($this->settings['limit'])) {

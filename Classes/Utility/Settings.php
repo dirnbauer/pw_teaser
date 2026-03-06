@@ -22,12 +22,7 @@ final class Settings
 {
     private ?ContentObjectRenderer $contentObject = null;
 
-    private ConfigurationManagerInterface $configurationManager;
-
-    public function __construct(ConfigurationManagerInterface $configurationManager)
-    {
-        $this->configurationManager = $configurationManager;
-    }
+    public function __construct(private readonly ConfigurationManagerInterface $configurationManager) {}
 
     public function setContentObject(?ContentObjectRenderer $contentObject): void
     {
@@ -48,7 +43,7 @@ final class Settings
         $result = [];
 
         foreach ($settings as $key => $value) {
-            if (substr((string)$key, -1) === '.') {
+            if (str_ends_with((string)$key, '.')) {
                 $keyWithoutDot = substr((string)$key, 0, -1);
                 if (array_key_exists($keyWithoutDot, $settings)) {
                     if ($this->contentObject === null) {

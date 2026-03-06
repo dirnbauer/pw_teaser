@@ -59,21 +59,21 @@ class Content extends AbstractEntity
     /**
      * It may contain multiple images, but TYPO3 called this field just "image"
      *
-     * @var ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference>
+     * @var ObjectStorage<FileReference>
      */
     protected $image;
 
     /**
      * It may contain multiple "assets"
      *
-     * @var ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference>
+     * @var ObjectStorage<FileReference>
      */
     protected $assets;
 
     /**
      * Categories
      *
-     * @var ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\Category>
+     * @var ObjectStorage<Category>
      */
     protected $categories;
 
@@ -345,7 +345,7 @@ class Content extends AbstractEntity
      */
     public function __call($name, $arguments)
     {
-        if (substr(strtolower($name), 0, 3) == 'get' && strlen($name) > 3) {
+        if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
             $attributeName = lcfirst(substr($name, 3));
 
             if (empty($this->contentRow)) {

@@ -1,6 +1,11 @@
 <?php
 namespace PwTeaserTeam\PwTeaser\Domain\Repository;
 
+use PwTeaserTeam\PwTeaser\Domain\Model\Page;
+use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
+use TYPO3\CMS\Extbase\Persistence\QueryInterface;
+use TYPO3\CMS\Extbase\Persistence\Repository;
+
 /*  | This extension is made with love for TYPO3 CMS and is licensed
  *  | under GNU General Public License.
  *  |
@@ -15,7 +20,7 @@ namespace PwTeaserTeam\PwTeaser\Domain\Repository;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class ContentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
+class ContentRepository extends Repository
 {
 
     /**
@@ -35,7 +40,7 @@ class ContentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * overwritten method exists, to perform sorting
      *
      * @param integer $pid Pid to search for
-     * @return \TYPO3\CMS\Extbase\Persistence\Generic\QueryResult All found objects, will be
+     * @return QueryResult All found objects, will be
      *         empty if there are no objects
      */
     public function findByPid($pid)
@@ -44,7 +49,7 @@ class ContentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
         $query->matching($query->equals('pid', $pid));
         $query->setOrderings(
             [
-                'sorting' => \TYPO3\CMS\Extbase\Persistence\QueryInterface::ORDER_ASCENDING
+                'sorting' => QueryInterface::ORDER_ASCENDING
             ]
         );
         return $query->execute();
@@ -54,8 +59,8 @@ class ContentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * Returns all objects of this repository which are located inside the
      * given pages
      *
-     * @param array <\PwTeaserTeam\PwTeaser\Domain\Model\Page> $pages Pages to get content elements
-     * @return \TYPO3\CMS\Extbase\Persistence\Generic\QueryResult All found objects, will be
+     * @param array<Page> $pages Pages to get content elements
+     * @return QueryResult All found objects, will be
      *         empty if there are no objects
      */
     public function findByPages($pages)
@@ -67,7 +72,12 @@ class ContentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             $constraint[] = $query->equals('pid', $page->getUid());
         }
 
-        $query->matching($query->logicalOr($constraint));
+        if ($constraint === []) {
+            $query->matching($query->equals('pid', -1));
+            return $query->execute();
+        }
+
+        $query->matching($query->logicalOr(...$constraint));
 
         return $query->execute();
     }

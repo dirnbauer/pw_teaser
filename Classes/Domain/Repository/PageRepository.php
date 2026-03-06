@@ -16,6 +16,11 @@ use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface;
+use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
+use TYPO3\CMS\Extbase\Persistence\QueryInterface;
+use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
+use TYPO3\CMS\Extbase\Persistence\Repository;
 
 /**
  * Repository for Page model
@@ -23,7 +28,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
+class PageRepository extends Repository
 {
     /** Category Mode: Or */
     const CATEGORY_MODE_OR = 1;
@@ -46,10 +51,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      *
      * @var string
      */
-    protected $orderDirection = \TYPO3\CMS\Extbase\Persistence\QueryInterface::ORDER_ASCENDING;
+    protected $orderDirection = QueryInterface::ORDER_ASCENDING;
 
     /**
-     * @var \TYPO3\CMS\Extbase\Persistence\QueryInterface
+     * @var QueryInterface
      */
     protected $query = null;
 
@@ -117,7 +122,7 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
         $query = $this->query;
         $this->addQueryConstraint($query->in('uid', $this->translatePids($pagePids)));
-        $query->matching($query->logicalAnd($this->queryConstraints));
+        $query->matching($query->logicalAnd(...$this->queryConstraints));
 
         if ($orderByPlugin == false) {
             $this->handleOrdering($query);
@@ -247,7 +252,7 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * @param \TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface $constraint Constraint to add
      * @return void
      */
-    protected function addQueryConstraint(\TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface $constraint)
+    protected function addQueryConstraint(ConstraintInterface $constraint)
     {
         $this->queryConstraints[] = $constraint;
     }
@@ -263,22 +268,22 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     public function addCategoryConstraint(array $categories, $isAnd = true, $isNot = false)
     {
         if ($isAnd === true && $isNot === false) {
-            $this->queryConstraints[] = $this->query->logicalAnd($this->buildCategoryConstraint($categories));
+            $this->queryConstraints[] = $this->query->logicalAnd(...$this->buildCategoryConstraint($categories));
         }
         if ($isAnd === true && $isNot === true) {
             $this->queryConstraints[] = $this->query->logicalNot(
                 $this->query->logicalAnd(
-                    $this->buildCategoryConstraint($categories)
+                    ...$this->buildCategoryConstraint($categories)
                 )
             );
         }
         if ($isAnd === false && $isNot === false) {
-            $this->queryConstraints[] = $this->query->logicalOr($this->buildCategoryConstraint($categories));
+            $this->queryConstraints[] = $this->query->logicalOr(...$this->buildCategoryConstraint($categories));
         }
         if ($isAnd === false && $isNot === true) {
             $this->queryConstraints[] = $this->query->logicalNot(
                 $this->query->logicalOr(
-                    $this->buildCategoryConstraint($categories)
+                    ...$this->buildCategoryConstraint($categories)
                 )
             );
         }
@@ -302,12 +307,12 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Finalize given query constraints and executes the query
      *
-     * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface Result of query
+     * @return array|QueryResultInterface Result of query
      */
     protected function executeQuery()
     {
         $query = $this->query;
-        $query->matching($query->logicalAnd($this->queryConstraints));
+        $query->matching($query->logicalAnd(...$this->queryConstraints));
         $this->handleOrdering($query);
 
         $queryResult = $query->execute();
@@ -320,10 +325,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Handles page localization
      *
-     * @param \TYPO3\CMS\Extbase\Persistence\Generic\QueryResult $pages
-     * @return array<\PwTeaserTeam\PwTeaser\Domain\Model\Page>
+     * @param QueryResult $pages
+     * @return array<Page>
      */
-    protected function handlePageLocalization(\TYPO3\CMS\Extbase\Persistence\Generic\QueryResult $pages)
+    protected function handlePageLocalization(QueryResult $pages)
     {
         /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
@@ -406,9 +411,9 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     public function setOrderDirection($orderDirection)
     {
         if ($orderDirection == 'desc' || $orderDirection == 1) {
-            $this->orderDirection = \TYPO3\CMS\Extbase\Persistence\QueryInterface::ORDER_DESCENDING;
+            $this->orderDirection = QueryInterface::ORDER_DESCENDING;
         } else {
-            $this->orderDirection = \TYPO3\CMS\Extbase\Persistence\QueryInterface::ORDER_ASCENDING;
+            $this->orderDirection = QueryInterface::ORDER_ASCENDING;
         }
     }
 
@@ -467,10 +472,10 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Adds handle of ordering to query object
      *
-     * @param \TYPO3\CMS\Extbase\Persistence\QueryInterface $query
+     * @param QueryInterface $query
      * @return void
      */
-    protected function handleOrdering(\TYPO3\CMS\Extbase\Persistence\QueryInterface $query)
+    protected function handleOrdering(QueryInterface $query)
     {
         $query->setOrderings([$this->orderBy => $this->orderDirection]);
     }
@@ -580,6 +585,6 @@ class PageRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
             ->executeQuery()
             ->fetchFirstColumn();
 
-        return array_map('intval', $childPageIds);
+        return array_map(intval(...), $childPageIds);
     }
 }

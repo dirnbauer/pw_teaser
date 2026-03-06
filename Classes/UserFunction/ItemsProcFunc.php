@@ -14,7 +14,7 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 final class ItemsProcFunc
 {
-    public function __construct(private ConfigurationManagerInterface $configurationManager) {}
+    public function __construct(private readonly ConfigurationManagerInterface $configurationManager) {}
 
     public function getAvailableTemplatePresets(array &$parameters): void
     {

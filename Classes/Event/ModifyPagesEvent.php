@@ -14,16 +14,10 @@ use PwTeaserTeam\PwTeaser\Controller\TeaserController;
 final class ModifyPagesEvent
 {
     /**
-     * @var array<int, mixed>
-     */
-    private array $pages;
-
-    /**
      * @param array<int, mixed> $pages
      */
-    public function __construct(array $pages, private readonly TeaserController $teaserController)
+    public function __construct(private array $pages, private readonly TeaserController $teaserController)
     {
-        $this->pages = $pages;
     }
 
     /**
