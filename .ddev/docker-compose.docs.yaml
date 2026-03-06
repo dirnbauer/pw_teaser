@@ -1,7 +1,0 @@
-services:
-    docs:
-        image: ghcr.io/typo3-documentation/render-guides:latest
-        command: makehtml
-        volumes:
-            - ../:/PROJECT:ro
-            - ../Documentation-GENERATED-temp:/RESULT

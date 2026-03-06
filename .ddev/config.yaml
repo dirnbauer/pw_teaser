@@ -6,7 +6,6 @@ composer_version: "2"
 webserver_type: apache-fpm
 xdebug_enabled: false
 additional_hostnames:
-    - docs.pw-teaser
     - v13.pw-teaser
 use_dns_when_possible: true
 web_environment:
