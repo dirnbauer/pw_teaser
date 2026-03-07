@@ -1,46 +1,54 @@
-# Security audit report
+# OWASP Security Audit Report (re-audit)
 
-## Scope
+## Methodology
 
-- PHP/OWASP audit of `Classes/`, `Configuration/`, `Resources/Private/`,
-  `ext_localconf.php`, and extension metadata
-
-## Summary
-
-No additional actionable OWASP-style findings were identified beyond the
-TYPO3-specific hardening already captured in the previous security pass.
-
-## Checks performed
-
-- Reviewed for direct use of `$_GET`, `$_POST`, `$_REQUEST`, file uploads, and
-  cookie handling
-- Reviewed for raw SQL construction, command execution, `eval()`,
-  deserialization, and XML parsing
-- Reviewed Fluid templates for `f:format.raw()` and comparable unescaped output
-- Reviewed controller and repository code for obvious trust-boundary mistakes
+Checked against OWASP Top 10 for PHP/web applications: injection, XSS,
+CSRF, broken access control, security misconfiguration, insecure parsing,
+and secrets exposure.
 
 ## Findings
 
-### 1. No direct injection sinks found
+### OK: A1 Injection
 
-- Query access uses Extbase queries or QueryBuilder APIs.
-- No string-built SQL, shell execution, or unsafe deserialization code was
-  found.
+All database access uses TYPO3 QueryBuilder with `createNamedParameter()`.
+No string concatenation in SQL. `GeneralUtility::intExplode()` and
+`GeneralUtility::trimExplode()` sanitize user-facing comma-separated
+inputs before use.
 
-### 2. No additional XSS findings found
+### OK: A3 Injection / XSS
 
-- Reviewed templates rely on Fluid escaping by default.
-- No raw output helpers were found in the extension templates reviewed.
+Fluid templates use auto-escaping by default. The only ViewHelper with
+`$escapeOutput = false` is `GetContentViewHelper`, which delegates to
+child rendering (controlled by the template author, not user input).
+`StripTagsViewHelper` explicitly strips HTML. No `innerHTML` or
+`f:format.raw` in extension templates.
 
-### 3. Residual risk remains in integrator-controlled template access
+### OK: A5 Security Misconfiguration
 
-- The extension intentionally exposes raw page/content row helpers to Fluid
-  templates.
-- This is part of the extension API rather than a direct vulnerability, but it
-  means integrators still need to treat template output carefully.
+Extension does not ship production configuration. `SYS/trustedHostsPattern`
+is set to `.*` only in the local DDEV install script, not in the extension.
 
-## Recommended changes
+### OK: A7 Cross-Site Request Forgery
 
-- No further code changes recommended in this audit pass.
-- Keep the previous TYPO3-specific hardening in place and cover the helper API
-  behavior with tests in the testing phase.
+Read-only `indexAction` with no form handling or state mutation.
+
+### OK: A8 Insecure Deserialization
+
+No `unserialize()`, `eval()`, `exec()`, `shell_exec()`, `system()`, or
+`passthru()` calls in extension code.
+
+### OK: A9 Components with Known Vulnerabilities
+
+`composer.json` constrains to `typo3/cms-core: ^13.4` which receives
+active security updates. Dev dependencies (`phpunit`, `rector`, etc.)
+are not shipped in production.
+
+### INFORMATIONAL: Magic `__call` methods
+
+`Page::__call()` and `Content::__call()` fetch raw database rows on
+cache miss. This is an accepted design pattern documented as `@deprecated`.
+No user-controllable input reaches method names in normal Fluid rendering.
+
+## Status
+
+No new actionable issues. No code changes required.
