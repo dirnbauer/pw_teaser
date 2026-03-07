@@ -27,7 +27,7 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
-class PageRepository extends Repository
+final class PageRepository extends Repository
 {
     /** Category Mode: Or */
     const CATEGORY_MODE_OR = 1;
@@ -129,7 +129,7 @@ class PageRepository extends Repository
      * @param array $results results to reorder
      * @return array results ordered by plugin
      */
-    protected function orderByPlugin(array $pagePids, array $results)
+    protected function orderByPlugin(array $pagePids, array $results): array
     {
         $sortedResults = [];
         foreach ($pagePids as $pagePid) {
@@ -241,7 +241,7 @@ class PageRepository extends Repository
      * @param ConstraintInterface $constraint Constraint to add
      * @return void
      */
-    protected function addQueryConstraint(ConstraintInterface $constraint)
+    protected function addQueryConstraint(ConstraintInterface $constraint): void
     {
         $this->queryConstraints[] = $constraint;
     }
@@ -433,7 +433,7 @@ class PageRepository extends Repository
      * @param array $dokTypesToFilterFor doktypes as array, may be empty
      * @return void
      */
-    public function setFilteredDokType(array $dokTypesToFilterFor)
+    public function setFilteredDokType(array $dokTypesToFilterFor): void
     {
         if (count($dokTypesToFilterFor) > 0) {
             $this->addQueryConstraint($this->query->in('doktype', $dokTypesToFilterFor));
@@ -458,7 +458,7 @@ class PageRepository extends Repository
      * @param QueryInterface $query
      * @return void
      */
-    protected function handleOrdering(QueryInterface $query)
+    protected function handleOrdering(QueryInterface $query): void
     {
         $query->setOrderings([$this->orderBy => $this->orderDirection]);
     }
@@ -468,7 +468,7 @@ class PageRepository extends Repository
      *
      * @return void
      */
-    protected function resetQuery()
+    protected function resetQuery(): void
     {
         unset($this->query);
         $this->query = $this->createQuery();

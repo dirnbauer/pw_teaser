@@ -11,6 +11,7 @@ use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\ContentRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\PageRepository;
 use PwTeaserTeam\PwTeaser\Utility\Settings;
+use ReflectionClass;
 use ReflectionProperty;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
@@ -26,9 +27,12 @@ final class TeaserControllerTest extends TestCase
             ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([]);
 
+        $pageRepository = (new ReflectionClass(PageRepository::class))->newInstanceWithoutConstructor();
+        $contentRepository = (new ReflectionClass(ContentRepository::class))->newInstanceWithoutConstructor();
+
         $subject = new TeaserController(
-            $this->createMock(PageRepository::class),
-            $this->createMock(ContentRepository::class),
+            $pageRepository,
+            $contentRepository,
             new CategoryRepository(),
             new Settings($settingsConfigurationManager)
         );

@@ -24,6 +24,8 @@ ExtensionUtility::configurePlugin(
     ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
 );
 
+// Transitional: alias old list_type records to new CType until
+// all installations have run the PwTeaserCTypeMigration wizard.
 ExtensionManagementUtility::addTypoScript(
     'pw_teaser',
     'setup',
