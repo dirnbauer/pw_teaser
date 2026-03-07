@@ -1,72 +1,48 @@
-# TYPO3 conformance report
+# TYPO3 13 Conformance Report (re-audit)
 
-## Scope
+## Findings
 
-- Extension: `pw_teaser`
-- Target: TYPO3 13.4 LTS only
-- Reviewed areas: `composer.json`, `ext_emconf.php`, `ext_localconf.php`,
-  `Classes/`, `Configuration/`, `Documentation/`, `README.md`
+### MEDIUM: PageRepository and ContentRepository not `final`
 
-## Summary
+All other classes in the extension use `final`. These two repositories are
+left non-final, which is inconsistent. Since they are not designed as
+extension points, they should be `final`.
 
-`pw_teaser` has a solid extension skeleton, PSR-4 autoloading, DI setup, and
-structured documentation, but it is not conformant for TYPO3 13 yet.
+**Action:** Add `final` keyword to both repository classes.
 
-## Key findings
+### MEDIUM: Missing return types and parameter types in PageRepository
 
-### 1. Release metadata is outdated
+Several methods lack native PHP return types or use untyped parameters:
+- `orderByPlugin()` — missing return type
+- `setFilteredDokType()` — missing return type
+- `handleOrdering()` — missing return type
+- `resetQuery()` — missing return type
+- `addQueryConstraint()` — missing return type
 
-- `composer.json` still requires `typo3/cms-core: ^10.4.6 || ^11.5`.
-- `ext_emconf.php` still declares TYPO3 `10.4.6-11.5.99`.
-- No explicit PHP runtime requirement is declared in `composer.json`.
+**Action:** Add native types.
 
-### 2. Runtime code still uses legacy TYPO3 patterns
+### LOW: `RemoveWhitespacesViewHelper::render()` does not handle null children
 
-- `ext_localconf.php` uses `TYPO3_MODE` and backend branching that does not fit
-  TYPO3 13.
-- `Classes/Controller/TeaserController.php` still relies on TSFE-era access,
-  weak typing, and conditional response creation.
-- `Classes/Domain/Repository/PageRepository.php` still uses TSFE state,
-  `ContentObjectRenderer::getTreeList()`, and old DBAL execution style.
-- `Classes/ViewHelpers/GetContentViewHelper.php` still uses
-  `templateVariableContainer`, which is not valid for modern Fluid.
+`renderChildren()` may return `null`. The `str_replace()` call on line 32
+will accept null in PHP 8.2 with a deprecation warning.
 
-### 3. PHP quality is inconsistent
+**Action:** Cast `renderChildren()` to string.
 
-- Some files use `declare(strict_types=1);`, but many core classes do not.
-- Controller and repository code still use untyped properties, loose return
-  types, and non-`final` classes.
-- Legacy comments and broad docblocks remain where native PHP types should
-  carry intent.
+### LOW: `ext_localconf.php` still contains list_type TypoScript alias
 
-### 4. FlexForm format is not TYPO3 13 ready
+The line `tt_content.list.20.pwteaser_pi1 =< tt_content.pwteaser_pi1`
+provides backward compatibility for old list_type records. This is
+reasonable during the transition period but should be documented
+as temporary.
 
-- `Configuration/FlexForms/flexform_teaser.xml` still uses `TCEforms`
-  wrappers that are removed in TYPO3 13.
+**Action:** Add inline comment explaining it is transitional.
 
-### 5. Quality tooling baseline is missing
+### OK: Conformance items passing
 
-- No `Tests/` directory exists.
-- No PHPUnit configuration exists.
-- No CI workflow exists for static analysis or tests.
-
-### 6. Documentation is structured but outdated
-
-- `Documentation/` still uses legacy `Settings.yml` and `Settings.cfg`.
-- TYPO3 13 support is not documented in `README.md` or version docs.
-- Referenced screenshots are missing from the repository.
-
-## Strengths to keep
-
-- PSR-4 autoloading is already configured.
-- `Configuration/Services.yaml` provides a good DI baseline.
-- The extension already separates controller, repository, model, and docs
-  concerns clearly.
-
-## Recommended remediation order
-
-1. Modernize TYPO3 13 runtime blockers in controller, repository, viewhelper,
-   and FlexForm files.
-2. Update extension metadata and local development assumptions for TYPO3 13.
-3. Add a minimal test baseline and CI support.
-4. Refresh documentation to match the TYPO3 13 support window.
+- `declare(strict_types=1)` on all PHP files
+- PSR-4 autoloading correct
+- DI via `Services.yaml` with autowire/autoconfigure
+- PSR-14 event (`ModifyPagesEvent`) properly structured
+- PHPStan level 5 passing
+- CI pipeline with PHP 8.2–8.4 matrix
+- `guides.xml` present for modern doc rendering
