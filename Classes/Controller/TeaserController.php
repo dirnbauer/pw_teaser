@@ -13,6 +13,7 @@ namespace PwTeaserTeam\PwTeaser\Controller;
  */
 use Exception;
 use Psr\Http\Message\ResponseInterface;
+use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\ContentRepository;
@@ -27,8 +28,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
-use TYPO3\CMS\Fluid\View\TemplateView;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
+use TYPO3Fluid\Fluid\View\TemplatePaths;
 
 /**
  * Controller for the teaser object
@@ -38,19 +39,13 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
  */
 class TeaserController extends ActionController
 {
+    /** @var array<string, mixed> */
     protected array $settings = [];
 
     protected int $currentPageUid = 0;
 
-    /**
-     * @var TemplateView
-     */
-    protected $view;
-
-    /**
-     * @var array
-     */
-    protected $viewSettings = [];
+    /** @var array<string, mixed> */
+    protected array $viewSettings = [];
 
     public function __construct(protected PageRepository $pageRepository, protected ContentRepository $contentRepository, protected CategoryRepository $categoryRepository, protected Settings $settingsUtility)
     {
@@ -88,6 +83,7 @@ class TeaserController extends ActionController
                 'ignoreUids' => '',
                 'categoriesList' => '',
                 'categoryMode' => '',
+                'paginationClass' => '',
             ],
             $this->settingsUtility->renderConfigurationArray($this->settings)
         );
@@ -127,30 +123,30 @@ class TeaserController extends ActionController
                 $rootPageUids = $this->currentPageUid;
                 $pages = $this->pageRepository->findByPidRecursively(
                     $this->currentPageUid,
-                    (int)$this->settings['recursionDepthFrom'],
-                    (int)$this->settings['recursionDepth']
+                    $this->getIntSetting('recursionDepthFrom'),
+                    $this->getIntSetting('recursionDepth', 255)
                 );
                 break;
 
             case 'custom':
-                $rootPageUids = $this->settings['customPages'];
+                $rootPageUids = $this->getStringSetting('customPages');
                 $pages = $this->pageRepository->findByPidList(
-                    $this->settings['customPages'],
-                    $this->settings['orderByPlugin']
+                    $this->getStringSetting('customPages'),
+                    !empty($this->settings['orderByPlugin'])
                 );
                 break;
 
             case 'customChildren':
-                $rootPageUids = $this->settings['customPages'];
-                $pages = $this->pageRepository->findChildrenByPidList($this->settings['customPages']);
+                $rootPageUids = $this->getStringSetting('customPages');
+                $pages = $this->pageRepository->findChildrenByPidList($this->getStringSetting('customPages'));
                 break;
 
             case 'customChildrenRecursively':
-                $rootPageUids = $this->settings['customPages'];
+                $rootPageUids = $this->getStringSetting('customPages');
                 $pages = $this->pageRepository->findChildrenRecursivelyByPidList(
-                    $this->settings['customPages'],
-                    (int)$this->settings['recursionDepthFrom'],
-                    (int)$this->settings['recursionDepth']
+                    $this->getStringSetting('customPages'),
+                    $this->getIntSetting('recursionDepthFrom'),
+                    $this->getIntSetting('recursionDepth', 255)
                 );
                 break;
         }
@@ -166,7 +162,12 @@ class TeaserController extends ActionController
             }
 
             if ($this->settings['loadContents'] === '1') {
-                $page->setContents($this->contentRepository->findByPid($page->getUid())->toArray());
+                $pageUid = $page->getUid();
+                if ($pageUid !== null) {
+                    /** @var array<Content> $contents */
+                    $contents = $this->contentRepository->findByPid($pageUid)->toArray();
+                    $page->setContents($contents);
+                }
             }
         }
 
@@ -178,11 +179,13 @@ class TeaserController extends ActionController
         $event = $this->eventDispatcher->dispatch(new ModifyPagesEvent($pages, $this));
         $this->view->assign('pages', $event->getPages());
 
-        if ($this->settings['enablePagination'] ?? true) {
-            $itemsPerPage = $this->settings['itemsPerPage'] ?? 10;
-            $currentPage = max(1, $this->request->hasArgument('currentPage') ? (int)$this->request->getArgument('currentPage') : 1);
-            $paginator = GeneralUtility::makeInstance(ArrayPaginator::class, $event->getPages(), $currentPage, $itemsPerPage, (int)($this->settings['limit'] ?? 0), 0);
-            $pagination = $this->getPagination($paginator);
+        if (!empty($this->settings['enablePagination'])) {
+            $itemsPerPage = $this->getIntSetting('itemsPerPage', 10);
+            $currentPageArg = $this->request->getArgument('currentPage');
+            $currentPage = max(1, is_numeric($currentPageArg) ? (int)$currentPageArg : 1);
+            $paginator = GeneralUtility::makeInstance(ArrayPaginator::class, $event->getPages(), $currentPage, $itemsPerPage, $this->getIntSetting('limit'), 0);
+            $paginationClass = $this->settings['paginationClass'] ?? null;
+            $pagination = $this->getPagination($paginator, is_string($paginationClass) ? $paginationClass : null);
             $this->view->assign('pagination', [
                 'currentPage' => $currentPage,
                 'paginator' => $paginator,
@@ -225,22 +228,25 @@ class TeaserController extends ActionController
      *
      * @return void
      */
-    protected function setOrderingAndLimitation()
+    protected function setOrderingAndLimitation(): void
     {
-        if (!empty($this->settings['orderBy'])) {
-            if ($this->settings['orderBy'] === 'customField') {
-                $this->pageRepository->setOrderBy($this->settings['orderByCustomField']);
+        $orderBy = $this->getStringSetting('orderBy');
+        if ($orderBy !== '') {
+            if ($orderBy === 'customField') {
+                $this->pageRepository->setOrderBy($this->getStringSetting('orderByCustomField'));
             } else {
-                $this->pageRepository->setOrderBy($this->settings['orderBy']);
+                $this->pageRepository->setOrderBy($orderBy);
             }
         }
 
-        if (!empty($this->settings['orderDirection'])) {
-            $this->pageRepository->setOrderDirection($this->settings['orderDirection']);
+        $orderDirection = $this->getStringSetting('orderDirection');
+        if ($orderDirection !== '') {
+            $this->pageRepository->setOrderDirection($orderDirection);
         }
 
-        if (!empty($this->settings['limit']) && ($this->settings['orderBy'] ?? '') !== 'random') {
-            $this->pageRepository->setLimit(intval($this->settings['limit']));
+        $limit = $this->getIntSetting('limit');
+        if ($limit > 0 && $orderBy !== 'random') {
+            $this->pageRepository->setLimit($limit);
         }
     }
 
@@ -253,23 +259,31 @@ class TeaserController extends ActionController
      */
     protected function performTemplatePathAndFilename(): bool
     {
-        $templateType = (string)($this->viewSettings['templateType'] ?? '');
-        $templateFile = (string)($this->viewSettings['templateRootFile'] ?? '');
+        $templateTypeRaw = $this->viewSettings['templateType'] ?? '';
+        $templateType = is_scalar($templateTypeRaw) ? (string)$templateTypeRaw : '';
+        $templateFileRaw = $this->viewSettings['templateRootFile'] ?? '';
+        $templateFile = is_scalar($templateFileRaw) ? (string)$templateFileRaw : '';
         $layoutRootPaths = $this->resolveViewPaths('layoutRootPaths', 'layoutRootPath');
         $partialRootPaths = $this->resolveViewPaths('partialRootPaths', 'partialRootPath');
         $templateRootPaths = $this->resolveViewPaths('templateRootPaths', 'templateRootPath');
 
-        $preset = $this->viewSettings['templatePreset'] ?? null;
-        if ($templateType === 'preset' && !empty($preset)) {
-            $currentPreset = $this->viewSettings['presets'][$preset];
-            if (!empty($currentPreset['partialRootPaths'])) {
-                $partialRootPaths = $currentPreset['partialRootPaths'];
+        $presetKey = $this->viewSettings['templatePreset'] ?? null;
+        if ($templateType === 'preset' && is_string($presetKey) && $presetKey !== '') {
+            $allPresets = $this->viewSettings['presets'] ?? [];
+            $currentPreset = is_array($allPresets) ? ($allPresets[$presetKey] ?? null) : null;
+            if (is_array($currentPreset)) {
+                $presetPartials = $currentPreset['partialRootPaths'] ?? null;
+                if (is_array($presetPartials) && $presetPartials !== []) {
+                    $partialRootPaths = array_values(array_filter($presetPartials, 'is_string'));
+                }
+                $presetLayouts = $currentPreset['layoutRootPaths'] ?? null;
+                if (is_array($presetLayouts) && $presetLayouts !== []) {
+                    $layoutRootPaths = array_values(array_filter($presetLayouts, 'is_string'));
+                }
+                $templateType = 'file';
+                $presetTemplate = $currentPreset['templateRootFile'] ?? '';
+                $templateFile = is_scalar($presetTemplate) ? (string)$presetTemplate : '';
             }
-            if (!empty($currentPreset['layoutRootPaths'])) {
-                $layoutRootPaths = $currentPreset['layoutRootPaths'];
-            }
-            $templateType = 'file';
-            $templateFile = $currentPreset['templateRootFile'];
         }
 
         if ($templateType !== 'preset' && $templateRootPaths !== []) {
@@ -277,7 +291,7 @@ class TeaserController extends ActionController
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
                 throw new Exception('Template folder "' . $firstPath . '" not found!');
             }
-            $this->view->getRenderingContext()->getTemplatePaths()->setTemplateRootPaths($templateRootPaths);
+            $this->getViewTemplatePaths()->setTemplateRootPaths($templateRootPaths);
         }
 
         if ($layoutRootPaths !== []) {
@@ -285,30 +299,52 @@ class TeaserController extends ActionController
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
                 throw new Exception('Layout folder "' . $firstPath . '" not found!');
             }
-            $this->view->getRenderingContext()->getTemplatePaths()->setLayoutRootPaths($layoutRootPaths);
+            $this->getViewTemplatePaths()->setLayoutRootPaths($layoutRootPaths);
         }
         if ($partialRootPaths !== []) {
             $firstPath = reset($partialRootPaths);
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
                 throw new Exception('Partial folder "' . $firstPath . '" not found!');
             }
-            $this->view->getRenderingContext()->getTemplatePaths()->setPartialRootPaths($partialRootPaths);
+            $this->getViewTemplatePaths()->setPartialRootPaths($partialRootPaths);
         }
         if ($templateType === 'file'
             && $templateFile !== ''
             && file_exists(GeneralUtility::getFileAbsFileName($templateFile))
         ) {
-            $this->view->getRenderingContext()->getTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templateFile));
+            $this->getViewTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templateFile));
             return true;
         }
 
-        $templatePathAndFilename = (string)($this->viewSettings['templatePathAndFilename'] ?? '');
+        $tpafRaw = $this->viewSettings['templatePathAndFilename'] ?? '';
+        $templatePathAndFilename = is_scalar($tpafRaw) ? (string)$tpafRaw : '';
         if ($templateType === '' && $templatePathAndFilename !== ''
             && file_exists(GeneralUtility::getFileAbsFileName($templatePathAndFilename))) {
-            $this->view->getRenderingContext()->getTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templatePathAndFilename));
+            $this->getViewTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templatePathAndFilename));
             return true;
         }
         return false;
+    }
+
+    private function getViewTemplatePaths(): TemplatePaths
+    {
+        $view = $this->view;
+        if ($view instanceof \TYPO3Fluid\Fluid\View\AbstractTemplateView) {
+            return $view->getRenderingContext()->getTemplatePaths();
+        }
+        throw new \RuntimeException('View is not an AbstractTemplateView instance');
+    }
+
+    private function getStringSetting(string $key, string $default = ''): string
+    {
+        $value = $this->settings[$key] ?? $default;
+        return is_scalar($value) ? (string)$value : $default;
+    }
+
+    private function getIntSetting(string $key, int $default = 0): int
+    {
+        $value = $this->settings[$key] ?? $default;
+        return is_numeric($value) ? (int)$value : $default;
     }
 
     /**
@@ -318,7 +354,7 @@ class TeaserController extends ActionController
     {
         $paths = $this->viewSettings[$pluralKey] ?? null;
         if (is_array($paths) && $paths !== []) {
-            return $paths;
+            return array_values(array_filter($paths, 'is_string'));
         }
         $singlePath = $this->viewSettings[$singularKey] ?? null;
         if (is_string($singlePath) && $singlePath !== '') {
@@ -334,38 +370,40 @@ class TeaserController extends ActionController
      */
     protected function performPluginConfigurations()
     {
-        // Set ShowNavHiddenItems to TRUE
-        $this->pageRepository->setShowNavHiddenItems((string)($this->settings['showNavHiddenItems'] ?? '') === '1');
+        $this->pageRepository->setShowNavHiddenItems($this->getStringSetting('showNavHiddenItems') === '1');
         $this->pageRepository->setFilteredDokType(
-            GeneralUtility::trimExplode(
+            GeneralUtility::intExplode(
                 ',',
-                (string)($this->settings['showDoktypes'] ?? ''),
+                $this->getStringSetting('showDoktypes'),
                 true
             )
         );
 
-        if (($this->settings['hideCurrentPage'] ?? '') === '1') {
+        if ($this->getStringSetting('hideCurrentPage') === '1') {
             $this->pageRepository->setIgnoreOfUid($this->currentPageUid);
         }
 
-        if (!empty($this->settings['ignoreUids'])) {
-            $ignoringUids = GeneralUtility::trimExplode(',', (string)$this->settings['ignoreUids'], true);
+        $ignoreUidsStr = $this->getStringSetting('ignoreUids');
+        if ($ignoreUidsStr !== '') {
+            $ignoringUids = GeneralUtility::trimExplode(',', $ignoreUidsStr, true);
             foreach ($ignoringUids as $uid) {
                 $this->pageRepository->setIgnoreOfUid((int)$uid);
             }
         }
 
-        if (!empty($this->settings['categoriesList']) && !empty($this->settings['categoryMode'])) {
+        $categoriesList = $this->getStringSetting('categoriesList');
+        $categoryMode = $this->getIntSetting('categoryMode');
+        if ($categoriesList !== '' && $categoryMode > 0) {
             $categories = [];
-            foreach (GeneralUtility::intExplode(',', $this->settings['categoriesList'], true) as $categoryUid) {
+            foreach (GeneralUtility::intExplode(',', $categoriesList, true) as $categoryUid) {
                 $categories[] = $this->categoryRepository->findByUid($categoryUid);
             }
 
-            $isAnd = match ((int)$this->settings['categoryMode']) {
+            $isAnd = match ($categoryMode) {
                 PageRepository::CATEGORY_MODE_OR, PageRepository::CATEGORY_MODE_OR_NOT => false,
                 default => true,
             };
-            $isNot = match ((int)$this->settings['categoryMode']) {
+            $isNot = match ($categoryMode) {
                 PageRepository::CATEGORY_MODE_AND_NOT, PageRepository::CATEGORY_MODE_OR_NOT => true,
                 default => false,
             };
@@ -387,25 +425,27 @@ class TeaserController extends ActionController
      * Performs special orderings like "random" or "sorting"
      *
      * @param array<Page> $pages
-     * @return array
+     * @return array<int, Page>
      */
-    protected function performSpecialOrderings(array $pages)
+    protected function performSpecialOrderings(array $pages): array
     {
-        // Make random if selected on queryResult, cause Extbase doesn't support it
-        if (($this->settings['orderBy'] ?? '') === 'random') {
+        $orderBy = $this->getStringSetting('orderBy');
+        $limit = $this->getIntSetting('limit');
+
+        if ($orderBy === 'random') {
             shuffle($pages);
-            if (!empty($this->settings['limit'])) {
-                $pages = array_slice($pages, 0, $this->settings['limit']);
+            if ($limit > 0) {
+                $pages = array_slice($pages, 0, $limit);
             }
         }
 
-        if (($this->settings['orderBy'] ?? '') === 'sorting' && str_contains((string)($this->settings['source'] ?? ''), 'Recursively')) {
+        if ($orderBy === 'sorting' && str_contains($this->getStringSetting('source'), 'Recursively')) {
             usort($pages, $this->sortByRecursivelySorting(...));
-            if (strtolower((string)$this->settings['orderDirection']) === strtolower(QueryInterface::ORDER_DESCENDING)) {
+            if (strtolower($this->getStringSetting('orderDirection')) === strtolower(QueryInterface::ORDER_DESCENDING)) {
                 $pages = array_reverse($pages);
             }
-            if (!empty($this->settings['limit'])) {
-                $pages = array_slice($pages, 0, $this->settings['limit']);
+            if ($limit > 0) {
+                $pages = array_slice($pages, 0, $limit);
                 return $pages;
             }
             return $pages;
@@ -450,15 +490,12 @@ class TeaserController extends ActionController
         $parentPage->setChildPages($childPages);
     }
 
-    /**
-     * @param PaginatorInterface $paginator
-     * @param string|null $paginationClass
-     * @return PaginationInterface
-     */
-    protected function getPagination($paginator, $paginationClass = null)
+    protected function getPagination(PaginatorInterface $paginator, ?string $paginationClass = null): PaginationInterface
     {
-        if (!empty($paginationClass) && class_exists($paginationClass)) {
-            return GeneralUtility::makeInstance($paginationClass, $paginator);
+        if ($paginationClass !== null && $paginationClass !== '' && class_exists($paginationClass)) {
+            $instance = GeneralUtility::makeInstance($paginationClass, $paginator);
+            assert($instance instanceof PaginationInterface);
+            return $instance;
         }
 
         return GeneralUtility::makeInstance(SimplePagination::class, $paginator);
