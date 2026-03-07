@@ -1,5 +1,12 @@
 .idea
+.DS_Store
 Documentation-GENERATED-temp
 public/
 vendor/
 v13/
+v14/
+node_modules/
+out/
+package-lock.json
+remotion/narration-durations.ts
+remotion/music-config.ts
