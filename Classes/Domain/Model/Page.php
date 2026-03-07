@@ -11,7 +11,7 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
-use TYPO3\CMS\Extbase\Annotation\Validate;
+use TYPO3\CMS\Extbase\Annotation\Validate as ValidateAttribute;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
@@ -39,7 +39,7 @@ class Page extends AbstractEntity
 
     protected bool $isCurrentPage = false;
 
-    #[Validate(['validator' => 'NotEmpty'])]
+    #[ValidateAttribute(['validator' => 'NotEmpty'])]
     protected string $title = '';
 
     protected string $subtitle = '';
@@ -148,6 +148,7 @@ class Page extends AbstractEntity
 
     /**
      * @deprecated Use getGet() instead (in Fluid: {page.get.attributeName})
+     * @param array<int, mixed> $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
@@ -447,7 +448,9 @@ class Page extends AbstractEntity
     {
         $recursiveOrdering = [];
         foreach ($this->getRootLine() as $pageRootPart) {
-            array_unshift($recursiveOrdering, str_pad((string)$pageRootPart['sorting'], 11, '0', STR_PAD_LEFT));
+            $sorting = $pageRootPart['sorting'] ?? 0;
+            $sortingStr = is_scalar($sorting) ? (string)$sorting : '0';
+            array_unshift($recursiveOrdering, str_pad($sortingStr, 11, '0', STR_PAD_LEFT));
         }
         return implode('-', $recursiveOrdering);
     }

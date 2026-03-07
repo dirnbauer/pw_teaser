@@ -204,6 +204,7 @@ class Content extends AbstractEntity
 
     /**
      * @deprecated Use typed getters instead. Falls back to raw database row.
+     * @param array<int, mixed> $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
