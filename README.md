@@ -28,6 +28,14 @@ You can see a rendered HTML version on https://docs.typo3.org/p/t3/pw_teaser/mai
 
 The current development baseline targets TYPO3 13.4 LTS and PHP 8.2.
 
+### CategoryRepository shim
+
+TYPO3 removed `\TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository` from
+core in version 12. Because pw_teaser needs to look up `Category` objects by UID
+for its category-filter feature, the extension ships a minimal local replacement
+at `Classes/Domain/Repository/CategoryRepository.php`. It extends the standard
+Extbase `Repository` and sets the object type to `Category` — nothing else.
+
 
 ## How to contribute?
 
