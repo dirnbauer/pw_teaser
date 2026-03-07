@@ -6,8 +6,8 @@
 	"license": "GPL-2.0",
 	"require": {
 		"php": "^8.2",
-		"typo3/cms-core": "^13.4",
-		"typo3/cms-install": "^13.4"
+		"typo3/cms-core": "^13.4 || ^14.0",
+		"typo3/cms-install": "^13.4 || ^14.0"
 	},
 	"autoload": {
 		"psr-4": {
@@ -19,13 +19,16 @@
 			"extension-key": "pw_teaser"
 		}
 	},
+	"suggest": {
+		"georgringer/numbered-pagination": "Provides numbered pagination with ellipsis (optional, not default)"
+	},
 	"require-dev": {
-		"phpunit/phpunit": "^10.5",
-		"typo3/testing-framework": "^8.3",
+		"phpunit/phpunit": "^10.5 || ^11.0",
+		"typo3/testing-framework": "^8.3 || ^9.0",
 		"ssch/typo3-rector": "^3.12",
 		"a9f/typo3-fractor": "^0.5.9",
 		"phpstan/phpstan": "^2.1",
-		"saschaegerer/phpstan-typo3": "^2.0"
+		"saschaegerer/phpstan-typo3": "^2.0 || ^3.0"
 	},
 	"config": {
 		"allow-plugins": {
