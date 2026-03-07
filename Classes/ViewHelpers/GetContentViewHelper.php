@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PwTeaserTeam\PwTeaser\ViewHelpers;
 
+use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /*  | This extension is made with love for TYPO3 CMS and is licensed
@@ -52,7 +53,7 @@ final class GetContentViewHelper extends AbstractViewHelper
 
         $variableProvider = $this->renderingContext->getVariableProvider();
 
-        /** @var $content \PwTeaserTeam\PwTeaser\Domain\Model\Content */
+        /** @var Content $content */
         foreach ($contents as $content) {
             $contentCtype = $content->getCtype();
             $contentColPos = $content->getColPos();

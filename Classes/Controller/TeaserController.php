@@ -42,14 +42,6 @@ class TeaserController extends ActionController
 
     protected int $currentPageUid = 0;
 
-    protected PageRepository $pageRepository;
-
-    protected ContentRepository $contentRepository;
-
-    protected CategoryRepository $categoryRepository;
-
-    protected Settings $settingsUtility;
-
     /**
      * @var TemplateView
      */
@@ -60,16 +52,8 @@ class TeaserController extends ActionController
      */
     protected $viewSettings = [];
 
-    public function __construct(
-        PageRepository $pageRepository,
-        ContentRepository $contentRepository,
-        CategoryRepository $categoryRepository,
-        Settings $settingsUtility
-    ) {
-        $this->pageRepository = $pageRepository;
-        $this->contentRepository = $contentRepository;
-        $this->categoryRepository = $categoryRepository;
-        $this->settingsUtility = $settingsUtility;
+    public function __construct(protected PageRepository $pageRepository, protected ContentRepository $contentRepository, protected CategoryRepository $categoryRepository, protected Settings $settingsUtility)
+    {
     }
 
     /**
@@ -175,15 +159,14 @@ class TeaserController extends ActionController
             $pages = $this->performSpecialOrderings($pages);
         }
 
-        /** @var $page \PwTeaserTeam\PwTeaser\Domain\Model\Page */
+        /** @var Page $page */
         foreach ($pages as $page) {
             if ($page->getUid() === $this->currentPageUid) {
                 $page->setIsCurrentPage(true);
             }
 
-            // Load contents if enabled in configuration
-            if ($this->settings['loadContents'] == '1') {
-                $page->setContents($this->contentRepository->findByPid($page->getUid()));
+            if ($this->settings['loadContents'] === '1') {
+                $page->setContents($this->contentRepository->findByPid($page->getUid())->toArray());
             }
         }
 
@@ -268,61 +251,80 @@ class TeaserController extends ActionController
      * @return boolean Returns TRUE if templateType is file and exists,
      *         otherwise returns FALSE
      */
-    protected function performTemplatePathAndFilename()
+    protected function performTemplatePathAndFilename(): bool
     {
-        $templateType = $this->viewSettings['templateType'] ?? '';
-        $templateFile = $this->viewSettings['templateRootFile'] ?? '';
-        $layoutRootPaths = $this->viewSettings['layoutRootPaths'] ?? null ?: [$this->viewSettings['layoutRootPath'] ?? null ?: null];
-        $partialRootPaths = $this->viewSettings['partialRootPaths'] ?? null ?: [$this->viewSettings['partialRootPath'] ?? null ?: null];
-        $templateRootPaths = $this->viewSettings['templateRootPaths'] ?? null ?: [$this->viewSettings['templateRootPath'] ?? null ?: null];
+        $templateType = (string)($this->viewSettings['templateType'] ?? '');
+        $templateFile = (string)($this->viewSettings['templateRootFile'] ?? '');
+        $layoutRootPaths = $this->resolveViewPaths('layoutRootPaths', 'layoutRootPath');
+        $partialRootPaths = $this->resolveViewPaths('partialRootPaths', 'partialRootPath');
+        $templateRootPaths = $this->resolveViewPaths('templateRootPaths', 'templateRootPath');
 
         $preset = $this->viewSettings['templatePreset'] ?? null;
         if ($templateType === 'preset' && !empty($preset)) {
             $currentPreset = $this->viewSettings['presets'][$preset];
-            if (array_key_exists('partialRootPaths', $currentPreset) && !empty($currentPreset['partialRootPaths'])) {
+            if (!empty($currentPreset['partialRootPaths'])) {
                 $partialRootPaths = $currentPreset['partialRootPaths'];
             }
-            if (array_key_exists('layoutRootPaths', $currentPreset) && !empty($currentPreset['layoutRootPaths'])) {
+            if (!empty($currentPreset['layoutRootPaths'])) {
                 $layoutRootPaths = $currentPreset['layoutRootPaths'];
             }
             $templateType = 'file';
             $templateFile = $currentPreset['templateRootFile'];
         }
 
-        if ($templateType !== 'preset' && $templateRootPaths !== [null] && !empty($templateRootPaths)) {
-            if (!file_exists(GeneralUtility::getFileAbsFileName(reset($templateRootPaths)))) {
-                throw new Exception('Template folder "' . reset($templateRootPaths) . '" not found!');
+        if ($templateType !== 'preset' && $templateRootPaths !== []) {
+            $firstPath = reset($templateRootPaths);
+            if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
+                throw new Exception('Template folder "' . $firstPath . '" not found!');
             }
-            $this->view->setTemplateRootPaths($templateRootPaths);
+            $this->view->getRenderingContext()->getTemplatePaths()->setTemplateRootPaths($templateRootPaths);
         }
 
-        if ($layoutRootPaths !== [null] && !empty($layoutRootPaths)) {
-            if (!file_exists(GeneralUtility::getFileAbsFileName(reset($layoutRootPaths)))) {
-                throw new Exception('Layout folder "' . reset($layoutRootPaths) . '" not found!');
+        if ($layoutRootPaths !== []) {
+            $firstPath = reset($layoutRootPaths);
+            if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
+                throw new Exception('Layout folder "' . $firstPath . '" not found!');
             }
-            $this->view->setLayoutRootPaths($layoutRootPaths);
+            $this->view->getRenderingContext()->getTemplatePaths()->setLayoutRootPaths($layoutRootPaths);
         }
-        if ($partialRootPaths !== [null] && !empty($partialRootPaths)) {
-            if (!file_exists(GeneralUtility::getFileAbsFileName(reset($partialRootPaths)))) {
-                throw new Exception('Partial folder "' . reset($partialRootPaths) . '" not found!');
+        if ($partialRootPaths !== []) {
+            $firstPath = reset($partialRootPaths);
+            if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
+                throw new Exception('Partial folder "' . $firstPath . '" not found!');
             }
-            $this->view->setPartialRootPaths($partialRootPaths);
+            $this->view->getRenderingContext()->getTemplatePaths()->setPartialRootPaths($partialRootPaths);
         }
-        if ($templateType === 'file' &&
-            !empty($templateFile) &&
-            file_exists(GeneralUtility::getFileAbsFileName($templateFile))
+        if ($templateType === 'file'
+            && $templateFile !== ''
+            && file_exists(GeneralUtility::getFileAbsFileName($templateFile))
         ) {
-            $this->view->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templateFile));
+            $this->view->getRenderingContext()->getTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templateFile));
             return true;
         }
 
-        $templatePathAndFilename = $this->viewSettings['templatePathAndFilename'] ?? '';
-        if ($templateType === null && !empty($templatePathAndFilename)
+        $templatePathAndFilename = (string)($this->viewSettings['templatePathAndFilename'] ?? '');
+        if ($templateType === '' && $templatePathAndFilename !== ''
             && file_exists(GeneralUtility::getFileAbsFileName($templatePathAndFilename))) {
-            $this->view->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templatePathAndFilename));
+            $this->view->getRenderingContext()->getTemplatePaths()->setTemplatePathAndFilename(GeneralUtility::getFileAbsFileName($templatePathAndFilename));
             return true;
         }
         return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveViewPaths(string $pluralKey, string $singularKey): array
+    {
+        $paths = $this->viewSettings[$pluralKey] ?? null;
+        if (is_array($paths) && $paths !== []) {
+            return $paths;
+        }
+        $singlePath = $this->viewSettings[$singularKey] ?? null;
+        if (is_string($singlePath) && $singlePath !== '') {
+            return [$singlePath];
+        }
+        return [];
     }
 
     /**
@@ -342,16 +344,18 @@ class TeaserController extends ActionController
             )
         );
 
-        if ($this->settings['hideCurrentPage'] ?? null == '1') {
+        if (($this->settings['hideCurrentPage'] ?? '') === '1') {
             $this->pageRepository->setIgnoreOfUid($this->currentPageUid);
         }
 
-        if ($this->settings['ignoreUids'] ?? null) {
-            $ignoringUids = GeneralUtility::trimExplode(',', $this->settings['ignoreUids'], true);
-            array_map($this->pageRepository->setIgnoreOfUid(...), $ignoringUids);
+        if (!empty($this->settings['ignoreUids'])) {
+            $ignoringUids = GeneralUtility::trimExplode(',', (string)$this->settings['ignoreUids'], true);
+            foreach ($ignoringUids as $uid) {
+                $this->pageRepository->setIgnoreOfUid((int)$uid);
+            }
         }
 
-        if (($this->settings['categoriesList'] ?? null) && $this->settings['categoryMode'] ?? null) {
+        if (!empty($this->settings['categoriesList']) && !empty($this->settings['categoryMode'])) {
             $categories = [];
             foreach (GeneralUtility::intExplode(',', $this->settings['categoriesList'], true) as $categoryUid) {
                 $categories[] = $this->categoryRepository->findByUid($categoryUid);
@@ -410,38 +414,33 @@ class TeaserController extends ActionController
     }
 
     /**
-     * Converts given pages array (flat) to nested one
-     *
      * @param array<Page> $pages
-     * @param string $rootPageUids Comma separated list of page uids
+     * @param string|int $rootPageUids Comma separated list of page uids
      * @return array<Page>
      */
-    protected function convertFlatToNestedPagesArray($pages, $rootPageUids)
+    protected function convertFlatToNestedPagesArray(array $pages, string|int $rootPageUids): array
     {
-        $rootPageUidArray = GeneralUtility::intExplode(',', $rootPageUids);
+        $rootPageUidArray = GeneralUtility::intExplode(',', (string)$rootPageUids);
         $rootPages = [];
         foreach ($rootPageUidArray as $rootPageUid) {
             $page = $this->pageRepository->findByUid($rootPageUid);
-            $this->fillChildPagesRecursivley($page, $pages);
-            $rootPages[] = $page;
+            if ($page instanceof Page) {
+                $this->fillChildPagesRecursively($page, $pages);
+                $rootPages[] = $page;
+            }
         }
         return $rootPages;
     }
 
     /**
-     * Fills given parentPage's childPages attribute recursively with pages
-     *
-     * @param Page $parentPage
-     * @param array $pages
-     * @return Page
+     * @param array<Page> $pages
      */
-    protected function fillChildPagesRecursivley($parentPage, array $pages)
+    protected function fillChildPagesRecursively(Page $parentPage, array $pages): void
     {
         $childPages = [];
-        /** @var $page \PwTeaserTeam\PwTeaser\Domain\Model\Page */
         foreach ($pages as $page) {
             if ($page->getPid() === $parentPage->getUid()) {
-                $this->fillChildPagesRecursivley($page, $pages);
+                $this->fillChildPagesRecursively($page, $pages);
                 $childPages[] = $page;
             }
         }
@@ -449,7 +448,6 @@ class TeaserController extends ActionController
         usort($childPages, fn(Page $a, Page $b) => $a->getSorting() <=> $b->getSorting());
 
         $parentPage->setChildPages($childPages);
-        return $parentPage;
     }
 
     /**

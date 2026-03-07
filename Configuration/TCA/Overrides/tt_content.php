@@ -13,21 +13,14 @@ $pluginSignature = ExtensionUtility::registerPlugin(
     'default',
     'LLL:EXT:pw_teaser/Resources/Private/Language/locallang.xlf:newContentElementWizardDescription'
 );
-
-$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_excludelist'][$pluginSignature] = 'select_key,pages,recursive';
-$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_addlist'][$pluginSignature] = 'pi_flexform';
-ExtensionManagementUtility::addPiFlexFormValue(
+ExtensionManagementUtility::addToAllTCAtypes(
+    'tt_content',
+    '--div--;Configuration,pi_flexform,',
     $pluginSignature,
-    'FILE:EXT:' . 'pw_teaser' . '/Configuration/FlexForms/flexform_teaser.xml'
+    'after:subheader'
 );
 ExtensionManagementUtility::addPiFlexFormValue(
     '*',
-    'FILE:EXT:' . 'pw_teaser' . '/Configuration/FlexForms/flexform_teaser.xml',
+    'FILE:EXT:pw_teaser/Configuration/FlexForms/flexform_teaser.xml',
     $pluginSignature
-);
-ExtensionManagementUtility::addToAllTCAtypes(
-    'tt_content',
-    '--div--;LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:tabs.plugin,pi_flexform',
-    $pluginSignature,
-    'after:palette:headers'
 );

@@ -27,66 +27,32 @@ use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
  */
 class Content extends AbstractEntity
 {
+    protected string $ctype = '';
+
+    protected int $colPos = 0;
+
+    protected string $header = '';
+
+    protected string $bodytext = '';
 
     /**
-     * ctype
-     *
-     * @var string
-     */
-    protected $ctype;
-
-    /**
-     * colPos
-     *
-     * @var integer
-     */
-    protected $colPos;
-
-    /**
-     * header
-     *
-     * @var string
-     */
-    protected $header;
-
-    /**
-     * bodytext
-     *
-     * @var string
-     */
-    protected $bodytext;
-
-    /**
-     * It may contain multiple images, but TYPO3 called this field just "image"
-     *
      * @var ObjectStorage<FileReference>
      */
-    protected $image;
+    protected ObjectStorage $image;
 
     /**
-     * It may contain multiple "assets"
-     *
      * @var ObjectStorage<FileReference>
      */
-    protected $assets;
+    protected ObjectStorage $assets;
 
     /**
-     * Categories
-     *
      * @var ObjectStorage<Category>
      */
-    protected $categories;
+    protected ObjectStorage $categories;
 
-    /**
-     * Complete row (from database) of this content element
-     *
-     * @var array
-     */
-    protected $contentRow;
+    /** @var array<string, mixed>|null */
+    protected ?array $contentRow = null;
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->image = new ObjectStorage();
@@ -95,57 +61,37 @@ class Content extends AbstractEntity
     }
 
     /**
-     * Setter for images
-     *
      * @param ObjectStorage<FileReference> $image
-     * @return void
      */
-    public function setImage(ObjectStorage $image)
+    public function setImage(ObjectStorage $image): void
     {
         $this->image = $image;
     }
 
     /**
-     * Getter for images
-     *
-     * @return ObjectStorage<FileReference> images
+     * @return ObjectStorage<FileReference>
      */
-    public function getImage()
+    public function getImage(): ObjectStorage
     {
         return $this->image;
     }
 
-    /**
-     * Add image
-     *
-     * @param FileReference $image
-     * @return void
-     */
-    public function addImage(FileReference $image)
+    public function addImage(FileReference $image): void
     {
         $this->image->attach($image);
     }
 
-    /**
-     * Remove image
-     *
-     * @param FileReference $image
-     * @return void
-     */
-    public function removeImage(FileReference $image)
+    public function removeImage(FileReference $image): void
     {
         $this->image->detach($image);
     }
 
     /**
-     * Returns image files as array (with all attributes)
-     *
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
-    public function getImageFiles()
+    public function getImageFiles(): array
     {
         $imageFiles = [];
-        /** @var FileReference $image */
         foreach ($this->getImage() as $image) {
             $imageFiles[] = $image->getOriginalResource()->toArray();
         }
@@ -153,204 +99,118 @@ class Content extends AbstractEntity
     }
 
     /**
-     * Setter for assets
-     *
      * @param ObjectStorage<FileReference> $assets
-     * @return void
      */
-    public function setAssets(ObjectStorage $assets)
+    public function setAssets(ObjectStorage $assets): void
     {
         $this->assets = $assets;
     }
 
     /**
-     * Getter for assets
-     *
-     * @return ObjectStorage<FileReference> assets
+     * @return ObjectStorage<FileReference>
      */
-    public function getAssets()
+    public function getAssets(): ObjectStorage
     {
         return $this->assets;
     }
 
-    /**
-     * Add assets
-     *
-     * @param FileReference $assets
-     * @return void
-     */
-    public function addAssets(FileReference $assets)
+    public function addAssets(FileReference $assets): void
     {
         $this->assets->attach($assets);
     }
 
-    /**
-     * Remove assets
-     *
-     * @param FileReference $assets
-     * @return void
-     */
-    public function removeAssets(FileReference $assets)
+    public function removeAssets(FileReference $assets): void
     {
         $this->assets->detach($assets);
     }
 
     /**
-     * Returns assets files as array (with all attributes)
-     *
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
-    public function getAssetsFiles()
+    public function getAssetsFiles(): array
     {
         $assetsFiles = [];
-        /** @var FileReference $assets */
         foreach ($this->getAssets() as $assets) {
             $assetsFiles[] = $assets->getOriginalResource()->toArray();
         }
         return $assetsFiles;
     }
 
-    /**
-     * Setter for bodytext
-     *
-     * @param string $bodytext bodytext
-     * @return void
-     */
-    public function setBodytext($bodytext)
+    public function setBodytext(string $bodytext): void
     {
         $this->bodytext = $bodytext;
     }
 
-    /**
-     * Getter for bodytext
-     *
-     * @return string bodytext
-     */
-    public function getBodytext()
+    public function getBodytext(): string
     {
         return $this->bodytext;
     }
 
-    /**
-     * Setter for ctype
-     *
-     * @param string $ctype ctype
-     * @return void
-     */
-    public function setCtype($ctype)
+    public function setCtype(string $ctype): void
     {
         $this->ctype = $ctype;
     }
 
-    /**
-     * Getter for ctype
-     *
-     * @return string ctype
-     */
-    public function getCtype()
+    public function getCtype(): string
     {
         return $this->ctype;
     }
 
-    /**
-     * Setter for colPos
-     *
-     * @param integer $colPos colPos
-     * @return void
-     */
-    public function setColPos($colPos)
+    public function setColPos(int $colPos): void
     {
         $this->colPos = $colPos;
     }
 
-    /**
-     * Getter for colPos
-     *
-     * @return integer colPos
-     */
-    public function getColPos()
+    public function getColPos(): int
     {
         return $this->colPos;
     }
 
-    /**
-     * Setter for header
-     *
-     * @param string $header header
-     * @return void
-     */
-    public function setHeader($header)
+    public function setHeader(string $header): void
     {
         $this->header = $header;
     }
 
-    /**
-     * Getter for header
-     *
-     * @return string header
-     */
-    public function getHeader()
+    public function getHeader(): string
     {
         return $this->header;
     }
 
     /**
-     * Getter for categories
-     *
      * @return ObjectStorage<Category>
      */
-    public function getCategories()
+    public function getCategories(): ObjectStorage
     {
         return $this->categories;
     }
 
     /**
-     * Setter for categories
-     *
      * @param ObjectStorage<Category> $categories
-     * @return void
      */
-    public function setCategories(ObjectStorage $categories)
+    public function setCategories(ObjectStorage $categories): void
     {
         $this->categories = $categories;
     }
 
-    /**
-     * Add category
-     *
-     * @param Category $category
-     * @return void
-     */
-    public function addCategory(Category $category)
+    public function addCategory(Category $category): void
     {
         $this->categories->attach($category);
     }
 
-    /**
-     * Remove category
-     *
-     * @param Category $category
-     * @return void
-     */
-    public function removeCategory(Category $category)
+    public function removeCategory(Category $category): void
     {
         $this->categories->detach($category);
     }
 
     /**
-     * Checks for attribute in _contentRow
-     *
-     * @param string $name Name of unknown method
-     * @param array arguments Arguments of call
-     * @return mixed
+     * @deprecated Use typed getters instead. Falls back to raw database row.
      */
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments): mixed
     {
         if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
             $attributeName = lcfirst(substr($name, 3));
 
-            if (empty($this->contentRow)) {
-                /** @var ConnectionPool $pool */
+            if ($this->contentRow === null) {
                 $pool = GeneralUtility::makeInstance(ConnectionPool::class);
                 $queryBuilder = $pool->getQueryBuilderForTable('tt_content');
                 $contentRow = $queryBuilder
@@ -374,18 +234,15 @@ class Content extends AbstractEntity
                     $this->contentRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
                 }
             }
-            if (isset($this->contentRow[$attributeName])) {
-                return $this->contentRow[$attributeName];
-            }
+            return $this->contentRow[$attributeName] ?? null;
         }
+        return null;
     }
 
     /**
-     * Get raw content row
-     *
-     * @return array
+     * @return array<string, mixed>|null
      */
-    public function getContentRow()
+    public function getContentRow(): ?array
     {
         return $this->contentRow;
     }

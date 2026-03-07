@@ -238,7 +238,7 @@ class PageRepository extends Repository
     /**
      * Adds query constraint to array
      *
-     * @param \TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface $constraint Constraint to add
+     * @param ConstraintInterface $constraint Constraint to add
      * @return void
      */
     protected function addQueryConstraint(ConstraintInterface $constraint)

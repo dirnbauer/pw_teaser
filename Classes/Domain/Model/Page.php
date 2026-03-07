@@ -30,235 +30,96 @@ use TYPO3\CMS\Core\Utility\RootlineUtility;
  */
 class Page extends AbstractEntity
 {
-    /** Translation constant: Show page always */
     const L18N_SHOW_ALWAYS = 0;
-    /** Translation constant: Hide page on default language */
     const L18N_HIDE_DEFAULT_LANGUAGE = 1;
-    /** Translation constant: Hide page on foreign language if no translation exists */
     const L18N_HIDE_IF_NO_TRANSLATION_EXISTS = 2;
-    /** Translation constant: Hide page always, but show on foreign langauge if translation exists */
     const L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS = 3;
 
-    /**
-     * doktype
-     *
-     * @var integer
-     */
-    protected $doktype;
+    protected int $doktype = 0;
 
-    /**
-     * isCurrentPage
-     *
-     * @var boolean
-     */
-    protected $isCurrentPage = false;
+    protected bool $isCurrentPage = false;
 
-    /**
-     * title
-     *
-     * @var string
-     */
     #[Validate(['validator' => 'NotEmpty'])]
-    protected $title;
+    protected string $title = '';
+
+    protected string $subtitle = '';
+
+    protected string $navTitle = '';
+
+    protected ?string $keywords = null;
+
+    protected string $description = '';
+
+    protected string $abstract = '';
+
+    protected string $alias = '';
 
     /**
-     * subtitle
-     *
-     * @var string
-     */
-    protected $subtitle;
-
-    /**
-     * navTitle
-     *
-     * @var string
-     */
-    protected $navTitle;
-
-    /**
-     * meta keywords
-     *
-     * @var string
-     */
-    protected $keywords;
-
-    /**
-     * meta description
-     *
-     * @var string
-     */
-    protected $description;
-
-    /**
-     * abstract
-     *
-     * @var string
-     */
-    protected $abstract;
-
-    /**
-     * alias
-     *
-     * @var string
-     */
-    protected $alias;
-
-    /**
-     * media
-     *
      * @var ObjectStorage<FileReference>
      */
-    protected $media;
+    protected ObjectStorage $media;
+
+    protected int $sorting = 0;
+
+    protected int $creationDate = 0;
+
+    protected int $tstamp = 0;
+
+    protected int $lastUpdated = 0;
+
+    protected int $starttime = 0;
+
+    protected int $endtime = 0;
+
+    protected int $newUntil = 0;
+
+    protected string $author = '';
+
+    protected string $authorEmail = '';
+
+    /** @var array<Content>|null */
+    protected ?array $contents = null;
 
     /**
-     * sorting
-     *
-     * @var integer
-     */
-    protected $sorting;
-
-    /**
-     * creation date (crdate)
-     *
-     * @var integer
-     */
-    protected $creationDate;
-
-    /**
-     * timestamp (tstamp)
-     *
-     * @var integer
-     */
-    protected $tstamp;
-
-    /**
-     * lastUpdated
-     *
-     * @var integer
-     */
-    protected $lastUpdated;
-
-    /**
-     * start time
-     *
-     * @var integer
-     */
-    protected $starttime;
-
-    /**
-     * end time
-     *
-     * @var integer
-     */
-    protected $endtime;
-
-    /**
-     * new until
-     *
-     * @var integer
-     */
-    protected $newUntil;
-
-    /**
-     * author
-     *
-     * @var string
-     */
-    protected $author;
-
-    /**
-     * author email
-     *
-     * @var string
-     */
-    protected $authorEmail;
-
-    /**
-     * contents
-     *
-     * @var array<Content>
-     */
-    protected $contents;
-
-    /**
-     * Categories
-     *
      * @var ObjectStorage<Category>
      */
-    protected $categories;
+    protected ObjectStorage $categories;
 
-    /**
-     * @var integer
-     */
-    protected $l18nConfiguration;
+    protected int $l18nConfiguration = 0;
 
-    /**
-     * Child pages
-     *
-     * @var array<Page>
-     */
-    protected $childPages = [];
+    /** @var array<Page> */
+    protected array $childPages = [];
 
-    /**
-     * Custom Attributes
-     * which can be set by hooks
-     *
-     * @var array<mixed>
-     */
-    protected $customAttributes = [];
+    /** @var array<string, mixed> */
+    protected array $customAttributes = [];
 
-    /**
-     * Complete row (from database) of this page
-     *
-     * @var array
-     */
-    protected $pageRow = null;
+    /** @var array<string, mixed>|null */
+    protected ?array $pageRow = null;
 
-    /**
-     * Sets a custom attribute
-     *
-     * @param string $key The name of the attribute
-     * @param mixed $value Attribute's value
-     *
-     * @return void
-     */
-    public function setCustomAttribute($key, $value)
+    public function setCustomAttribute(string $key, mixed $value): void
     {
         $this->customAttributes[$key] = $value;
     }
 
-    /**
-     * Returns the value of a custom attribute
-     *
-     * @param string $key Name of attribute
-     * @return mixed The value of a custom attribute
-     */
-    public function getCustomAttribute($key)
+    public function getCustomAttribute(string $key): mixed
     {
-        if (!empty($key) && $this->hasCustomAttribute($key)) {
+        if ($key !== '' && $this->hasCustomAttribute($key)) {
             return $this->customAttributes[$key];
         }
         return null;
     }
 
-    /**
-     * Checks if given custom attribute has been set
-     *
-     * @param string $key
-     * @return bool
-     */
-    public function hasCustomAttribute($key)
+    public function hasCustomAttribute(string $key): bool
     {
         return isset($this->customAttributes[$key]);
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function getGet(): array
     {
-        if (empty($this->pageRow)) {
-            /** @var ConnectionPool $pool */
+        if ($this->pageRow === null) {
             $pool = GeneralUtility::makeInstance(ConnectionPool::class);
             $queryBuilder = $pool->getQueryBuilderForTable('pages');
             $pageRow = $queryBuilder
@@ -286,24 +147,17 @@ class Page extends AbstractEntity
     }
 
     /**
-     * Checks for attribute in _customAttributes and _pageRow
-     *
-     * @param string $name Name of unknown method
-     * @param array arguments Arguments of call
-     * @return mixed
-     * @deprecated Use getGet() instead (in fluid template: {page.get.attributeName})
+     * @deprecated Use getGet() instead (in Fluid: {page.get.attributeName})
      */
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments): mixed
     {
         if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
             $attributeName = lcfirst(substr($name, 3));
-            return $this->getGet()[$attributeName];
+            return $this->getGet()[$attributeName] ?? null;
         }
+        return null;
     }
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->categories = new ObjectStorage();
@@ -311,557 +165,285 @@ class Page extends AbstractEntity
     }
 
     /**
-     * Setter for contents
-     *
-     * @param array<Content> $contents array of contents
-     * @return void
+     * @param array<Content>|null $contents
      */
-    public function setContents($contents)
+    public function setContents(?array $contents): void
     {
         $this->contents = $contents;
     }
 
     /**
-     * Getter for contents
-     *
-     * @return array<Content> contents
+     * @return array<Content>|null
      */
-    public function getContents()
+    public function getContents(): ?array
     {
         return $this->contents;
     }
 
-    /**
-     * Getter for isCurrentPage
-     *
-     * @return boolean
-     */
-    public function getIsCurrentPage()
+    public function getIsCurrentPage(): bool
     {
         return $this->isCurrentPage;
     }
 
-    /**
-     * Setter for isCurrentPage
-     *
-     * @param boolean $isCurrentPage
-     * @return void
-     */
-    public function setIsCurrentPage($isCurrentPage)
+    public function setIsCurrentPage(bool $isCurrentPage): void
     {
         $this->isCurrentPage = $isCurrentPage;
     }
 
-    /**
-     * Setter for authorEmail
-     *
-     * @param string $authorEmail authorEmail
-     * @return void
-     */
-    public function setAuthorEmail($authorEmail)
+    public function setAuthorEmail(string $authorEmail): void
     {
         $this->authorEmail = $authorEmail;
     }
 
-    /**
-     * Getter for authorEmail
-     *
-     * @return string authorEmail
-     */
-    public function getAuthorEmail()
+    public function getAuthorEmail(): string
     {
         return $this->authorEmail;
     }
 
-    /**
-     * Setter for keywords
-     *
-     * @param string $keywords keywords
-     * @return void
-     */
-    public function setKeywords($keywords)
+    public function setKeywords(?string $keywords): void
     {
         $this->keywords = $keywords;
     }
 
     /**
-     * Getter for keywords
-     *
-     * @return array array of keywords
+     * @return array<int, string>
      */
-    public function getKeywords()
+    public function getKeywords(): array
     {
         return GeneralUtility::trimExplode(',', (string)$this->keywords, true);
     }
 
-    /**
-     * Getter for keywords. Returns a string
-     *
-     * @return string keywords as string
-     */
-    public function getKeywordsAsString()
+    public function getKeywordsAsString(): ?string
     {
         return $this->keywords;
     }
 
-    /**
-     * Setter for description
-     *
-     * @param string $description description
-     * @return void
-     */
-    public function setDescription($description)
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    /**
-     * Getter for description
-     *
-     * @return string description
-     */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    /**
-     * Setter for alias
-     *
-     * @param string $alias alias
-     * @return void
-     */
-    public function setAlias($alias)
+    public function setAlias(string $alias): void
     {
         $this->alias = $alias;
     }
 
-    /**
-     * Getter for alias
-     *
-     * @return string alias
-     */
-    public function getAlias()
+    public function getAlias(): string
     {
         return $this->alias;
     }
 
-    /**
-     * Setter for navTitle
-     *
-     * @param string $navTitle navTitle
-     * @return void
-     */
-    public function setNavTitle($navTitle)
+    public function setNavTitle(string $navTitle): void
     {
         $this->navTitle = $navTitle;
     }
 
-    /**
-     * Getter for navTitle
-     *
-     * @return string navTitle
-     */
-    public function getNavTitle()
+    public function getNavTitle(): string
     {
         return $this->navTitle;
     }
 
-    /**
-     * Setter for abstract
-     *
-     * @param string $abstract abstract
-     * @return void
-     */
-    public function setAbstract($abstract)
+    public function setAbstract(string $abstract): void
     {
         $this->abstract = $abstract;
     }
 
-    /**
-     * Getter for abstract
-     *
-     * @return string abstract
-     */
-    public function getAbstract()
+    public function getAbstract(): string
     {
         return $this->abstract;
     }
 
-    /**
-     * Setter for subtitle
-     *
-     * @param string $subtitle subtitle
-     * @return void
-     */
-    public function setSubtitle($subtitle)
+    public function setSubtitle(string $subtitle): void
     {
         $this->subtitle = $subtitle;
     }
 
-    /**
-     * Getter for subtitle
-     *
-     * @return string subtitle
-     */
-    public function getSubtitle()
+    public function getSubtitle(): string
     {
         return $this->subtitle;
     }
 
-    /**
-     * Setter for title
-     *
-     * @param string $title title
-     * @return void
-     */
-    public function setTitle($title)
+    public function setTitle(string $title): void
     {
         $this->title = $title;
     }
 
-    /**
-     * Getter for title
-     *
-     * @return string title
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->title;
     }
 
     /**
-     * Setter for media
-     *
      * @param ObjectStorage<FileReference> $media
-     * @return void
      */
-    public function setMedia(ObjectStorage $media)
+    public function setMedia(ObjectStorage $media): void
     {
         $this->media = $media;
     }
 
     /**
-     * Getter for media (returns FileReference objects)
-     *
      * @return ObjectStorage<FileReference>
      */
-    public function getMedia()
+    public function getMedia(): ObjectStorage
     {
         return $this->media;
     }
 
-    /**
-     * Add single medium
-     *
-     * @param FileReference $medium
-     * @return void
-     */
-    public function addMedium(FileReference $medium)
+    public function addMedium(FileReference $medium): void
     {
         $this->media->attach($medium);
     }
 
-    /**
-     * Removes single medium
-     *
-     * @param FileReference $medium
-     * @return void
-     */
-    public function removeMedium(FileReference $medium)
+    public function removeMedium(FileReference $medium): void
     {
         $this->media->detach($medium);
     }
 
-    /**
-     * Returns media files as array (with all attributes)
-     *
-     * @return array
-     * @deprecated Use media attribute instead
-     */
-    public function getMediaFiles()
-    {
-        GeneralUtility::deprecationLog(
-            'Please don\'t use {page.mediaFiles} anymore in your pw_teaser templates. Use {page.media} instead.'
-        );
-        return $this->getMedia()->toArray();
-    }
-
-    /**
-     * Setter for newUntil
-     *
-     * @param integer $newUntil newUntil
-     * @return void
-     */
-    public function setNewUntil($newUntil)
+    public function setNewUntil(int $newUntil): void
     {
         $this->newUntil = $newUntil;
     }
 
-    /**
-     * Getter for newUntil
-     *
-     * @return integer newUntil
-     */
-    public function getNewUntil()
+    public function getNewUntil(): int
     {
         return $this->newUntil;
     }
 
-    /**
-     * Return TRUE if the page is marked as new
-     *
-     * @return boolean TRUE if the page is marked as new, otherwise FALSE
-     */
-    public function getIsNew()
+    public function getIsNew(): bool
     {
-        if (!empty($this->newUntil) && $this->newUntil !== 0) {
+        if ($this->newUntil !== 0) {
             return $this->newUntil < time();
         }
         return false;
     }
 
-    /**
-     * Setter for creationDate (crdate)
-     *
-     * @param integer $creationDate creationDate
-     * @return void
-     */
-    public function setCreationDate($creationDate)
+    public function setCreationDate(int $creationDate): void
     {
         $this->creationDate = $creationDate;
     }
 
-    /**
-     * Getter for creationDate (crdate)
-     *
-     * @return integer creationDate
-     */
-    public function getCreationDate()
+    public function getCreationDate(): int
     {
         return $this->creationDate;
     }
 
-    /**
-     * Setter for tstamp
-     *
-     * @param integer $tstamp tstamp
-     * @return void
-     */
-    public function setTstamp($tstamp)
+    public function setTstamp(int $tstamp): void
     {
         $this->tstamp = $tstamp;
     }
 
-    /**
-     * Getter for tstamp
-     *
-     * @return integer tstamp
-     */
-    public function getTstamp()
+    public function getTstamp(): int
     {
         return $this->tstamp;
     }
 
-    /**
-     * Setter for lastUpdated
-     *
-     * @param integer $lastUpdated lastUpdated
-     * @return void
-     */
-    public function setLastUpdated($lastUpdated)
+    public function setLastUpdated(int $lastUpdated): void
     {
         $this->lastUpdated = $lastUpdated;
     }
 
-    /**
-     * Getter for lastUpdated
-     *
-     * @return integer lastUpdated
-     */
-    public function getLastUpdated()
+    public function getLastUpdated(): int
     {
         return $this->lastUpdated;
     }
 
-    /**
-     * Setter for starttime
-     *
-     * @param integer $starttime
-     * @return void
-     */
-    public function setStarttime($starttime)
+    public function setStarttime(int $starttime): void
     {
         $this->starttime = $starttime;
     }
 
-    /**
-     * Getter for starttime
-     *
-     * @return integer starttime
-     */
-    public function getStarttime()
+    public function getStarttime(): int
     {
         return $this->starttime;
     }
 
-    /**
-     * Getter for endtime
-     *
-     * @return integer endtime
-     */
-    public function getEndtime()
+    public function getEndtime(): int
     {
         return $this->endtime;
     }
 
-    /**
-     * Setter for endtime
-     *
-     * @param integer $endtime endtime
-     * @return void
-     */
-    public function setEndtime($endtime)
+    public function setEndtime(int $endtime): void
     {
         $this->endtime = $endtime;
     }
 
-    /**
-     * Getter for author
-     *
-     * @return string author
-     */
-    public function getAuthor()
+    public function getAuthor(): string
     {
         return $this->author;
     }
 
-    /**
-     * Setter for author
-     *
-     * @param string $author author
-     * @return void
-     */
-    public function setAuthor($author)
+    public function setAuthor(string $author): void
     {
         $this->author = $author;
     }
 
-    /**
-     * Getter for doktype
-     *
-     * @return integer the doktype
-     */
-    public function getDoktype()
+    public function getDoktype(): int
     {
         return $this->doktype;
     }
 
-    /**
-     * Setter for doktype
-     *
-     * @param integer $doktype the doktype
-     * @return void
-     */
-    public function setDoktype($doktype)
+    public function setDoktype(int $doktype): void
     {
         $this->doktype = $doktype;
     }
 
-    /**
-     * Getter for l18nConfiguration
-     *
-     * @return integer
-     */
-    public function getL18nConfiguration()
+    public function getL18nConfiguration(): int
     {
         return $this->l18nConfiguration;
     }
 
-    /**
-     * Setter for l18nConfiguration
-     *
-     * @param integer $l18nCfg
-     * @return void
-     */
-    public function setL18nConfiguration($l18nCfg)
+    public function setL18nConfiguration(int $l18nCfg): void
     {
         $this->l18nConfiguration = $l18nCfg;
     }
 
     /**
-     * Getter for categories
-     *
      * @return ObjectStorage<Category>
      */
-    public function getCategories()
+    public function getCategories(): ObjectStorage
     {
         return $this->categories;
     }
 
     /**
-     * Setter for categories
-     *
      * @param ObjectStorage<Category> $categories
-     * @return void
      */
-    public function setCategories($categories)
+    public function setCategories(ObjectStorage $categories): void
     {
         $this->categories = $categories;
     }
 
-    /**
-     * Add category
-     *
-     * @param Category $category
-     * @return void
-     */
-    public function addCategory(Category $category)
+    public function addCategory(Category $category): void
     {
         $this->categories->attach($category);
     }
 
-    /**
-     * Remove category
-     *
-     * @param Category $category
-     * @return void
-     */
-    public function removeCategory(Category $category)
+    public function removeCategory(Category $category): void
     {
         $this->categories->detach($category);
     }
 
     /**
-     * Returns rootLine of this page
-     *
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
-    public function getRootLine()
+    public function getRootLine(): array
     {
         $context = GeneralUtility::makeInstance(Context::class);
-        /** @var RootlineUtility $rootline */
         $rootline = GeneralUtility::makeInstance(RootlineUtility::class, $this->getUid(), '', $context);
         return $rootline->get();
     }
 
-    /**
-     * Returns amount of parent pages, including this page itself.
-     * The root page (not id=0) got depth 1.
-     *
-     * @return integer
-     */
-    public function getRootLineDepth()
+    public function getRootLineDepth(): int
     {
         return count($this->getRootLine());
     }
 
-    /**
-     * Returns string of sortings of all root pages including this page.
-     *
-     * @return string String with orderings of this page and all root pages
-     */
-    public function getRecursiveRootLineOrdering()
+    public function getRecursiveRootLineOrdering(): string
     {
         $recursiveOrdering = [];
         foreach ($this->getRootLine() as $pageRootPart) {
@@ -871,53 +453,35 @@ class Page extends AbstractEntity
     }
 
     /**
-     * Returns the complete page row (from database) as array
-     *
-     * @return array
+     * @return array<string, mixed>|null
      */
-    public function getPageRow()
+    public function getPageRow(): ?array
     {
         return $this->pageRow;
     }
 
-    /**
-     * Getter for sorting
-     *
-     * @return integer
-     */
-    public function getSorting()
+    public function getSorting(): int
     {
         return $this->sorting;
     }
 
-    /**
-     * Setter for sorting
-     *
-     * @param integer $sorting
-     * @return void
-     */
-    public function setSorting($sorting)
+    public function setSorting(int $sorting): void
     {
         $this->sorting = $sorting;
     }
 
     /**
-     * Getter for child pages
-     *
-     * @return array
+     * @return array<Page>
      */
-    public function getChildPages()
+    public function getChildPages(): array
     {
         return $this->childPages;
     }
 
     /**
-     * Setter for child pages
-     *
      * @param array<Page> $childPages
-     * @return void
      */
-    public function setChildPages(array $childPages)
+    public function setChildPages(array $childPages): void
     {
         $this->childPages = $childPages;
     }

@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 use PwTeaserTeam\PwTeaser\Controller\TeaserController;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 defined('TYPO3') or die();
@@ -32,12 +31,3 @@ ExtensionManagementUtility::addTypoScript(
     'defaultContentRendering'
 );
 
-$rootLineFields = GeneralUtility::trimExplode(
-    ',',
-    (string)($GLOBALS['TYPO3_CONF_VARS']['FE']['addRootLineFields'] ?? ''),
-    true
-);
-if (!in_array('sorting', $rootLineFields, true)) {
-    $rootLineFields[] = 'sorting';
-}
-$GLOBALS['TYPO3_CONF_VARS']['FE']['addRootLineFields'] = implode(',', $rootLineFields);
