@@ -42,7 +42,12 @@ final class GetContentViewHelper extends AbstractViewHelper
     public function render(): string
     {
         $contents = $this->arguments['contents'];
-        if ($contents === null) {
+        if ($contents === null || !is_array($contents)) {
+            return '';
+        }
+
+        $as = $this->arguments['as'];
+        if (!is_string($as)) {
             return '';
         }
 
@@ -51,29 +56,36 @@ final class GetContentViewHelper extends AbstractViewHelper
         $breakNow = false;
         $asHasBeenSet = false;
 
+        if ($this->renderingContext === null) {
+            return '';
+        }
         $variableProvider = $this->renderingContext->getVariableProvider();
+        $colPos = is_int($this->arguments['colPos'] ?? null) ? $this->arguments['colPos'] : 0;
+        $cType = $this->arguments['cType'];
+        $index = $this->arguments['index'];
 
         /** @var Content $content */
         foreach ($contents as $content) {
             $contentCtype = $content->getCtype();
             $contentColPos = $content->getColPos();
-            $matchesType = $this->arguments['cType'] === null || $contentCtype === $this->arguments['cType'];
-            $matchesColumn = $contentColPos === $this->arguments['colPos'];
+            $matchesType = $cType === null || $contentCtype === $cType;
+            $matchesColumn = $contentColPos === $colPos;
 
             if ($matchesColumn && $matchesType) {
-                if ($this->arguments['index'] === null) {
-                    $variableProvider->add($this->arguments['as'], $content);
+                if ($index === null) {
+                    $variableProvider->add($as, $content);
                     $asHasBeenSet = true;
-                } elseif ($indexCount === $this->arguments['index']) {
-                    $variableProvider->add($this->arguments['as'], $content);
+                } elseif (is_int($index) && $indexCount === $index) {
+                    $variableProvider->add($as, $content);
                     $asHasBeenSet = true;
                     $breakNow = true;
                 }
             }
 
             if ($asHasBeenSet) {
-                $output .= $this->renderChildren();
-                $variableProvider->remove($this->arguments['as']);
+                $children = $this->renderChildren();
+                $output .= is_string($children) ? $children : (is_scalar($children) ? (string)$children : '');
+                $variableProvider->remove($as);
                 $asHasBeenSet = false;
             }
 

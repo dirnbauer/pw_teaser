@@ -29,6 +29,7 @@ final class RemoveWhitespacesViewHelper extends AbstractViewHelper
      */
     public function render(): string
     {
-        return str_replace(["\t", "\r", "\n"], '', (string)$this->renderChildren());
+        $children = $this->renderChildren();
+        return str_replace(["\t", "\r", "\n"], '', is_string($children) ? $children : '');
     }
 }

@@ -12,25 +12,22 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *  | (c) 2011-2022 Armin Vieweg <armin@v.ieweg.de>
  */
 
-/**
- * This class strips html and php code out of a string
- *
- * @copyright Copyright belongs to the respective authors
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
- */
 final class StripTagsViewHelper extends AbstractViewHelper
 {
-
-    /**
-     * Strips html and php code out of a string
-     *
-     * @param string $string The string which will be stripped
-     * @return string the stripped string
-     */
-    public function render(?string $string = null): string
+    public function initializeArguments(): void
     {
+        parent::initializeArguments();
+        $this->registerArgument('string', 'string', 'The string to strip tags from');
+    }
+
+    public function render(): string
+    {
+        $string = $this->arguments['string'] ?? null;
         if ($string === null) {
-            $string = html_entity_decode((string)$this->renderChildren());
+            $children = $this->renderChildren();
+            $string = html_entity_decode(is_string($children) ? $children : '');
+        } else {
+            $string = is_string($string) ? $string : '';
         }
         return strip_tags($string);
     }
