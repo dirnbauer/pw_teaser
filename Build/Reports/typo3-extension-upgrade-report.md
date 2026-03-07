@@ -1,66 +1,59 @@
-# TYPO3 13 upgrade report
+# TYPO3 Extension Upgrade Report (re-audit)
 
-## Scope
+Audited against TYPO3 13.4 LTS on the current codebase state.
 
-- Extension: `pw_teaser`
-- Current support window: TYPO3 10/11
-- Target support window: TYPO3 13.4 LTS only
+## Findings
 
-## Confirmed TYPO3 13 blockers
+### CRITICAL: `Configuration/TypoScript/setup.txt` contains deprecated Bootstrap->run
 
-### 1. Bootstrap constants and backend checks
+`setup.txt` still ships a `lib.tx_pwteaser = USER` block that invokes
+`TYPO3\CMS\Extbase\Core\Bootstrap->run`. This userFunc-based rendering was
+removed in TYPO3 12. The extension already registers via
+`PLUGIN_TYPE_CONTENT_ELEMENT`, making this block dead and potentially
+conflicting.
 
-- `ext_localconf.php` still uses `TYPO3_MODE`.
-- TYPO3 13 requires `defined('TYPO3') or die();` in bootstrap files and no
-  `TYPO3_MODE` branching there.
+The file also contains `plugin.tx_pwteaser.view.presets` which IS needed
+by `ItemsProcFunc::getAvailableTemplatePresets()`.
 
-### 2. Extbase controller response contract
+**Action:** Rename `setup.txt` → `setup.typoscript`, remove the deprecated
+`lib.tx_pwteaser` block, keep the presets.
 
-- `Classes/Controller/TeaserController.php` still exposes an action that may
-  return `void`.
-- TYPO3 13 Extbase actions must always return `ResponseInterface`, usually via
-  `htmlResponse()`.
+### HIGH: `hidePagesIfNotTranslatedByDefault` global removed in TYPO3 10
 
-### 3. TSFE-dependent page access
+`PageRepository::handlePageLocalization()` line 345 reads
+`$GLOBALS['TYPO3_CONF_VARS']['FE']['hidePagesIfNotTranslatedByDefault']`.
+This config key was removed in TYPO3 10. In TYPO3 13 it is always
+null/false, so the `else` branch is dead code.
 
-- `TeaserController`, `Page`, `Content`, and `PageRepository` still read from
-  `$GLOBALS['TSFE']`.
-- TYPO3 13 prefers request attributes such as `routing` and
-  `frontend.page.information`, and TSFE access should be reduced or removed.
+**Action:** Remove the obsolete config check; keep only the behavior for
+`hidePagesIfNotTranslatedByDefault = false` (the only path that executes).
 
-### 4. Removed recursive page-tree API
+### LOW: `Services.php` SingletonPass for ItemsProcFunc
 
-- `Classes/Domain/Repository/PageRepository.php` still uses
-  `ContentObjectRenderer::getTreeList()`.
-- TYPO3 13 requires `PageRepository->getPageIdsRecursive()` or
-  `getDescendantPageIdsRecursive()` instead.
+The `SingletonPass` compiler pass in `Configuration/Services.php` tags
+`ItemsProcFunc` as a singleton. Since `ItemsProcFunc` is now a `final readonly`
+class with no mutable state, this is harmless but unnecessary complexity.
 
-### 5. Fluid internals no longer supported
+**Action:** Remove `Services.php`; `Services.yaml` autowiring is sufficient.
 
-- `Classes/ViewHelpers/GetContentViewHelper.php` still uses
-  `templateVariableContainer`.
-- This must be replaced with modern rendering context variable access.
+### OK: No remaining deprecated API usage
 
-### 6. FlexForm XML shape is outdated
+- No `TYPO3_MODE`, `$GLOBALS['TSFE']`, `deprecationLog`, `getContentObject()`
+- FlexForms use modern `label`/`value` items format
+- Persistence mapping is in `Configuration/Extbase/Persistence/Classes.php`
+- Icons registered via `Configuration/Icons.php`
+- CType migration wizard is present
 
-- `Configuration/FlexForms/flexform_teaser.xml` still uses `TCEforms` wrappers.
-- TYPO3 13 no longer evaluates those wrappers; labels, `sheetTitle`,
-  `displayCond`, and `config` must live directly on the relevant nodes.
+## Status
 
-### 7. Local development settings are too old
-
-- `.ddev/config.yaml` still pins PHP `7.4` and only advertises TYPO3 10/11
-  hostnames and install flows.
-- TYPO3 13 requires PHP 8.2+.
-
-## Required upgrade changes
-
-1. Update version constraints and PHP requirements in `composer.json`,
-   `ext_emconf.php`, and DDEV config.
-2. Remove `TYPO3_MODE` and make `TeaserController::indexAction()` fully
-   PSR-7-compliant.
-3. Replace TSFE-dependent page and content lookups with TYPO3 13-compatible
-   APIs or explicit repository helpers.
-4. Replace `getTreeList()` and old DBAL execution patterns in repositories.
-5. Refactor `GetContentViewHelper` to work with modern Fluid.
-6. Rewrite the FlexForm file into TYPO3 13 syntax.
+| Area | Status |
+|------|--------|
+| composer.json constraints | OK |
+| ext_emconf.php constraints | OK |
+| ext_localconf.php | OK |
+| FlexForm structure | OK |
+| Persistence mapping | OK (PHP config) |
+| Icon registration | OK |
+| TypoScript loading | NEEDS FIX (setup.txt) |
+| Deprecated globals | NEEDS FIX (hidePagesIfNotTranslatedByDefault) |
+| Services DI | LOW (SingletonPass removable) |
