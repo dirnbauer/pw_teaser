@@ -33,9 +33,9 @@ final class Settings
      * Renders a given typoscript configuration and returns the whole array with
      * calculated values.
      *
-     * @param array $settings the typoscript configuration array
+     * @param array<string, mixed> $settings the typoscript configuration array
      * @param string $section
-     * @return array the configuration array with the rendered typoscript
+     * @return array<string, mixed> the configuration array with the rendered typoscript
      */
     public function renderConfigurationArray(array $settings, string $section = 'settings.'): array
     {
@@ -49,8 +49,12 @@ final class Settings
                     if ($this->contentObject === null) {
                         continue;
                     }
-                    $result[$keyWithoutDot] = $this->contentObject->cObjGetSingle($settings[$keyWithoutDot], $value);
-                } else {
+                    $name = $settings[$keyWithoutDot] ?? '';
+                    if (is_string($name) && is_array($value)) {
+                        $result[$keyWithoutDot] = $this->contentObject->cObjGetSingle($name, $value);
+                    }
+                } elseif (is_array($value)) {
+                    /** @var array<string, mixed> $value */
                     $result[$keyWithoutDot] = $this->renderConfigurationArray($value);
                 }
             } else {
@@ -65,10 +69,10 @@ final class Settings
     /**
      * Overwrite flexform values with typoscript if flexform value is empty and typoscript value exists.
      *
-     * @param array $settings Settings from flexform
+     * @param array<string, mixed> $settings Settings from flexform
      * @param string $section
      * @param string $extKey
-     * @return array enhanced settings
+     * @return array<string, mixed> enhanced settings
      */
     protected function enhanceSettingsWithTypoScript(
         array $settings,
@@ -96,8 +100,8 @@ final class Settings
      * After:  $array['level1.']['level2.']['finalLevel'] = 'hello kitty'
      *           $array['level1'] = 'TEXT'
      *
-     * @param array $configuration settings array to make renderable
-     * @return array the renderable settings
+     * @param array<string, mixed> $configuration settings array to make renderable
+     * @return array<string, mixed> the renderable settings
      */
     protected function makeConfigurationArrayRenderable(array $configuration): array
     {

@@ -16,12 +16,26 @@ final readonly class ItemsProcFunc
 {
     public function __construct(private ConfigurationManagerInterface $configurationManager) {}
 
+    /**
+     * @param array<string, mixed> &$parameters
+     */
     public function getAvailableTemplatePresets(array &$parameters): void
     {
         $config = $this->configurationManager->getConfiguration(ConfigurationManager::CONFIGURATION_TYPE_FULL_TYPOSCRIPT);
-        $presets = $config['plugin.']['tx_pwteaser.']['view.']['presets.'] ?? [];
+        $pluginConfig = is_array($config['plugin.'] ?? null) ? $config['plugin.'] : [];
+        $extConfig = is_array($pluginConfig['tx_pwteaser.'] ?? null) ? $pluginConfig['tx_pwteaser.'] : [];
+        $viewConfig = is_array($extConfig['view.'] ?? null) ? $extConfig['view.'] : [];
+        $presets = is_array($viewConfig['presets.'] ?? null) ? $viewConfig['presets.'] : [];
+
+        if (!isset($parameters['items']) || !is_array($parameters['items'])) {
+            $parameters['items'] = [];
+        }
         foreach ($presets as $key => $preset) {
-            $parameters['items'][] = ['label' => $preset['label'], 'value' => rtrim((string)$key, '.')];
+            if (!is_array($preset)) {
+                continue;
+            }
+            $label = is_string($preset['label'] ?? null) ? $preset['label'] : (string)$key;
+            $parameters['items'][] = ['label' => $label, 'value' => rtrim((string)$key, '.')];
         }
     }
 }
