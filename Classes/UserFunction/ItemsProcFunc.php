@@ -9,12 +9,18 @@ namespace PwTeaserTeam\PwTeaser\UserFunction;
  *  |
  *  | (c) 2011-2022 Armin Vieweg <armin@v.ieweg.de>
  */
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 final readonly class ItemsProcFunc
 {
-    public function __construct(private ConfigurationManagerInterface $configurationManager) {}
+    private ConfigurationManagerInterface $configurationManager;
+
+    public function __construct(?ConfigurationManagerInterface $configurationManager = null)
+    {
+        $this->configurationManager = $configurationManager ?? GeneralUtility::makeInstance(ConfigurationManagerInterface::class);
+    }
 
     /**
      * @param array<string, mixed> &$parameters
