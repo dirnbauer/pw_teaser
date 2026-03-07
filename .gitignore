@@ -7,6 +7,7 @@ v13/
 v14/
 node_modules/
 out/
+composer.lock
 package-lock.json
 remotion/narration-durations.ts
 remotion/music-config.ts
