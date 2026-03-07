@@ -10,8 +10,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
-    name: "Unit (PHP ${{ matrix.php-version }})"
+        include:
+          - php-version: '8.2'
+            typo3-version: '^13.4'
+          - php-version: '8.3'
+            typo3-version: '^13.4'
+          - php-version: '8.4'
+            typo3-version: '^13.4'
+          - php-version: '8.2'
+            typo3-version: '^14.0'
+          - php-version: '8.3'
+            typo3-version: '^14.0'
+          - php-version: '8.4'
+            typo3-version: '^14.0'
+    name: "Unit (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +33,9 @@ jobs:
           php-version: "${{ matrix.php-version }}"
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: |
+          composer require typo3/cms-core:${{ matrix.typo3-version }} --no-update --no-interaction
+          composer install --no-interaction --prefer-dist
 
       - name: Run unit tests
         run: vendor/bin/phpunit -c Tests/UnitTests.xml
@@ -31,8 +45,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
-    name: "Functional (PHP ${{ matrix.php-version }})"
+        include:
+          - php-version: '8.2'
+            typo3-version: '^13.4'
+          - php-version: '8.3'
+            typo3-version: '^14.0'
+    name: "Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
     services:
       mysql:
         image: mysql:8.0
@@ -62,14 +80,16 @@ jobs:
           php-version: "${{ matrix.php-version }}"
 
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: |
+          composer require typo3/cms-core:${{ matrix.typo3-version }} --no-update --no-interaction
+          composer install --no-interaction --prefer-dist
 
       - name: Run functional tests
         run: vendor/bin/phpunit -c Tests/FunctionalTests.xml
 
   phpstan:
     runs-on: ubuntu-latest
-    name: "PHPStan"
+    name: "PHPStan (Level 9)"
     steps:
       - uses: actions/checkout@v4
 
@@ -83,3 +103,17 @@ jobs:
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --no-progress
+
+  composer-validate:
+    runs-on: ubuntu-latest
+    name: "Composer Validate"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - name: Validate composer.json
+        run: composer validate --strict
