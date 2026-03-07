@@ -1,0 +1,31 @@
+{
+  "name": "pw_teaser",
+  "version": "1.0.0",
+  "description": "Create powerful, dynamic page teasers in TYPO3 CMS with data from page properties and its content elements. Based on Extbase and Fluid template engine.",
+  "main": "index.js",
+  "scripts": {
+    "narration:generate": "node --strip-types scripts/generate-narration.ts",
+    "music:generate": "node --strip-types scripts/generate-music.ts",
+    "remotion:studio": "npx remotion studio remotion/index.ts",
+    "remotion:render": "npx remotion render remotion/index.ts ProductTour out/product-tour.mp4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirnbauer/pw_teaser.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dirnbauer/pw_teaser/issues"
+  },
+  "homepage": "https://github.com/dirnbauer/pw_teaser#readme",
+  "dependencies": {
+    "@remotion/cli": "^4.0.434",
+    "@remotion/media": "4.0.434",
+    "@remotion/player": "^4.0.434",
+    "qrcode.react": "^4.2.0",
+    "remotion": "^4.0.434"
+  }
+}
