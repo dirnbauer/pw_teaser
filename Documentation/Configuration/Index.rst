@@ -39,6 +39,7 @@ loadContents_                          ``bool``
 pageMode_                              ``string``
 enablePagination_                      ``bool``
 itemsPerPage_                          ``int``
+paginationClass_                       ``string``
 ===================================== ============
 
 
@@ -189,7 +190,34 @@ itemsPerPage
    Default
       10
    Description
-      Amount of items (pages) to show on a single page. Only used, when ``enabledPagination`` is true.
+      Amount of items (pages) to show on a single page. Only used, when ``enablePagination`` is true.
+
+
+.. _paginationClass:
+
+paginationClass
+"""""""""""""""
+.. container:: table-row
+
+   Property
+      paginationClass
+   Data type
+      string
+   Default
+      *(empty — uses SimplePagination)*
+   Description
+      Fully qualified class name of a custom pagination implementation.
+      When empty, TYPO3's built-in ``SimplePagination`` (previous/next) is used.
+
+      To use numbered pagination with page numbers and ellipsis, install
+      ``georgringer/numbered-pagination`` and set:
+
+      .. code-block:: typoscript
+
+         plugin.tx_pwteaser.settings.paginationClass = GeorgRinger\NumberedPagination\NumberedPagination
+
+      The configured class must implement ``TYPO3\CMS\Core\Pagination\PaginationInterface``
+      and accept a ``PaginatorInterface`` as its constructor argument.
 
 
 .. _configuration-visibility:

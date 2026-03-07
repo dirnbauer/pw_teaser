@@ -11,7 +11,7 @@ Create the first teaser
 
 Go to any page you want to add a teaser list of pages, and **add a new page teaser plugin**:
 
-In TYPO3 13, the plugin appears in the new content element wizard as
+In TYPO3 13/14, the plugin appears in the new content element wizard as
 ``Page Teaser (pw_teaser)``.
 
 On tab "Plugin" you see all settings pw_teaser has:

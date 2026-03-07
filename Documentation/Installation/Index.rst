@@ -9,8 +9,8 @@ Installation
 Requirements
 ------------
 
-- TYPO3 13.4 LTS
-- PHP 8.2 or newer
+- TYPO3 13.4 LTS or TYPO3 14
+- PHP 8.2 or newer (8.2, 8.3, 8.4)
 
 Download
 --------
@@ -38,7 +38,7 @@ TypoScript Setup
 
 When pw_teaser is successfully installed, you need to **include the provided TypoScript** to your TypoScript template:
 
-In TYPO3 13, include the static TypoScript record :guilabel:`PwTeaser` in your
+In TYPO3 13 or 14, include the static TypoScript record :guilabel:`PwTeaser` in your
 site template so the default view configuration and template presets are loaded.
 
 

@@ -12,7 +12,7 @@ Using TypoScript
 Predefine settings with TS
 --------------------------
 
-You may predefine some settings which are used in pw_teaser, unless it **will be overwritten by plugin settings**.
+You may predefine some settings which are used in pw_teaser, unless they **will be overwritten by plugin settings**.
 
 To do this, just write this in TypoScript setup:
 
@@ -27,40 +27,22 @@ To do this, just write this in TypoScript setup:
    See the configuration :ref:`configuration_reference`, which settings are available.
 
 
-Add a whole page teaser with TS
--------------------------------
+Pagination class
+----------------
 
-If you want to add a page teaser in areas on your page, which are not editable by users, you can simply use typoscript
-to assign it to a marker or variable (i.e.) of your template. You could put it in a COA too, of course.
-
-**Example:**
+By default, pw_teaser uses TYPO3 core's ``SimplePagination`` (previous/next).
+To switch to numbered pagination, install ``georgringer/numbered-pagination``
+and set:
 
 ::
 
-    10 = COA
-    10 {
-      10 = TEXT
-      10.value = Latest News (based on pages)
-
-      20 < lib.tx_pwteaser
-      20 {
-        settings {
-          # see configuration reference
-        }
-        view {
-          # see configuration reference
-        }
-      }
-    }
-
-.. important::
-   The ``lib.tx_pwteaser`` is only available when you have **included the static template** to your TYPO3 template.
+    plugin.tx_pwteaser.settings.paginationClass = GeorgRinger\NumberedPagination\NumberedPagination
 
 
 Using parsed TypoScript
 -----------------------
 
-You may use typoscript for aby pw_teaser setting.
+You may use TypoScript for any pw_teaser setting.
 
 **For example:**
 
@@ -83,5 +65,5 @@ You may use typoscript for aby pw_teaser setting.
       }
     }
 
-This example creates a comma-separated list for the setting "customPages". Unlikely to default Extbase behavior, the
+This example creates a comma-separated list for the setting "customPages". Unlike default Extbase behavior, the
 defined settings are parsed by TypoScript parser, before used in Extbase controller.

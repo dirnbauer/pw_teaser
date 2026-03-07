@@ -8,6 +8,25 @@ Versions
 
 .. contents:: :local:
 
+7.0.0
+-----
+
+- [FEATURE] Add TYPO3 14 compatibility (dual v13/v14 support)
+- [FEATURE] Configurable pagination class via TypoScript (``paginationClass``)
+- [FEATURE] Add ``georgringer/numbered-pagination`` as optional Composer suggest
+- [TASK] Drop PHP 7.x / 8.0 / 8.1 support — PHP 8.2+ required
+- [TASK] Fluid 5.0 compatibility: strict types in ViewHelpers, removed TemplateView import
+- [TASK] Migrate ``#[Validate]`` attribute to named-argument syntax
+- [TASK] ``StripTagsViewHelper`` uses ``initializeArguments()`` instead of render parameters
+- [TASK] Extract ``getViewTemplatePaths()`` helper for v13/v14 view compatibility
+- [TASK] CType migration wizard for ``list_type`` to ``CType`` conversion
+- [TASK] All domain models fully typed (Page, Content)
+- [TASK] All repositories marked ``final`` with native return types
+- [TASK] PHPStan level 5 static analysis
+- [TASK] CI matrix: PHP 8.2/8.3/8.4 against TYPO3 13 and 14
+- [BUGFIX] GetContentViewHelper index counter only advances on full match
+- [DOCS] Comprehensive documentation update for v13/v14
+
 6.0.3
 -----
 

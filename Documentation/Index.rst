@@ -22,7 +22,7 @@ Page Teaser (with Fluid)
 		Create powerful, dynamic page teasers with data from page properties and its content elements. Based on Extbase and Fluid Template Engine.
 
 	:Keywords:
-		TYPO3 CMS, teaser, pages, sitemap
+		TYPO3 CMS, teaser, pages, sitemap, pagination
 
 	:Copyright:
 		2010-2026
@@ -40,8 +40,8 @@ Page Teaser (with Fluid)
 	:Rendered:
 		|today|
 
-	This manual documents the TYPO3 13.4 LTS / PHP 8.2 baseline of
-	``pw_teaser``.
+	This manual documents the TYPO3 13 LTS / 14 baseline of
+	``pw_teaser`` (version 7.x). PHP 8.2 or newer is required.
 
 	The content of this document is related to TYPO3,
 	a GNU/GPL CMS/Framework available from `www.typo3.org <https://www.typo3.org/>`_.
