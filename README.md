@@ -1,63 +1,258 @@
 # pw_teaser for TYPO3 CMS
 
-Create powerful page teasers in TYPO3 CMS with data from page properties and
-its content elements.
-Based on Extbase and Fluid template engine.
+Create powerful, dynamic page teasers in TYPO3 CMS with data from page
+properties and its content elements.
+Built on Extbase and the Fluid template engine.
 
+<div align="center">
+
+[![Product Tour](docs/video-thumbnail.png)](#product-tour)
+
+**[Watch the product tour video](#product-tour)** — 3 minutes covering every feature.
+
+</div>
+
+## Product Tour
+
+> The full narrated product tour walks through all features, template modes,
+> pagination, and PSR-14 extensibility in under 4 minutes.
+
+https://github.com/user-attachments/assets/pw-teaser-product-tour.mp4
+
+*Video generated with [Remotion](https://remotion.dev). Source in [`remotion/`](remotion/).
+Regenerate with `npm run remotion:studio`.*
+
+## Compatibility
+
+| pw_teaser | TYPO3    | PHP        |
+|-----------|----------|------------|
+| 7.x       | 13 – 14  | 8.2 – 8.4 |
+| 6.x       | 11 – 13  | 8.1 – 8.3 |
+| 5.x       | 10 – 11  | 7.4 – 8.1 |
 
 ## Features
 
-- Show lists of pages (like TYPO3's ``menu_pages`` or ``menu_subpages`` content element type)
-- Very detailed options to filter pages
-- Create nested or flat views of your page structures
-- Layout the teasers of your pages like you want, with Fluid templates
-- Template Presets
-- Pagination available
-- Extendable by EventListener, to modify or extend pages result
+- Six page sources — direct children, recursive trees, or hand-picked custom pages
+- Filter by categories with AND, OR, and NOT logic
+- Sort by title, date, manual order, or random
+- **Three template modes** — Preset, File, and Directory — for maximum flexibility
+- Built-in pagination with `SimplePagination` (default) and optional
+  `georgringer/numbered-pagination`
+- Extendable via PSR-14 `ModifyPagesEvent`
+- Fully compatible with TYPO3 13 LTS and TYPO3 14
 
+![Teaser frontend output](docs/screenshots/teaser-frontend-output.png)
 
-## Documentation
+## Installation
 
-This extension provides ReST documentation in the
-[`Documentation/`](Documentation) directory.
+```bash
+composer require t3/pw_teaser
+```
 
-You can see a rendered HTML version on https://docs.typo3.org/p/t3/pw_teaser/main/en-us/
+After installation, include the static TypoScript record **PwTeaser** in your
+site template so the default view configuration and template presets are loaded.
 
+## Template Modes
 
-## Requirements
+pw_teaser offers three ways to control how teasers are rendered. You select the
+mode in the plugin's FlexForm under the **Template** tab.
 
-The current development baseline targets TYPO3 13.4 LTS and PHP 8.2.
+### Mode 1: Preset (recommended)
 
-### CategoryRepository shim
+Editors choose from a dropdown of TypoScript-defined template configurations.
+No path knowledge required — integrators define presets, editors pick them.
+
+![Preset mode](docs/screenshots/template-preset-mode.png)
+
+Three presets ship out of the box:
+
+| Preset key         | Label              | Description                                    |
+|--------------------|--------------------|------------------------------------------------|
+| `default`          | Default            | Full teaser with title, abstract, media        |
+| `headlineAndImage` | Headline & Images  | Compact cards with headline and page media     |
+| `headlineOnly`     | Headline only      | Minimal list showing only page titles          |
+
+**Register custom presets** in your site package's TypoScript:
+
+```typoscript
+plugin.tx_pwteaser {
+    view {
+        presets {
+            myCustomPreset {
+                label = My Custom Teaser Layout
+                templateRootFile = EXT:my_sitepackage/Resources/Private/Templates/PwTeaser/Custom.html
+                partialRootPaths.10 = EXT:my_sitepackage/Resources/Private/Partials/PwTeaser
+                layoutRootPaths.10 = EXT:my_sitepackage/Resources/Private/Layouts/PwTeaser
+            }
+        }
+    }
+}
+```
+
+### Mode 2: File
+
+Point to a single Fluid template file for full design freedom. Ideal for
+one-off designs that don't fit into the preset system.
+
+![File mode](docs/screenshots/template-file-mode.png)
+
+Set `view.templateType = file` and provide the file path:
+
+```typoscript
+plugin.tx_pwteaser {
+    view {
+        templateType = file
+        templateRootFile = EXT:my_sitepackage/Resources/Private/Templates/PwTeaser/CustomTeaser.html
+        partialRootPath = EXT:my_sitepackage/Resources/Private/Partials/PwTeaser
+    }
+}
+```
+
+### Mode 3: Directory
+
+Follow the standard Extbase controller/action convention. You provide a
+directory root and Fluid resolves `Teaser/Index.html` automatically,
+with full support for partials and layouts.
+
+![Directory mode](docs/screenshots/template-directory-mode.png)
+
+```
+EXT:my_sitepackage/Resources/Private/Templates/PwTeaser/
+├── Teaser/
+│   └── Index.html          ← Resolved automatically
+├── Partials/
+│   └── PageCard.html
+└── Layouts/
+    └── Default.html
+```
+
+Best for complex projects with shared partials and layout wrappers.
+
+## Pagination
+
+pw_teaser ships with TYPO3 core's `SimplePagination` enabled by default (previous/next navigation).
+
+For numbered pagination with page numbers and ellipsis, install the optional package:
+
+```bash
+composer require georgringer/numbered-pagination
+```
+
+Then configure via TypoScript:
+
+```typoscript
+plugin.tx_pwteaser.settings.paginationClass = GeorgRinger\NumberedPagination\NumberedPagination
+```
+
+### Routing configuration
+
+Add the following route enhancer to your site configuration for clean pagination URLs:
+
+```yaml
+routeEnhancers:
+  PwTeaser:
+    type: Extbase
+    extension: PwTeaser
+    plugin: Pi1
+    routes:
+      - routePath: '/'
+        _controller: 'Teaser::index'
+      - routePath: '/{label-page}-{page}'
+        _controller: 'Teaser::index'
+        _arguments:
+          page: 'currentPage'
+    defaultController: 'Teaser::index'
+    defaults:
+      page: '0'
+    requirements:
+      page: '\d+'
+    aspects:
+      page:
+        type: StaticRangeMapper
+        start: '1'
+        end: '999'
+      label-page:
+        type: LocaleModifier
+        default: 'page'
+        localeMap:
+          - locale: 'de_.*'
+            value: 'seite'
+```
+
+## PSR-14 Events
+
+The `ModifyPagesEvent` lets you filter, sort, or enrich the page result set
+before rendering:
+
+```php
+use PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent;
+
+#[\TYPO3\CMS\Core\Attribute\AsEventListener]
+final class EnrichPagesListener
+{
+    public function __invoke(ModifyPagesEvent $event): void
+    {
+        $pages = $event->getPages();
+        // filter, sort, or add data...
+        $event->setPages($pages);
+    }
+}
+```
+
+## Upgrading from 6.x to 7.0
+
+Version 7.0 widens TYPO3 support to **13 LTS and 14** and requires **PHP 8.2+**.
+
+Key changes:
+
+- `composer.json` requires `typo3/cms-core: ^13.4 || ^14.0`
+- Fluid 5.0 compatibility (TYPO3 14): strict types in ViewHelpers, no `StandaloneView`/`TemplateView` imports
+- `#[Validate]` attributes use named arguments (`validator: 'NotEmpty'`)
+- Configurable pagination class via `plugin.tx_pwteaser.settings.paginationClass`
+- `georgringer/numbered-pagination` added as a Composer `suggest`
+
+If you use custom Fluid templates, check for underscore-prefixed variable names
+(disallowed in Fluid 5.0) and ensure your ViewHelpers register arguments via
+`initializeArguments()` instead of `render()` method parameters.
+
+## CategoryRepository shim
 
 TYPO3 removed `\TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository` from
 core in version 12. Because pw_teaser needs to look up `Category` objects by UID
 for its category-filter feature, the extension ships a minimal local replacement
 at `Classes/Domain/Repository/CategoryRepository.php`. It extends the standard
-Extbase `Repository` and sets the object type to `Category` — nothing else.
+Extbase `Repository` and sets the object type to `Category`.
 
+## Documentation
+
+Full documentation is available in the [`Documentation/`](Documentation) directory
+and online at https://docs.typo3.org/p/t3/pw_teaser/main/en-us/
+
+## Development
+
+### DDEV environment
+
+pw_teaser ships a standard DDEV configuration for local development with
+PHP 8.2 and MariaDB.
+
+```bash
+ddev start
+ddev install-v13        # creates a TYPO3 13 test instance
+ddev test-unit          # run unit tests
+ddev test-functional    # run functional tests
+```
+
+The TYPO3 test instance is available at `https://v13.pw-teaser.ddev.site/`.
+
+### CI
+
+GitHub Actions runs unit and functional tests across PHP 8.2/8.3/8.4 against
+both TYPO3 13 and TYPO3 14, plus PHPStan static analysis.
 
 ## How to contribute?
 
-Just fork this repository and create a pull request to the **master** branch.
-Please also describe why you've submitted your patch. If you have any questions feel free to contact me.
-
-In case you can't provide code but want to support pw_teaser anyway, here is my
-[PayPal donation link](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2DCCULSKFRZFU).
-
-### DDEV Environment
-
-pw_teaser ships a mostly standard DDEV configuration for TYPO3 extension
-development with PHP 8.2 and an isolated TYPO3 13 instance in a dedicated
-`v13` data volume.
-
-Start the environment with `ddev start` and create the TYPO3 13 test instance
-with `ddev install-v13`. The TYPO3 test instance is then available at
-`https://v13.pw-teaser.ddev.site/`.
-
-Run the automated checks inside DDEV with `ddev test-unit` and
-`ddev test-functional`.
-
+Fork this repository and create a pull request to the **master** branch.
+Please describe why you submitted your patch.
 
 ## Links
 
