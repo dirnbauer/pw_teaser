@@ -279,45 +279,35 @@ function SceneFeatures() {
         fontFamily: FONT,
       }}
     >
-      <div style={{ display: "flex", gap: 48, alignItems: "flex-start" }}>
-        <div style={{ width: 480 }}>
-          <FadeSlideIn>
-            <div style={{ fontSize: 48, fontWeight: 700, color: COLORS.white, marginBottom: 32 }}>
-              Features
-            </div>
-          </FadeSlideIn>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {features.map((f, i) => {
-              const scale = spring({ fps, frame: frame - i * 8, config: { damping: 80 } });
-              return (
-                <div
-                  key={f.title}
-                  style={{
-                    transform: `scale(${Math.min(scale, 1)})`,
-                    opacity: scale,
-                    backgroundColor: COLORS.bgCard,
-                    borderRadius: 12,
-                    padding: 18,
-                    border: `1px solid ${COLORS.primaryDark}44`,
-                  }}
-                >
-                  <div style={{ fontSize: 24, marginBottom: 6 }}>{f.icon}</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: COLORS.primaryLight, marginBottom: 4 }}>
-                    {f.title}
-                  </div>
-                  <div style={{ fontSize: 13, color: COLORS.muted }}>{f.desc}</div>
-                </div>
-              );
-            })}
-          </div>
+      <FadeSlideIn>
+        <div style={{ fontSize: 48, fontWeight: 700, color: COLORS.white, marginBottom: 40 }}>
+          Features
         </div>
+      </FadeSlideIn>
 
-        <FadeSlideIn delay={fps * 1.2} direction="left">
-          <div style={{ flex: 1, borderRadius: 16, overflow: "hidden", border: `2px solid ${COLORS.primaryDark}66`, boxShadow: "0 12px 48px rgba(0,0,0,0.5)" }}>
-            <Img src={staticFile("screenshots/teaser-frontend-output.png")} style={{ width: "100%", display: "block" }} />
-          </div>
-        </FadeSlideIn>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+        {features.map((f, i) => {
+          const scale = spring({ fps, frame: frame - i * 8, config: { damping: 80 } });
+          return (
+            <div
+              key={f.title}
+              style={{
+                transform: `scale(${Math.min(scale, 1)})`,
+                opacity: scale,
+                backgroundColor: COLORS.bgCard,
+                borderRadius: 16,
+                padding: 32,
+                border: `1px solid ${COLORS.primaryDark}44`,
+              }}
+            >
+              <div style={{ fontSize: 36, marginBottom: 12 }}>{f.icon}</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: COLORS.primaryLight, marginBottom: 8 }}>
+                {f.title}
+              </div>
+              <div style={{ fontSize: 16, color: COLORS.muted, lineHeight: 1.5 }}>{f.desc}</div>
+            </div>
+          );
+        })}
       </div>
 
       <SceneAudio sceneId="features" />
@@ -339,40 +329,42 @@ function ScenePresetMode() {
 
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.bg, padding: 80, fontFamily: FONT }}>
-      <div style={{ display: "flex", gap: 48, alignItems: "flex-start" }}>
-        <div style={{ width: 460 }}>
-          <FadeSlideIn>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-              <div style={{ padding: "6px 16px", borderRadius: 8, backgroundColor: COLORS.primary, color: COLORS.white, fontSize: 16, fontWeight: 600 }}>
-                MODE 1
-              </div>
-            </div>
-          </FadeSlideIn>
-          <FadeSlideIn delay={4}>
-            <div style={{ fontSize: 48, fontWeight: 700, color: COLORS.primaryLight, marginBottom: 20 }}>Preset</div>
-          </FadeSlideIn>
-          <FadeSlideIn delay={10}>
-            <div style={{ fontSize: 19, color: COLORS.muted, lineHeight: 1.6, marginBottom: 32 }}>
-              Integrators define named templates in TypoScript. Editors pick from a dropdown.
-            </div>
-          </FadeSlideIn>
+      <FadeSlideIn>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+          <div style={{ padding: "6px 16px", borderRadius: 8, backgroundColor: COLORS.primary, color: COLORS.white, fontSize: 16, fontWeight: 600 }}>
+            MODE 1
+          </div>
+        </div>
+      </FadeSlideIn>
+      <FadeSlideIn delay={4}>
+        <div style={{ fontSize: 52, fontWeight: 700, color: COLORS.primaryLight, marginBottom: 20 }}>Preset</div>
+      </FadeSlideIn>
+      <FadeSlideIn delay={10}>
+        <div style={{ fontSize: 22, color: COLORS.muted, lineHeight: 1.6, marginBottom: 40, maxWidth: 900 }}>
+          Integrators define named templates in TypoScript. Editors pick from a dropdown.
+        </div>
+      </FadeSlideIn>
 
+      <div style={{ display: "flex", gap: 48, alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
           {presets.map((p, i) => {
             const scale = spring({ fps, frame: frame - fps * 0.8 - i * 10, config: { damping: 80 } });
             return (
-              <div key={p.key} style={{ transform: `scale(${Math.min(scale, 1)})`, opacity: scale, display: "flex", gap: 12, alignItems: "center", marginBottom: 14 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primaryLight, flexShrink: 0 }} />
+              <div key={p.key} style={{ transform: `scale(${Math.min(scale, 1)})`, opacity: scale, display: "flex", gap: 16, alignItems: "center", marginBottom: 20 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primaryLight, flexShrink: 0 }} />
                 <div>
-                  <span style={{ fontSize: 17, fontWeight: 600, color: COLORS.white }}>{p.label}</span>
-                  <span style={{ fontSize: 15, color: COLORS.muted, marginLeft: 10 }}>— {p.desc}</span>
+                  <span style={{ fontSize: 22, fontWeight: 600, color: COLORS.white }}>{p.label}</span>
+                  <span style={{ fontSize: 18, color: COLORS.muted, marginLeft: 12 }}>— {p.desc}</span>
                 </div>
               </div>
             );
           })}
+        </div>
 
-          <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.primaryDark}44`, marginTop: 24 }}>
-            <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 10, textTransform: "uppercase" as const, letterSpacing: "0.1em" }}>TypoScript</div>
-            <div style={{ fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: 12, lineHeight: 1.8 }}>
+        <FadeSlideIn delay={fps * 1.0} direction="left">
+          <div style={{ width: 560, backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 32, border: `1px solid ${COLORS.primaryDark}44` }}>
+            <div style={{ fontSize: 13, color: COLORS.muted, marginBottom: 14, textTransform: "uppercase" as const, letterSpacing: "0.1em" }}>TypoScript</div>
+            <div style={{ fontFamily: "'SF Mono', 'Fira Code', monospace", fontSize: 16, lineHeight: 2.0 }}>
               <span style={{ color: COLORS.muted }}>{"plugin"}</span><span style={{ color: COLORS.white }}>{".tx_pwteaser {"}</span><br />
               <span style={{ color: COLORS.muted }}>{"  view"}</span><span style={{ color: COLORS.white }}>{".presets {"}</span><br />
               <span style={{ color: COLORS.accent }}>{"    myPreset"}</span><span style={{ color: COLORS.white }}>{" {"}</span><br />
@@ -382,12 +374,6 @@ function ScenePresetMode() {
               <span style={{ color: COLORS.white }}>{"  }"}</span><br />
               <span style={{ color: COLORS.white }}>{"}"}</span>
             </div>
-          </div>
-        </div>
-
-        <FadeSlideIn delay={fps * 0.5} direction="left">
-          <div style={{ flex: 1, borderRadius: 12, overflow: "hidden", border: `2px solid ${COLORS.primaryDark}66`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
-            <Img src={staticFile("screenshots/template-preset-mode.png")} style={{ width: "100%", display: "block" }} />
           </div>
         </FadeSlideIn>
       </div>
@@ -427,36 +413,31 @@ function SceneFileMode() {
         </div>
       </FadeSlideIn>
 
-      <div style={{ display: "flex", gap: 48 }}>
-        <div style={{ width: 460 }}>
-          {fields.map((f, i) => {
-            const slideY = interpolate(frame - fps * 0.6 - i * 8, [0, fps * 0.4], [40, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-            const opacity = interpolate(frame - fps * 0.6 - i * 8, [0, fps * 0.3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-            return (
-              <div key={f.label} style={{ opacity, transform: `translateY(${slideY}px)`, marginBottom: 20 }}>
-                <div style={{ fontSize: 13, color: f.required ? COLORS.accent : COLORS.muted, marginBottom: 6, fontWeight: 600 }}>
-                  {f.label} {f.required && "(required)"}
-                </div>
-                <div style={{ backgroundColor: COLORS.bgCard, padding: "12px 16px", borderRadius: 10, border: `1px solid ${COLORS.primaryDark}44`, fontFamily: "'SF Mono', monospace", fontSize: 13, color: COLORS.primaryLight }}>
-                  {f.value}
-                </div>
+      <div style={{ display: "flex", gap: 32, flexWrap: "wrap" as const }}>
+        {fields.map((f, i) => {
+          const slideY = interpolate(frame - fps * 0.6 - i * 8, [0, fps * 0.4], [40, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          const opacity = interpolate(frame - fps * 0.6 - i * 8, [0, fps * 0.3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          return (
+            <div key={f.label} style={{ opacity, transform: `translateY(${slideY}px)`, flex: 1, minWidth: 300 }}>
+              <div style={{ fontSize: 15, color: f.required ? COLORS.accent : COLORS.muted, marginBottom: 8, fontWeight: 600 }}>
+                {f.label} {f.required && "(required)"}
               </div>
-            );
-          })}
-          <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.accent}44`, borderTop: `3px solid ${COLORS.accent}`, marginTop: 12 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.accent, marginBottom: 8 }}>When to use</div>
-            <div style={{ fontSize: 14, color: COLORS.muted, lineHeight: 1.7 }}>
-              A single, self-contained template. Ideal for project-specific designs.
+              <div style={{ backgroundColor: COLORS.bgCard, padding: "16px 20px", borderRadius: 12, border: `1px solid ${COLORS.primaryDark}44`, fontFamily: "'SF Mono', monospace", fontSize: 16, color: COLORS.primaryLight }}>
+                {f.value}
+              </div>
             </div>
+          );
+        })}
+      </div>
+
+      <FadeSlideIn delay={fps * 1.5}>
+        <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 28, border: `1px solid ${COLORS.accent}44`, borderTop: `3px solid ${COLORS.accent}`, marginTop: 40, maxWidth: 600 }}>
+          <div style={{ fontSize: 18, fontWeight: 600, color: COLORS.accent, marginBottom: 10 }}>When to use</div>
+          <div style={{ fontSize: 17, color: COLORS.muted, lineHeight: 1.7 }}>
+            A single, self-contained template. Ideal for project-specific designs.
           </div>
         </div>
-
-        <FadeSlideIn delay={fps * 1.2} direction="left">
-          <div style={{ flex: 1, borderRadius: 12, overflow: "hidden", border: `2px solid ${COLORS.accent}66`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
-            <Img src={staticFile("screenshots/template-file-mode.png")} style={{ width: "100%", display: "block" }} />
-          </div>
-        </FadeSlideIn>
-      </div>
+      </FadeSlideIn>
 
       <SceneAudio sceneId="fileMode" />
       <NarrationSubtitle text={NARRATION_SCRIPT.fileMode} sceneDurationFrames={SCENE_DURATIONS.fileMode} />
@@ -497,21 +478,21 @@ function SceneDirectoryMode() {
         </div>
       </FadeSlideIn>
 
-      <div style={{ display: "flex", gap: 48 }}>
-        <div style={{ width: 460 }}>
-          <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 28, border: `1px solid ${COLORS.primaryDark}44`, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 48, alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 36, border: `1px solid ${COLORS.primaryDark}44` }}>
             {tree.map((item, i) => {
               const lineOpacity = interpolate(frame - fps * 0.6 - i * 5, [0, fps * 0.3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
               return (
-                <div key={i} style={{ opacity: lineOpacity, display: "flex", alignItems: "center", gap: 8, paddingLeft: item.indent * 24, marginBottom: 8 }}>
-                  <span style={{ fontSize: 15, color: item.type === "dir" ? COLORS.accent : (item.highlight ? COLORS.success : COLORS.primaryLight) }}>
+                <div key={i} style={{ opacity: lineOpacity, display: "flex", alignItems: "center", gap: 10, paddingLeft: item.indent * 32, marginBottom: 12 }}>
+                  <span style={{ fontSize: 20, color: item.type === "dir" ? COLORS.accent : (item.highlight ? COLORS.success : COLORS.primaryLight) }}>
                     {item.type === "dir" ? "📁" : "📄"}
                   </span>
-                  <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 16, color: item.highlight ? COLORS.success : COLORS.white, fontWeight: item.highlight ? 700 : 400 }}>
+                  <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 22, color: item.highlight ? COLORS.success : COLORS.white, fontWeight: item.highlight ? 700 : 400 }}>
                     {item.name}
                   </span>
                   {item.highlight && (
-                    <span style={{ fontSize: 12, color: COLORS.success, marginLeft: 6, padding: "2px 8px", borderRadius: 6, border: `1px solid ${COLORS.success}44`, backgroundColor: `${COLORS.success}11` }}>
+                    <span style={{ fontSize: 14, color: COLORS.success, marginLeft: 8, padding: "4px 12px", borderRadius: 6, border: `1px solid ${COLORS.success}44`, backgroundColor: `${COLORS.success}11` }}>
                       auto-resolved
                     </span>
                   )}
@@ -519,17 +500,14 @@ function SceneDirectoryMode() {
               );
             })}
           </div>
-          <div style={{ backgroundColor: COLORS.bgCard, borderRadius: 12, padding: 20, border: `1px solid ${COLORS.success}44`, borderTop: `3px solid ${COLORS.success}` }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.success, marginBottom: 8 }}>Best for</div>
-            <div style={{ fontSize: 14, color: COLORS.muted, lineHeight: 1.7 }}>
-              Complex projects with shared partials and the standard Extbase override hierarchy.
-            </div>
-          </div>
         </div>
 
         <FadeSlideIn delay={fps * 1.5} direction="left">
-          <div style={{ flex: 1, borderRadius: 12, overflow: "hidden", border: `2px solid ${COLORS.success}66`, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
-            <Img src={staticFile("screenshots/template-directory-mode.png")} style={{ width: "100%", display: "block" }} />
+          <div style={{ width: 400, backgroundColor: COLORS.bgCard, borderRadius: 16, padding: 28, border: `1px solid ${COLORS.success}44`, borderTop: `3px solid ${COLORS.success}` }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: COLORS.success, marginBottom: 12 }}>Best for</div>
+            <div style={{ fontSize: 17, color: COLORS.muted, lineHeight: 1.7 }}>
+              Complex projects with shared partials and the standard Extbase override hierarchy.
+            </div>
           </div>
         </FadeSlideIn>
       </div>

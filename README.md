@@ -62,8 +62,6 @@ mode in the plugin's FlexForm under the **Template** tab.
 Editors choose from a dropdown of TypoScript-defined template configurations.
 No path knowledge required — integrators define presets, editors pick them.
 
-![Preset mode](docs/screenshots/template-preset-mode.png)
-
 Three presets ship out of the box:
 
 | Preset key         | Label              | Description                                    |
@@ -94,8 +92,6 @@ plugin.tx_pwteaser {
 Point to a single Fluid template file for full design freedom. Ideal for
 one-off designs that don't fit into the preset system.
 
-![File mode](docs/screenshots/template-file-mode.png)
-
 Set `view.templateType = file` and provide the file path:
 
 ```typoscript
@@ -113,8 +109,6 @@ plugin.tx_pwteaser {
 Follow the standard Extbase controller/action convention. You provide a
 directory root and Fluid resolves `Teaser/Index.html` automatically,
 with full support for partials and layouts.
-
-![Directory mode](docs/screenshots/template-directory-mode.png)
 
 ```
 EXT:my_sitepackage/Resources/Private/Templates/PwTeaser/
