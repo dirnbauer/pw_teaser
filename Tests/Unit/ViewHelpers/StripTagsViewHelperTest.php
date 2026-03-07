@@ -16,8 +16,10 @@ final class StripTagsViewHelperTest extends TestCase
     {
         $subject = new StripTagsViewHelper();
         $subject->setRenderingContext(new RenderingContext());
+        $subject->initializeArguments();
+        $subject->setArguments(['string' => '<p>Hello <strong>World</strong></p>']);
 
-        self::assertSame('Hello World', $subject->render('<p>Hello <strong>World</strong></p>'));
+        self::assertSame('Hello World', $subject->render());
     }
 
     #[Test]
@@ -25,6 +27,8 @@ final class StripTagsViewHelperTest extends TestCase
     {
         $subject = new StripTagsViewHelper();
         $subject->setRenderingContext(new RenderingContext());
+        $subject->initializeArguments();
+        $subject->setArguments(['string' => null]);
         $subject->setRenderChildrenClosure(static fn(): string => '<div>&amp; foo</div>');
 
         self::assertSame('& foo', $subject->render());
@@ -35,6 +39,8 @@ final class StripTagsViewHelperTest extends TestCase
     {
         $subject = new StripTagsViewHelper();
         $subject->setRenderingContext(new RenderingContext());
+        $subject->initializeArguments();
+        $subject->setArguments(['string' => null]);
         $subject->setRenderChildrenClosure(static fn(): string => '');
 
         self::assertSame('', $subject->render());
