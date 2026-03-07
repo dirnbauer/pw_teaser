@@ -56,19 +56,17 @@ final class GetContentViewHelper extends AbstractViewHelper
         foreach ($contents as $content) {
             $contentCtype = $content->getCtype();
             $contentColPos = $content->getColPos();
+            $matchesType = $this->arguments['cType'] === null || $contentCtype === $this->arguments['cType'];
+            $matchesColumn = $contentColPos === $this->arguments['colPos'];
 
-            if ($contentColPos === $this->arguments['colPos']) {
-                if ($this->arguments['cType'] === null || $contentCtype === $this->arguments['cType']) {
-                    if ($this->arguments['index'] === null) {
-                        $variableProvider->add($this->arguments['as'], $content);
-                        $asHasBeenSet = true;
-                    } else {
-                        if ($indexCount === $this->arguments['index']) {
-                            $variableProvider->add($this->arguments['as'], $content);
-                            $asHasBeenSet = true;
-                            $breakNow = true;
-                        }
-                    }
+            if ($matchesColumn && $matchesType) {
+                if ($this->arguments['index'] === null) {
+                    $variableProvider->add($this->arguments['as'], $content);
+                    $asHasBeenSet = true;
+                } elseif ($indexCount === $this->arguments['index']) {
+                    $variableProvider->add($this->arguments['as'], $content);
+                    $asHasBeenSet = true;
+                    $breakNow = true;
                 }
             }
 
@@ -81,7 +79,7 @@ final class GetContentViewHelper extends AbstractViewHelper
             if ($breakNow) {
                 break;
             }
-            if ($this->arguments['cType'] === null || $contentCtype === $this->arguments['cType']) {
+            if ($matchesColumn && $matchesType) {
                 $indexCount++;
             }
         }
