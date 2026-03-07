@@ -7,14 +7,36 @@ namespace PwTeaserTeam\PwTeaser\Tests\Unit\ViewHelpers;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PwTeaserTeam\PwTeaser\ViewHelpers\StripTagsViewHelper;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 
 final class StripTagsViewHelperTest extends TestCase
 {
     #[Test]
-    public function renderStripsHtmlFromProvidedString(): void
+    public function renderStripsHtmlFromArgument(): void
     {
         $subject = new StripTagsViewHelper();
+        $subject->setRenderingContext(new RenderingContext());
 
-        self::assertSame('Hello World', trim($subject->render('<p>Hello <strong>World</strong></p>')));
+        self::assertSame('Hello World', $subject->render('<p>Hello <strong>World</strong></p>'));
+    }
+
+    #[Test]
+    public function renderStripsHtmlFromChildContent(): void
+    {
+        $subject = new StripTagsViewHelper();
+        $subject->setRenderingContext(new RenderingContext());
+        $subject->setRenderChildrenClosure(static fn(): string => '<div>&amp; foo</div>');
+
+        self::assertSame('& foo', $subject->render());
+    }
+
+    #[Test]
+    public function renderReturnsEmptyStringForNullChildContent(): void
+    {
+        $subject = new StripTagsViewHelper();
+        $subject->setRenderingContext(new RenderingContext());
+        $subject->setRenderChildrenClosure(static fn(): string => '');
+
+        self::assertSame('', $subject->render());
     }
 }
