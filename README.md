@@ -17,7 +17,7 @@ Built on Extbase and the Fluid template engine.
 > The full narrated product tour walks through all features, template modes,
 > pagination, and PSR-14 extensibility in under 4 minutes.
 
-https://github.com/user-attachments/assets/pw-teaser-product-tour.mp4
+https://github.com/dirnbauer/pw_teaser/releases/download/v7.0.0/pw-teaser-product-tour.mp4
 
 *Video generated with [Remotion](https://remotion.dev). Source in [`remotion/`](remotion/).
 Regenerate with `npm run remotion:studio`.*
