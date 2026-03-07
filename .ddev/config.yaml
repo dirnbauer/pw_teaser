@@ -1,12 +1,13 @@
 name: pw-teaser
 type: php
 docroot: ""
-php_version: "8.2"
+php_version: "8.3"
 composer_version: "2"
 webserver_type: apache-fpm
 xdebug_enabled: false
 additional_hostnames:
     - v13.pw-teaser
+    - v14.pw-teaser
 use_dns_when_possible: true
 web_environment:
     - EXTENSION_KEY=pw_teaser
