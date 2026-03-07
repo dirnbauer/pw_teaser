@@ -342,14 +342,8 @@ class PageRepository extends Repository
                     true
                 );
 
-                if ((boolean)$GLOBALS['TYPO3_CONF_VARS']['FE']['hidePagesIfNotTranslatedByDefault'] === false) {
-                    if (!$requiresTranslation || $translationExists) {
-                        $displayedPages[] = $page;
-                    }
-                } else {
-                    if (($requiresTranslation && !$translationExists) || $translationExists) {
-                        $displayedPages[] = $page;
-                    }
+                if (!$requiresTranslation || $translationExists) {
+                    $displayedPages[] = $page;
                 }
             }
         }
