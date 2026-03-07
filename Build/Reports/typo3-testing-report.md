@@ -1,35 +1,48 @@
-# TYPO3 testing report
+# TYPO3 Testing Report (re-audit)
 
-## Current state
+## Current Test Infrastructure
 
-- No `Tests/` directory exists yet.
-- No PHPUnit configuration exists.
-- No TYPO3 testing framework dependency exists.
-- No CI workflow exists for automated verification.
+- **19 unit tests** covering Page, Content, TeaserController, Settings,
+  ItemsProcFunc, StripTagsViewHelper, GetContentViewHelper, ModifyPagesEvent
+- **2 functional tests** covering PageRepository recursive collection
+  and deleted-page filtering
+- **PHPStan level 5** with zero errors
+- **CI matrix:** PHP 8.2, 8.3, 8.4 for both unit and functional tests
+- **DDEV commands:** `ddev test-unit`, `ddev test-functional`
 
-## Minimum viable TYPO3 13 baseline
+## Findings
 
-### Unit tests
+### MEDIUM: No test for RemoveWhitespacesViewHelper
 
-- Add a fast unit test for `StripTagsViewHelper`.
-- Add a small event-focused unit test for `ModifyPagesEvent`.
+The ViewHelper is small but now includes a null-safety cast that should
+be covered.
 
-### Functional tests
+**Action:** Add unit test.
 
-- Add a first functional test around upgraded repository behavior in
-  `PageRepository`, focusing on translation detection or recursive page lookup.
+### LOW: No test for PwTeaserCTypeMigration
 
-### Tooling
+The upgrade wizard class is thin (delegates to base class) and would
+require a functional test with database fixtures. Low value given the
+base class is tested by TYPO3 core.
 
-- Add TYPO3 13-compatible dev dependencies for PHPUnit and the TYPO3 testing
-  framework.
-- Add PHPUnit config files for unit and functional suites.
-- Add a small GitHub Actions workflow that runs unit and functional tests.
+**Action:** Skip — base class coverage is sufficient.
 
-## Recommended changes
+### OK: Test coverage of upgraded behavior
 
-1. Create `Tests/Unit/` and `Tests/Functional/`.
-2. Add `Tests/UnitTests.xml` and `Tests/FunctionalTests.xml`.
-3. Add TYPO3 13-compatible dev dependencies with Composer.
-4. Add one functional fixture dataset for page translation/recursion behavior.
-5. Add a minimal CI workflow for the new suites.
+Tests specifically cover:
+- Page model null-keyword handling (TYPO3 13 null-safety)
+- TeaserController default settings when FlexForm is empty
+- GetContentViewHelper index counting with colPos+cType filter (bug fix)
+- PageRepository recursive collection with language filtering
+- Settings utility TypoScript fallback behavior
+- ModifyPagesEvent page replacement
+
+## Status
+
+| Area | Status |
+|------|--------|
+| Unit tests | 19 passing |
+| Functional tests | 2 passing |
+| PHPStan | Level 5, zero errors |
+| CI pipeline | PHP 8.2–8.4 matrix |
+| RemoveWhitespacesViewHelper | NEEDS TEST |
