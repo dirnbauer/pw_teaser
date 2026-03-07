@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PwTeaserTeam\PwTeaser\Domain\Repository;
 
+use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
@@ -19,6 +20,8 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
 
 /**
  * Repository for Content model
+ *
+ * @extends Repository<Content>
  *
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
@@ -43,7 +46,7 @@ final class ContentRepository extends Repository
      * overwritten method exists, to perform sorting
      *
      * @param integer $pid Pid to search for
-     * @return QueryResultInterface All found objects, will be
+     * @return QueryResultInterface<int, Content> All found objects, will be
      *         empty if there are no objects
      */
     public function findByPid(int $pid): QueryResultInterface
@@ -63,8 +66,7 @@ final class ContentRepository extends Repository
      * given pages
      *
      * @param array<Page> $pages Pages to get content elements
-     * @param array<Page> $pages
-     * @return QueryResultInterface All found objects, will be
+     * @return QueryResultInterface<int, Content> All found objects, will be
      *         empty if there are no objects
      */
     public function findByPages(array $pages): QueryResultInterface

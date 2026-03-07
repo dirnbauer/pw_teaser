@@ -24,6 +24,8 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
 /**
  * Repository for Page model
  *
+ * @extends Repository<Page>
+ *
  * @copyright Copyright belongs to the respective authors
  * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
@@ -42,6 +44,7 @@ final class PageRepository extends Repository
 
     protected string $orderDirection = QueryInterface::ORDER_ASCENDING;
 
+    /** @var QueryInterface<Page>|null */
     protected ?QueryInterface $query = null;
 
     /**
@@ -66,10 +69,11 @@ final class PageRepository extends Repository
      * Returns all objects of this repository which match the pid
      *
      * @param integer $pid the pid to search for
-     * @return array All found pages, will be empty if the result is empty
+     * @return array<int, Page> All found pages, will be empty if the result is empty
      */
     public function findByPid(int $pid): array
     {
+        assert($this->query !== null);
         $translatedPid = $this->translatePids([$pid]);
 
         $this->addQueryConstraint($this->query->equals('pid', (int)reset($translatedPid)));
@@ -83,7 +87,7 @@ final class PageRepository extends Repository
      * @param integer $pid the pid to search for recursively
      * @param integer $recursionDepthFrom Start of recursion depth
      * @param integer $recursionDepth Depth of recursion
-     * @return array All found pages, will be empty if the result is empty
+     * @return array<int, Page> All found pages, will be empty if the result is empty
      */
     public function findByPidRecursively(int $pid, int $recursionDepthFrom, int $recursionDepth): array
     {
@@ -95,10 +99,11 @@ final class PageRepository extends Repository
      *
      * @param string $pidlist comma seperated list of pids to search for
      * @param boolean $orderByPlugin setting of ordering by plugin
-     * @return array All found pages, will be empty if the result is empty
+     * @return array<int, Page> All found pages, will be empty if the result is empty
      */
     public function findByPidList(string $pidlist, bool $orderByPlugin = false): array
     {
+        assert($this->query !== null);
         $pagePids = GeneralUtility::intExplode(',', $pidlist, true);
 
         // early return when list is empty to prevent sql exception
@@ -125,9 +130,9 @@ final class PageRepository extends Repository
     /**
      * Creates array of result items, with the order of given pagePids
      *
-     * @param array $pagePids pagePids to order for
-     * @param array $results results to reorder
-     * @return array results ordered by plugin
+     * @param array<int> $pagePids pagePids to order for
+     * @param array<int, Page> $results results to reorder
+     * @return array<int, Page> results ordered by plugin
      */
     protected function orderByPlugin(array $pagePids, array $results): array
     {
@@ -147,10 +152,11 @@ final class PageRepository extends Repository
      * Returns all objects of this repository which are in the pidlist
      *
      * @param string $pidlist comma seperated list of pids to search for
-     * @return array All found pages, will be empty if the result is empty
+     * @return array<int, Page> All found pages, will be empty if the result is empty
      */
     public function findChildrenByPidList(string $pidlist): array
     {
+        assert($this->query !== null);
         $pagePids = GeneralUtility::intExplode(',', $pidlist, true);
 
         // early return when list is empty to prevent sql exception
@@ -169,10 +175,11 @@ final class PageRepository extends Repository
      * @param string $pidlist comma seperated list of pids to search for
      * @param integer $recursionDepthFrom Start level for recursion
      * @param integer $recursionDepth Depth of recursion
-     * @return array All found pages, will be empty if the result is empty
+     * @return array<int, Page> All found pages, will be empty if the result is empty
      */
     public function findChildrenRecursivelyByPidList(string $pidlist, int $recursionDepthFrom, int $recursionDepth): array
     {
+        assert($this->query !== null);
         $pagePids = $this->getRecursivePageList($pidlist, $recursionDepthFrom, $recursionDepth);
         $translatedPids = $this->translatePids($pagePids);
         if (!empty($translatedPids)) {
@@ -226,7 +233,8 @@ final class PageRepository extends Repository
                 ->executeQuery()
                 ->fetchAssociative();
             if ($translatedRow) {
-                $translatedPidList[$pid] = $translatedRow['uid'];
+                $uid = $translatedRow['uid'];
+                $translatedPidList[$pid] = is_int($uid) ? $uid : (is_string($uid) || is_float($uid) ? (int) $uid : $pid);
             } else {
                 $translatedPidList[$pid] = $pid;
             }
@@ -256,6 +264,7 @@ final class PageRepository extends Repository
      */
     public function addCategoryConstraint(array $categories, bool $isAnd = true, bool $isNot = false): void
     {
+        assert($this->query !== null);
         if ($isAnd === true && $isNot === false) {
             $this->queryConstraints[] = $this->query->logicalAnd(...$this->buildCategoryConstraint($categories));
         }
@@ -286,6 +295,7 @@ final class PageRepository extends Repository
      */
     protected function buildCategoryConstraint(array $categories): array
     {
+        assert($this->query !== null);
         $constraints = [];
         foreach ($categories as $category) {
             $constraints[] = $this->query->contains('categories', $category);
@@ -300,6 +310,7 @@ final class PageRepository extends Repository
      */
     protected function executeQuery(): array
     {
+        assert($this->query !== null);
         $query = $this->query;
         $query->matching($query->logicalAnd(...$this->queryConstraints));
         $this->handleOrdering($query);
@@ -314,8 +325,8 @@ final class PageRepository extends Repository
     /**
      * Handles page localization
      *
-     * @param QueryResultInterface $pages
-     * @return array<Page>
+     * @param QueryResultInterface<int, Page> $pages
+     * @return array<int, Page>
      */
     protected function handlePageLocalization(QueryResultInterface $pages): array
     {
@@ -332,7 +343,9 @@ final class PageRepository extends Repository
                     $displayedPages[] = $page;
                 }
             } else {
-                $translationExists = $this->pageHasTranslation($page->getUid(), $currentLangUid);
+                $pageUid = $page->getUid();
+                $langUid = is_int($currentLangUid) ? $currentLangUid : (is_string($currentLangUid) || is_float($currentLangUid) ? (int) $currentLangUid : 0);
+                $translationExists = $pageUid !== null && $this->pageHasTranslation($pageUid, $langUid);
                 $requiresTranslation = in_array(
                     $page->getL18nConfiguration(),
                     [
@@ -356,7 +369,7 @@ final class PageRepository extends Repository
      * @param string $pidlist List of pageUids to get subpages of. May contain a single uid.
      * @param integer $recursionDepthFrom Start of recursion depth
      * @param integer $recursionDepth Depth of recursion
-     * @return array Found subpages, recursivley
+     * @return array<int> Found subpages, recursivley
      */
     protected function getRecursivePageList(string $pidlist, int $recursionDepthFrom, int $recursionDepth): array
     {
@@ -408,6 +421,7 @@ final class PageRepository extends Repository
      */
     public function setLimit(int $limit): void
     {
+        assert($this->query !== null);
         $this->query->setLimit($limit);
     }
 
@@ -420,6 +434,7 @@ final class PageRepository extends Repository
      */
     public function setShowNavHiddenItems(bool $showNavHiddenItems): void
     {
+        assert($this->query !== null);
         if ($showNavHiddenItems === true) {
             $this->addQueryConstraint($this->query->in('nav_hide', [0, 1]));
         } else {
@@ -430,11 +445,12 @@ final class PageRepository extends Repository
     /**
      * Sets doktypes to filter for
      *
-     * @param array $dokTypesToFilterFor doktypes as array, may be empty
+     * @param array<int> $dokTypesToFilterFor doktypes as array, may be empty
      * @return void
      */
     public function setFilteredDokType(array $dokTypesToFilterFor): void
     {
+        assert($this->query !== null);
         if (count($dokTypesToFilterFor) > 0) {
             $this->addQueryConstraint($this->query->in('doktype', $dokTypesToFilterFor));
         }
@@ -448,14 +464,16 @@ final class PageRepository extends Repository
      */
     public function setIgnoreOfUid(int $currentPageUid): void
     {
-        $this->addQueryConstraint($this->query->logicalNot($this->query->equals('uid', $currentPageUid)));
-        $this->addQueryConstraint($this->query->logicalNot($this->query->equals('l10n_parent', $currentPageUid)));
+        assert($this->query !== null);
+        $query = $this->query;
+        $this->addQueryConstraint($query->logicalNot($query->equals('uid', $currentPageUid)));
+        $this->addQueryConstraint($query->logicalNot($query->equals('l10n_parent', $currentPageUid)));
     }
 
     /**
      * Adds handle of ordering to query object
      *
-     * @param QueryInterface $query
+     * @param QueryInterface<Page> $query
      * @return void
      */
     protected function handleOrdering(QueryInterface $query): void
@@ -572,6 +590,8 @@ final class PageRepository extends Repository
             ->executeQuery()
             ->fetchFirstColumn();
 
-        return array_map(intval(...), $childPageIds);
+        return array_map(static function (mixed $v): int {
+            return is_int($v) ? $v : (is_string($v) || is_float($v) ? (int) $v : 0);
+        }, $childPageIds);
     }
 }
