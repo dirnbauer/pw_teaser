@@ -32,13 +32,13 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
 final class PageRepository extends Repository
 {
     /** Category Mode: Or */
-    const CATEGORY_MODE_OR = 1;
+    public const CATEGORY_MODE_OR = 1;
     /** Category Mode: And */
-    const CATEGORY_MODE_AND = 2;
+    public const CATEGORY_MODE_AND = 2;
     /** Category Mode: Or Not */
-    const CATEGORY_MODE_OR_NOT = 3;
+    public const CATEGORY_MODE_OR_NOT = 3;
     /** Category Mode: And Not */
-    const CATEGORY_MODE_AND_NOT = 4;
+    public const CATEGORY_MODE_AND_NOT = 4;
 
     protected string $orderBy = 'uid';
 

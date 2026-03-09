@@ -2,8 +2,19 @@
 	"name": "t3/pw_teaser",
 	"type": "typo3-cms-extension",
 	"description": "Create powerful, dynamic page teasers with data from page properties and its content elements. Based on Extbase and Fluid Template Engine.",
-	"homepage": "http://typo3.org",
+	"homepage": "https://typo3.org",
 	"license": "GPL-2.0-or-later",
+	"keywords": [
+		"typo3",
+		"typo3-extension",
+		"teaser",
+		"extbase",
+		"fluid"
+	],
+	"support": {
+		"issues": "https://github.com/a-r-m-i-n/pw_teaser/issues",
+		"source": "https://github.com/a-r-m-i-n/pw_teaser"
+	},
 	"require": {
 		"php": "^8.2",
 		"typo3/cms-core": "^13.4 || ^14.0",

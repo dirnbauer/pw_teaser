@@ -30,10 +30,10 @@ use TYPO3\CMS\Core\Utility\RootlineUtility;
  */
 class Page extends AbstractEntity
 {
-    const L18N_SHOW_ALWAYS = 0;
-    const L18N_HIDE_DEFAULT_LANGUAGE = 1;
-    const L18N_HIDE_IF_NO_TRANSLATION_EXISTS = 2;
-    const L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS = 3;
+    public const L18N_SHOW_ALWAYS = 0;
+    public const L18N_HIDE_DEFAULT_LANGUAGE = 1;
+    public const L18N_HIDE_IF_NO_TRANSLATION_EXISTS = 2;
+    public const L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS = 3;
 
     protected int $doktype = 0;
 
