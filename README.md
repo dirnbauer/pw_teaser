@@ -222,12 +222,60 @@ Extbase `Repository` and sets the object type to `Category`.
 Full documentation is available in the [`Documentation/`](Documentation) directory
 and online at https://docs.typo3.org/p/t3/pw_teaser/main/en-us/
 
+## Testing
+
+pw_teaser maintains a comprehensive test suite with **73 unit tests** and
+**14 functional tests** (87 total), providing thorough coverage of all
+extension components.
+
+### Test coverage
+
+| Component               | Type       | Tests | What is covered                                                    |
+|-------------------------|------------|------:|---------------------------------------------------------------------|
+| Page model              | Unit       |    20 | Properties, custom attributes, isNew logic, collections, L18N constants |
+| Content model           | Unit       |    10 | Properties, ObjectStorage collections, category operations          |
+| ModifyPagesEvent        | Unit       |     5 | PSR-14 contract, filtering, enrichment patterns                     |
+| TeaserController        | Unit       |    16 | Setting helpers, special orderings, view path resolution, nesting   |
+| ItemsProcFunc           | Unit       |     6 | DI fallback, FlexForm presets, edge cases                           |
+| Settings utility        | Unit       |     4 | TypoScript rendering, fallbacks, nested arrays                      |
+| GetContentViewHelper    | Unit       |     3 | Null handling, type/colPos filtering, index limiting                |
+| RemoveWhitespacesVH     | Unit       |     2 | Whitespace removal, null children                                   |
+| StripTagsViewHelper     | Unit       |     3 | Tag stripping from argument and child content                       |
+| PageRepository          | Functional |    14 | findByPid, findByPidList, recursive queries, ordering, nav_hide     |
+
+### Running tests locally
+
+```bash
+ddev start
+
+# Unit tests
+ddev exec vendor/bin/phpunit -c Tests/UnitTests.xml
+
+# Functional tests (requires DB credentials)
+ddev exec bash -c 'typo3DatabaseName=db typo3DatabaseHost=db \
+  typo3DatabaseUsername=db typo3DatabasePassword=db \
+  typo3DatabaseDriver=mysqli \
+  vendor/bin/phpunit -c Tests/FunctionalTests.xml'
+
+# PHPStan (level 9)
+ddev exec php vendor/bin/phpstan analyse -c phpstan.neon
+```
+
+### CI
+
+GitHub Actions runs the full test matrix on every push and pull request:
+
+- **Unit tests**: PHP 8.2/8.3/8.4 against TYPO3 13.4 and 14.0
+- **Functional tests**: PHP 8.2 + TYPO3 13.4, PHP 8.3 + TYPO3 14.0
+- **PHPStan**: Level 9 static analysis
+- **Composer validate**: Strict validation without lock file
+
 ## Development
 
 ### DDEV environment
 
 pw_teaser ships a standard DDEV configuration for local development with
-PHP 8.2 and MariaDB.
+PHP 8.3 and MariaDB.
 
 ```bash
 ddev start
@@ -237,11 +285,6 @@ ddev test-functional    # run functional tests
 ```
 
 The TYPO3 test instance is available at `https://v13.pw-teaser.ddev.site/`.
-
-### CI
-
-GitHub Actions runs unit and functional tests across PHP 8.2/8.3/8.4 against
-both TYPO3 13 and TYPO3 14, plus PHPStan static analysis.
 
 ## How to contribute?
 
