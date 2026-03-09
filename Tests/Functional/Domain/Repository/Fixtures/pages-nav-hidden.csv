@@ -1,0 +1,5 @@
+"pages"
+,"uid","pid","title","slug","doktype","hidden","deleted","nav_hide","sys_language_uid","l10n_parent","l18n_cfg","sorting"
+,100,0,"Nav Test Root","/nav-root",1,0,0,0,0,0,0,256
+,101,100,"Visible Page","/visible",1,0,0,0,0,0,0,256
+,102,100,"Nav Hidden Page","/nav-hidden",1,0,0,1,0,0,0,512
