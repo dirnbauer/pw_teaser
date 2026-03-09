@@ -239,6 +239,82 @@ final class TeaserControllerTest extends TestCase
     }
 
     #[Test]
+    public function resolveCurrentPageUidPrefersFrontendPageInformationAttribute(): void
+    {
+        $subject = $this->createController();
+        $pageInformation = new class {
+            public function getId(): int
+            {
+                return 123;
+            }
+        };
+        $routing = new class {
+            public function getPageId(): int
+            {
+                return 999;
+            }
+        };
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getAttribute')->willReturnCallback(
+            static function (string $name) use ($pageInformation, $routing): mixed {
+                return match ($name) {
+                    'frontend.page.information' => $pageInformation,
+                    'routing' => $routing,
+                    default => null,
+                };
+            }
+        );
+        $this->writeProperty($subject, 'request', $request);
+
+        $method = new ReflectionMethod($subject, 'resolveCurrentPageUid');
+        $method->setAccessible(true);
+
+        self::assertSame(123, $method->invoke($subject));
+    }
+
+    #[Test]
+    public function resolveCurrentPageUidFallsBackToRoutingAttribute(): void
+    {
+        $subject = $this->createController();
+        $routing = new class {
+            public function getPageId(): int
+            {
+                return 456;
+            }
+        };
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getAttribute')->willReturnCallback(
+            static function (string $name) use ($routing): mixed {
+                return match ($name) {
+                    'frontend.page.information' => null,
+                    'routing' => $routing,
+                    default => null,
+                };
+            }
+        );
+        $this->writeProperty($subject, 'request', $request);
+
+        $method = new ReflectionMethod($subject, 'resolveCurrentPageUid');
+        $method->setAccessible(true);
+
+        self::assertSame(456, $method->invoke($subject));
+    }
+
+    #[Test]
+    public function resolveCurrentPageUidReturnsZeroWhenNoAttributesExist(): void
+    {
+        $subject = $this->createController();
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getAttribute')->willReturn(null);
+        $this->writeProperty($subject, 'request', $request);
+
+        $method = new ReflectionMethod($subject, 'resolveCurrentPageUid');
+        $method->setAccessible(true);
+
+        self::assertSame(0, $method->invoke($subject));
+    }
+
+    #[Test]
     public function resolveViewPathsReturnsPluralPaths(): void
     {
         $subject = $this->createController();
