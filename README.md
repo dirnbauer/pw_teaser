@@ -201,7 +201,8 @@ Key changes:
 
 - `composer.json` requires `typo3/cms-core: ^13.4 || ^14.0`
 - Fluid 5.0 compatibility (TYPO3 14): strict types in ViewHelpers, no `StandaloneView`/`TemplateView` imports
-- `#[Validate]` attributes use named arguments (`validator: 'NotEmpty'`)
+- `#[Validate]` attributes use cross-version compatible array syntax
+  (`['validator' => 'NotEmpty']`) for TYPO3 13/14
 - Configurable pagination class via `plugin.tx_pwteaser.settings.paginationClass`
 - `georgringer/numbered-pagination` added as a Composer `suggest`
 

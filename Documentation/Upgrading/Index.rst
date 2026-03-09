@@ -21,8 +21,8 @@ Key changes:
 - ``ext_emconf.php`` declares ``typo3: 13.4.0-14.99.99``
 - Fluid 5.0 compatibility for TYPO3 14: strict types in ViewHelpers,
   no ``StandaloneView``/``TemplateView`` imports
-- ``#[Validate]`` attributes now use named arguments
-  (``validator: 'NotEmpty'`` instead of ``['validator' => 'NotEmpty']``)
+- ``#[Validate]`` attributes use TYPO3 13/14-compatible array syntax
+  (``['validator' => 'NotEmpty']``)
 - Configurable pagination class via
   ``plugin.tx_pwteaser.settings.paginationClass``
 - ``georgringer/numbered-pagination`` added as a Composer ``suggest``
