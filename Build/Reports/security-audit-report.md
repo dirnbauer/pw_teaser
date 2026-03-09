@@ -1,54 +1,43 @@
-# OWASP Security Audit Report (re-audit)
+# OWASP Security Audit Report (2026-03-06)
 
 ## Methodology
 
-Checked against OWASP Top 10 for PHP/web applications: injection, XSS,
-CSRF, broken access control, security misconfiguration, insecure parsing,
-and secrets exposure.
+Reviewed against OWASP Top 10 priorities for PHP/TYPO3 extension code:
+injection, XSS, CSRF, trust boundaries, vulnerable dependencies, and secure
+operational defaults.
 
 ## Findings
 
-### OK: A1 Injection
+### LOW: Dependency update hygiene can be improved (A06)
 
-All database access uses TYPO3 QueryBuilder with `createNamedParameter()`.
-No string concatenation in SQL. `GeneralUtility::intExplode()` and
-`GeneralUtility::trimExplode()` sanitize user-facing comma-separated
-inputs before use.
+The repository currently has no automated dependency update workflow
+(`dependabot.yml` missing). This increases the chance of delayed security
+updates in development dependencies and CI tooling.
 
-### OK: A3 Injection / XSS
+**Action:** add a weekly GitHub Dependabot config for Composer and npm.
 
-Fluid templates use auto-escaping by default. The only ViewHelper with
-`$escapeOutput = false` is `GetContentViewHelper`, which delegates to
-child rendering (controlled by the template author, not user input).
-`StripTagsViewHelper` explicitly strips HTML. No `innerHTML` or
-`f:format.raw` in extension templates.
+### OK: Injection resistance (A03)
 
-### OK: A5 Security Misconfiguration
+- DB access uses QueryBuilder + named parameters.
+- No raw SQL interpolation found in extension runtime code.
 
-Extension does not ship production configuration. `SYS/trustedHostsPattern`
-is set to `.*` only in the local DDEV install script, not in the extension.
+### OK: XSS posture (A03)
 
-### OK: A7 Cross-Site Request Forgery
+- Fluid auto-escaping is used by default.
+- No extension templates rely on `f:format.raw`.
+- `GetContentViewHelper` is now guarded against invalid entries.
 
-Read-only `indexAction` with no form handling or state mutation.
+### OK: CSRF and state mutation surface (A01/A07)
 
-### OK: A8 Insecure Deserialization
+- Frontend controller action is read-only (`indexAction`).
+- No extension-owned mutating endpoints or backend form handlers in scope.
 
-No `unserialize()`, `eval()`, `exec()`, `shell_exec()`, `system()`, or
-`passthru()` calls in extension code.
+### OK: Unsafe parsing / code execution (A08)
 
-### OK: A9 Components with Known Vulnerabilities
+- No `eval`, `exec`, `shell_exec`, `passthru`, or `unserialize` usage in
+  extension runtime code.
 
-`composer.json` constrains to `typo3/cms-core: ^13.4` which receives
-active security updates. Dev dependencies (`phpunit`, `rector`, etc.)
-are not shipped in production.
+## Suggested Remediation
 
-### INFORMATIONAL: Magic `__call` methods
-
-`Page::__call()` and `Content::__call()` fetch raw database rows on
-cache miss. This is an accepted design pattern documented as `@deprecated`.
-No user-controllable input reaches method names in normal Fluid rendering.
-
-## Status
-
-No new actionable issues. No code changes required.
+1. Add `.github/dependabot.yml` for Composer + npm ecosystem updates.
+2. Keep CI green so dependency PRs can be merged quickly.
