@@ -66,6 +66,9 @@ final class GetContentViewHelper extends AbstractViewHelper
 
         /** @var Content $content */
         foreach ($contents as $content) {
+            if (!$content instanceof Content) {
+                continue;
+            }
             $contentCtype = $content->getCtype();
             $contentColPos = $content->getColPos();
             $matchesType = $cType === null || $contentCtype === $cType;

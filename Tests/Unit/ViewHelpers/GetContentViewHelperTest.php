@@ -28,6 +28,25 @@ final class GetContentViewHelperTest extends TestCase
     }
 
     #[Test]
+    public function renderSkipsInvalidNonContentEntries(): void
+    {
+        $subject = $this->createSubject();
+        $subject->setArguments([
+            'contents' => [
+                'invalid',
+                $this->createContent('image', 0, 'Valid image'),
+                42,
+            ],
+            'as' => 'content',
+            'colPos' => 0,
+            'cType' => 'image',
+            'index' => null,
+        ]);
+
+        self::assertSame('Valid image', $subject->render());
+    }
+
+    #[Test]
     public function renderFiltersContentsByTypeAndColumnPosition(): void
     {
         $subject = $this->createSubject();

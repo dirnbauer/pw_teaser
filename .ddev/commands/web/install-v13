@@ -36,7 +36,7 @@ vendor/bin/typo3 setup --no-interaction --force \
   --admin-user-password="$ADMIN_PASSWORD" \
   --admin-email=admin@example.invalid
 
-vendor/bin/typo3 configuration:set SYS/trustedHostsPattern '.*'
+vendor/bin/typo3 configuration:set SYS/trustedHostsPattern '(^|\\.)pw-teaser\\.ddev\\.site$'
 vendor/bin/typo3 extension:setup
 
 if [ -f /var/www/html/$VERSION/config/sites/main/config.yaml ]; then
