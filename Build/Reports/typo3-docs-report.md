@@ -1,45 +1,36 @@
-# TYPO3 Documentation Report (re-audit)
+# TYPO3 Documentation Report (2026-03-06)
 
 ## Findings
 
-### OK: guides.xml present
+### MEDIUM: Repository links are inconsistent with active project remote
 
-Modern `guides.xml` is in place for the TYPO3 documentation rendering
-pipeline.
+Multiple docs still point to `github.com/a-r-m-i-n/pw_teaser` while the active
+repository is `github.com/dirnbauer/pw_teaser`.
 
-### OK: Index.rst metadata accurate
+Affected locations:
 
-Copyright, version, and TYPO3 13.4 baseline references are correct.
+- `README.md` links section
+- `Documentation/Support/Index.rst` issue tracker/contribution links
+- `composer.json` support URLs (should align with docs links)
 
-### OK: Installation/Index.rst
+**Action:** update all repository/support URLs to the active remote.
 
-Requirements, Composer command, and TypoScript inclusion guidance are
-accurate for TYPO3 13.
+### LOW: Testing guidance is present but not discoverable as a docs chapter
 
-### OK: Configuration/Index.rst
+Testing instructions exist in `Documentation/Support/Index.rst`, but there is
+no dedicated chapter in the main documentation toctree. This makes CI/testing
+guidance harder to find in rendered docs.
 
-All FlexForm settings are documented with types and defaults.
+**Action:** add `Documentation/Testing/Index.rst` and include it in
+`Documentation/Index.rst` toctree.
 
-### OK: Upgrading/Index.rst
+### OK: Core TYPO3 docs baseline
 
-Pagination migration and routing configuration are documented.
+- `guides.xml` is present
+- installation/configuration/upgrading/event docs exist
+- TYPO3 13/14 compatibility context is documented
 
-### OK: Events/Index.rst
+## Suggested Remediation
 
-`ModifyPagesEvent` usage with PSR-14 EventListener is documented.
-
-### LOW: Settings.cfg is legacy
-
-`Settings.cfg` and `Settings.yml` are for the old Sphinx-based renderer.
-They still work but `guides.xml` is the modern entry point. No action
-needed — they don't conflict.
-
-### LOW: Includes.txt is legacy
-
-`Includes.txt` with custom roles is legacy Sphinx syntax. Modern
-phpDocumentor guides handle these automatically. No harm in keeping it.
-
-## Status
-
-Documentation is accurate and complete for TYPO3 13.4 LTS.
-No changes required.
+1. Normalize all repository and issue links to `dirnbauer/pw_teaser`.
+2. Add a dedicated Testing chapter and wire it into docs navigation.
