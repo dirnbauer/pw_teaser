@@ -12,8 +12,8 @@
 		"fluid"
 	],
 	"support": {
-		"issues": "https://github.com/a-r-m-i-n/pw_teaser/issues",
-		"source": "https://github.com/a-r-m-i-n/pw_teaser"
+		"issues": "https://github.com/dirnbauer/pw_teaser/issues",
+		"source": "https://github.com/dirnbauer/pw_teaser"
 	},
 	"require": {
 		"php": "^8.2",

@@ -225,21 +225,22 @@ and online at https://docs.typo3.org/p/t3/pw_teaser/main/en-us/
 
 ## Testing
 
-pw_teaser maintains a comprehensive test suite with **73 unit tests** and
-**14 functional tests** (87 total), providing thorough coverage of all
+pw_teaser maintains a comprehensive test suite with **77 unit test cases**
+(74 unit test methods) and **14 functional tests** (91 total), providing
+thorough coverage of all
 extension components.
 
 ### Test coverage
 
 | Component               | Type       | Tests | What is covered                                                    |
 |-------------------------|------------|------:|---------------------------------------------------------------------|
-| Page model              | Unit       |    20 | Properties, custom attributes, isNew logic, collections, L18N constants |
-| Content model           | Unit       |    10 | Properties, ObjectStorage collections, category operations          |
+| Page model              | Unit       |    21 | Properties, custom attributes, isNew logic, collections, L18N constants |
+| Content model           | Unit       |     9 | Properties, ObjectStorage collections, category operations          |
 | ModifyPagesEvent        | Unit       |     5 | PSR-14 contract, filtering, enrichment patterns                     |
-| TeaserController        | Unit       |    16 | Setting helpers, special orderings, view path resolution, nesting   |
-| ItemsProcFunc           | Unit       |     6 | DI fallback, FlexForm presets, edge cases                           |
+| TeaserController        | Unit       |    19 | Setting helpers, special orderings, view path resolution, nesting, page UID resolution |
+| ItemsProcFunc           | Unit       |     7 | DI fallback, FlexForm presets, edge cases                           |
 | Settings utility        | Unit       |     4 | TypoScript rendering, fallbacks, nested arrays                      |
-| GetContentViewHelper    | Unit       |     3 | Null handling, type/colPos filtering, index limiting                |
+| GetContentViewHelper    | Unit       |     4 | Null handling, type/colPos filtering, index limiting, invalid entry guard |
 | RemoveWhitespacesVH     | Unit       |     2 | Whitespace removal, null children                                   |
 | StripTagsViewHelper     | Unit       |     3 | Tag stripping from argument and child content                       |
 | PageRepository          | Functional |    14 | findByPid, findByPidList, recursive queries, ordering, nav_hide     |
@@ -294,8 +295,8 @@ Please describe why you submitted your patch.
 
 ## Links
 
-- [Git Repository](https://github.com/a-r-m-i-n/pw_teaser)
-- [Issue tracker](https://github.com/a-r-m-i-n/pw_teaser/issues)
+- [Git Repository](https://github.com/dirnbauer/pw_teaser)
+- [Issue tracker](https://github.com/dirnbauer/pw_teaser/issues)
 - [Read documentation online](https://docs.typo3.org/p/t3/pw_teaser/main/en-us/)
 - [EXT:pw_teaser in TER](https://extensions.typo3.org/extension/pw_teaser)
 - [EXT:pw_teaser on Packagist](https://packagist.org/packages/t3/pw_teaser)

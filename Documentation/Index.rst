@@ -59,6 +59,7 @@ Page Teaser (with Fluid)
         UsingTypoScript/Index
         Templates/Index
         Events/Index
+        Testing/Index
         Versions/Index
         Upgrading/Index
         Support/Index
