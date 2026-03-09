@@ -1,48 +1,35 @@
-# TYPO3 13 Conformance Report (re-audit)
+# TYPO3 Conformance Report (2026-03-06)
+
+Scope: extension-wide conformance pass for architecture, metadata, typed PHP,
+testing baseline, and repository hygiene.
 
 ## Findings
 
-### MEDIUM: PageRepository and ContentRepository not `final`
+### MEDIUM: Composer metadata can be improved for ecosystem conformance
 
-All other classes in the extension use `final`. These two repositories are
-left non-final, which is inconsistent. Since they are not designed as
-extension points, they should be `final`.
+`composer.json` lacks explicit `support` links and package `keywords`, which
+reduces quality signals in Packagist and for maintainers.
 
-**Action:** Add `final` keyword to both repository classes.
+**Action:** add `support.issues`, `support.source`, and curated keywords.
 
-### MEDIUM: Missing return types and parameter types in PageRepository
+### LOW: Class constants use implicit visibility
 
-Several methods lack native PHP return types or use untyped parameters:
-- `orderByPlugin()` — missing return type
-- `setFilteredDokType()` — missing return type
-- `handleOrdering()` — missing return type
-- `resetQuery()` — missing return type
-- `addQueryConstraint()` — missing return type
+`Page` and `PageRepository` define constants with `const` instead of explicit
+`public const`. While valid, explicit visibility is preferred in modern TYPO3
+extensions for readability and conformance.
 
-**Action:** Add native types.
+**Action:** switch to `public const` for all model/repository constants.
 
-### LOW: `RemoveWhitespacesViewHelper::render()` does not handle null children
+### OK: Core conformance baseline is strong
 
-`renderChildren()` may return `null`. The `str_replace()` call on line 32
-will accept null in PHP 8.2 with a deprecation warning.
+- Strict typing is present across extension PHP files.
+- PSR-4 autoload and directory structure are coherent.
+- Services are wired through `Configuration/Services.yaml`.
+- CI matrix validates PHP 8.2/8.3/8.4 with TYPO3 13/14.
+- PHPStan is enforced at level 9.
+- Unit + functional test baseline is comprehensive (87 tests total).
 
-**Action:** Cast `renderChildren()` to string.
+## Suggested Remediation
 
-### LOW: `ext_localconf.php` still contains list_type TypoScript alias
-
-The line `tt_content.list.20.pwteaser_pi1 =< tt_content.pwteaser_pi1`
-provides backward compatibility for old list_type records. This is
-reasonable during the transition period but should be documented
-as temporary.
-
-**Action:** Add inline comment explaining it is transitional.
-
-### OK: Conformance items passing
-
-- `declare(strict_types=1)` on all PHP files
-- PSR-4 autoloading correct
-- DI via `Services.yaml` with autowire/autoconfigure
-- PSR-14 event (`ModifyPagesEvent`) properly structured
-- PHPStan level 5 passing
-- CI pipeline with PHP 8.2–8.4 matrix
-- `guides.xml` present for modern doc rendering
+1. Enrich `composer.json` metadata (`support`, `keywords`).
+2. Make constant visibility explicit (`public const`) in key domain classes.
