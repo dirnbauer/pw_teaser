@@ -1,48 +1,38 @@
-# TYPO3 Testing Report (re-audit)
+# TYPO3 Testing Report (2026-03-06)
 
 ## Current Test Infrastructure
 
-- **19 unit tests** covering Page, Content, TeaserController, Settings,
-  ItemsProcFunc, StripTagsViewHelper, GetContentViewHelper, ModifyPagesEvent
-- **2 functional tests** covering PageRepository recursive collection
-  and deleted-page filtering
-- **PHPStan level 5** with zero errors
-- **CI matrix:** PHP 8.2, 8.3, 8.4 for both unit and functional tests
-- **DDEV commands:** `ddev test-unit`, `ddev test-functional`
+- **74 unit tests** across controller, models, repositories, user functions,
+  utility classes, events, and ViewHelpers
+- **14 functional tests** for `PageRepository` behavior and filtering
+- **CI matrix** for TYPO3 13/14 and PHP 8.2/8.3/8.4
+- **PHPStan level 9** in CI
 
 ## Findings
 
-### MEDIUM: No test for RemoveWhitespacesViewHelper
+### MEDIUM: `resolveCurrentPageUid()` fallback behavior lacks direct tests
 
-The ViewHelper is small but now includes a null-safety cast that should
-be covered.
+`TeaserController::resolveCurrentPageUid()` has two execution paths:
 
-**Action:** Add unit test.
+1. Prefer `frontend.page.information->getId()`
+2. Fallback to `routing->getPageId()`
 
-### LOW: No test for PwTeaserCTypeMigration
+Only indirect coverage exists through `initializeAction` and other controller
+tests. A direct unit test is needed to protect request-attribute compatibility
+across TYPO3 runtime changes.
 
-The upgrade wizard class is thin (delegates to base class) and would
-require a functional test with database fixtures. Low value given the
-base class is tested by TYPO3 core.
+**Action:** add dedicated unit tests for both paths and the default `0` case.
 
-**Action:** Skip — base class coverage is sufficient.
+### OK: Other high-risk areas are now covered
 
-### OK: Test coverage of upgraded behavior
+- `ItemsProcFunc` DI fallback and FlexForm edge cases
+- `GetContentViewHelper` filtering/indexing and invalid-entry guard
+- `PageRepository` recursive/list/filtering behavior (functional)
+- `Page` / `Content` model typed property behavior
 
-Tests specifically cover:
-- Page model null-keyword handling (TYPO3 13 null-safety)
-- TeaserController default settings when FlexForm is empty
-- GetContentViewHelper index counting with colPos+cType filter (bug fix)
-- PageRepository recursive collection with language filtering
-- Settings utility TypoScript fallback behavior
-- ModifyPagesEvent page replacement
+## Suggested Remediation
 
-## Status
-
-| Area | Status |
-|------|--------|
-| Unit tests | 19 passing |
-| Functional tests | 2 passing |
-| PHPStan | Level 5, zero errors |
-| CI pipeline | PHP 8.2–8.4 matrix |
-| RemoveWhitespacesViewHelper | NEEDS TEST |
+1. Add direct unit tests for `resolveCurrentPageUid()`:
+   - page information attribute path
+   - routing fallback path
+   - default value path
