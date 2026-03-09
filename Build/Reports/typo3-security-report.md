@@ -1,46 +1,39 @@
-# TYPO3 Security Report (re-audit)
+# TYPO3 Security Report (2026-03-06)
+
+Scope: TYPO3-specific extension security pass focused on trusted boundaries,
+safe rendering, request handling, and extension-owned local tooling.
 
 ## Findings
 
-### OK: QueryBuilder with parameterized queries throughout
+### MEDIUM: Local install script configures overly broad trusted hosts pattern
 
-All database access in `PageRepository`, `Page::getGet()`, and
-`Content::__call()` uses `QueryBuilder` with `createNamedParameter()`.
-No raw SQL concatenation.
+`.ddev/commands/web/install-v13` sets:
 
-### OK: Fluid auto-escaping respected
+`vendor/bin/typo3 configuration:set SYS/trustedHostsPattern '.*'`
 
-`GetContentViewHelper` sets `$escapeOutput = false` intentionally to
-pass through child rendering. All other ViewHelpers use default escaping.
-No `f:format.raw` in extension templates.
+Even in local dev, this pattern disables host-header validation entirely. A
+project-specific DDEV wildcard is safer and still practical.
 
-### OK: No CSRF exposure
+**Action:** constrain to `*.pw-teaser.ddev.site`.
 
-The extension only provides a frontend plugin with a read-only `indexAction`.
-No form submissions, no data mutation endpoints. CSRF protection is not
-applicable.
+### LOW: `GetContentViewHelper` assumes all `contents` entries are `Content`
 
-### OK: No secrets or credentials in extension code
+The render loop directly calls `$content->getCtype()` and
+`$content->getColPos()` for each array item. Non-`Content` values can trigger
+runtime errors and potentially produce avoidable DoS in malformed templates.
 
-No API keys, passwords, or sensitive configuration embedded in source.
-DDEV credentials are local-only test defaults.
+**Action:** add `instanceof Content` guard and skip invalid entries.
 
-### LOW: `__call` magic methods perform DB queries on unrecognized getters
+### OK: Core extension security baseline remains strong
 
-Both `Page::__call()` and `Content::__call()` issue database queries when
-Fluid templates call arbitrary `{page.someUnknownProperty}` or
-`{content.someUnknownProperty}`. This is by design (dynamic page/content
-attribute access), and queries use parameterized access. The methods are
-already marked `@deprecated`.
+- QueryBuilder with named parameters is used for DB access.
+- No raw SQL concatenation.
+- Frontend action is read-only (no state mutation endpoints).
+- No embedded production secrets in extension code.
+- No high-risk functions (`eval`, `exec`, `unserialize`) in extension runtime.
 
-**Action:** No code change needed. Documented as accepted risk.
+## Suggested Remediation
 
-### LOW: Exception messages include filesystem paths
-
-`TeaserController::performTemplatePathAndFilename()` throws exceptions
-containing template/partial/layout directory paths. In production with
-`debug=0`, TYPO3 suppresses these. No change needed.
-
-## Status
-
-All extension-level security checks pass. No actionable remediations.
+1. Restrict trusted hosts in DDEV install script to extension-specific wildcard.
+2. Harden `GetContentViewHelper` iteration with type guards.
+3. Add unit coverage for invalid collection entries to prevent regressions.
