@@ -1,59 +1,44 @@
-# TYPO3 Extension Upgrade Report (re-audit)
+# TYPO3 Extension Upgrade Report (2026-03-06)
 
-Audited against TYPO3 13.4 LTS on the current codebase state.
+Scope: re-check extension upgrade status for TYPO3 13/14 baseline with focus on
+real upgrade regressions and stale migration artifacts.
 
 ## Findings
 
-### CRITICAL: `Configuration/TypoScript/setup.txt` contains deprecated Bootstrap->run
+### HIGH: Migration documentation is no longer accurate
 
-`setup.txt` still ships a `lib.tx_pwteaser = USER` block that invokes
-`TYPO3\CMS\Extbase\Core\Bootstrap->run`. This userFunc-based rendering was
-removed in TYPO3 12. The extension already registers via
-`PLUGIN_TYPE_CONTENT_ELEMENT`, making this block dead and potentially
-conflicting.
+The upgrade docs still state `#[Validate]` uses named-argument syntax
+(`validator: 'NotEmpty'`). The code now intentionally uses the array-based
+syntax (`['validator' => 'NotEmpty']`) for cross-version compatibility in
+TYPO3 13/14.
 
-The file also contains `plugin.tx_pwteaser.view.presets` which IS needed
-by `ItemsProcFunc::getAvailableTemplatePresets()`.
+Affected files:
 
-**Action:** Rename `setup.txt` → `setup.typoscript`, remove the deprecated
-`lib.tx_pwteaser` block, keep the presets.
+- `README.md`
+- `Documentation/Upgrading/Index.rst`
+- `Documentation/Versions/Index.rst`
 
-### HIGH: `hidePagesIfNotTranslatedByDefault` global removed in TYPO3 10
+**Action:** Update docs/changelog wording to match the implemented compatibility
+strategy.
 
-`PageRepository::handlePageLocalization()` line 345 reads
-`$GLOBALS['TYPO3_CONF_VARS']['FE']['hidePagesIfNotTranslatedByDefault']`.
-This config key was removed in TYPO3 10. In TYPO3 13 it is always
-null/false, so the `else` branch is dead code.
+### MEDIUM: Changelog still mentions old PHPStan baseline
 
-**Action:** Remove the obsolete config check; keep only the behavior for
-`hidePagesIfNotTranslatedByDefault = false` (the only path that executes).
+`Documentation/Versions/Index.rst` still says "PHPStan level 5 static analysis"
+while the extension is now maintained at level 9.
 
-### LOW: `Services.php` SingletonPass for ItemsProcFunc
+**Action:** update the 7.0.0 entry to reflect level 9.
 
-The `SingletonPass` compiler pass in `Configuration/Services.php` tags
-`ItemsProcFunc` as a singleton. Since `ItemsProcFunc` is now a `final readonly`
-class with no mutable state, this is harmless but unnecessary complexity.
+### OK: Core upgrade mechanics are in place
 
-**Action:** Remove `Services.php`; `Services.yaml` autowiring is sufficient.
+- Composer constraints are aligned to TYPO3 13.4/14 and PHP 8.2+
+- `ext_emconf.php` dependency ranges are aligned
+- Extbase plugin registration uses `PLUGIN_TYPE_CONTENT_ELEMENT`
+- TypoScript preset loading exists in `setup.typoscript`
+- No legacy `Bootstrap->run` rendering block present
+- No deprecated TSFE-style runtime access in extension code
 
-### OK: No remaining deprecated API usage
+## Suggested Remediation
 
-- No `TYPO3_MODE`, `$GLOBALS['TSFE']`, `deprecationLog`, `getContentObject()`
-- FlexForms use modern `label`/`value` items format
-- Persistence mapping is in `Configuration/Extbase/Persistence/Classes.php`
-- Icons registered via `Configuration/Icons.php`
-- CType migration wizard is present
-
-## Status
-
-| Area | Status |
-|------|--------|
-| composer.json constraints | OK |
-| ext_emconf.php constraints | OK |
-| ext_localconf.php | OK |
-| FlexForm structure | OK |
-| Persistence mapping | OK (PHP config) |
-| Icon registration | OK |
-| TypoScript loading | NEEDS FIX (setup.txt) |
-| Deprecated globals | NEEDS FIX (hidePagesIfNotTranslatedByDefault) |
-| Services DI | LOW (SingletonPass removable) |
+1. Correct migration docs for `#[Validate]` compatibility syntax.
+2. Correct PHPStan level references in the versions/changelog docs.
+3. Keep dual-version wording explicit to avoid accidental downgrade assumptions.
