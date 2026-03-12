@@ -15,16 +15,21 @@ Requirements
 Download
 --------
 
-You can use the TER (TYPO3 Extension Repository) or Composer to fetch ``t3/pw_teaser`` package.
+You can use TER (TYPO3 Extension Repository) or install via Composer using a
+VCS repository entry.
 
 - TER: https://extensions.typo3.org/extension/pw_teaser
-- Packagist: https://packagist.org/packages/t3/pw_teaser
+
+.. important::
+   ``t3/pw_teaser`` is currently not distributed via Packagist.
+   For Composer installs, use the Git repository as VCS source.
 
 For Composer-based installations, run:
 
 .. code-block:: bash
 
-    composer require t3/pw_teaser
+    composer config repositories.pw-teaser vcs https://github.com/dirnbauer/pw_teaser
+    composer require t3/pw_teaser:^7.0
 
 After installation, enable the extension in TYPO3 if needed:
 

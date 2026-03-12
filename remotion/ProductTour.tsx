@@ -841,12 +841,18 @@ function SceneOutro() {
             style={{
               marginTop: 50,
               fontFamily: "'SF Mono', 'Fira Code', monospace",
-              fontSize: 22,
+              fontSize: 20,
               color: COLORS.primary,
               letterSpacing: "0.02em",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              alignItems: "center",
             }}
           >
-            composer require t3/pw_teaser
+            <div>composer config repositories.pw-teaser vcs</div>
+            <div>https://github.com/dirnbauer/pw_teaser</div>
+            <div>composer require t3/pw_teaser:^7.0</div>
           </div>
         </FadeSlideIn>
         <FadeSlideIn delay={fps * 2.5}>

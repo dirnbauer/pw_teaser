@@ -45,8 +45,13 @@ Regenerate with `npm run remotion:studio`.*
 
 ## Installation
 
+`t3/pw_teaser` is currently **not distributed via Packagist**.
+For Composer-based TYPO3 installs, add the Git repository as a VCS source,
+then require the extension package:
+
 ```bash
-composer require t3/pw_teaser
+composer config repositories.pw-teaser vcs https://github.com/dirnbauer/pw_teaser
+composer require t3/pw_teaser:^7.0
 ```
 
 After installation, include the static TypoScript record **PwTeaser** in your
@@ -299,6 +304,5 @@ Please describe why you submitted your patch.
 - [Issue tracker](https://github.com/dirnbauer/pw_teaser/issues)
 - [Read documentation online](https://docs.typo3.org/p/t3/pw_teaser/main/en-us/)
 - [EXT:pw_teaser in TER](https://extensions.typo3.org/extension/pw_teaser)
-- [EXT:pw_teaser on Packagist](https://packagist.org/packages/t3/pw_teaser)
 - [The author](https://v.ieweg.de)
 - [**Donate**](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2DCCULSKFRZFU)
