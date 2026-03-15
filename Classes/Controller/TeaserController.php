@@ -181,7 +181,7 @@ class TeaserController extends ActionController
 
         if (!empty($this->settings['enablePagination'])) {
             $itemsPerPage = $this->getIntSetting('itemsPerPage', 10);
-            $currentPageArg = $this->request->getArgument('currentPage');
+            $currentPageArg = $this->request->hasArgument('currentPage') ? $this->request->getArgument('currentPage') : 1;
             $currentPage = max(1, is_numeric($currentPageArg) ? (int)$currentPageArg : 1);
             $paginator = GeneralUtility::makeInstance(ArrayPaginator::class, $event->getPages(), $currentPage, $itemsPerPage, $this->getIntSetting('limit'), 0);
             $paginationClass = $this->settings['paginationClass'] ?? null;
