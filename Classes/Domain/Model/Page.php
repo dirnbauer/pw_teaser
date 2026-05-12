@@ -318,7 +318,7 @@ class Page extends AbstractEntity
     public function getIsNew(): bool
     {
         if ($this->newUntil !== 0) {
-            return $this->newUntil < time();
+            return $this->newUntil > time();
         }
         return false;
     }

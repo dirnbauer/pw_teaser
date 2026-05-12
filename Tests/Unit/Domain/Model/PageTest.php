@@ -152,19 +152,19 @@ final class PageTest extends TestCase
     }
 
     #[Test]
-    public function getIsNewReturnsTrueWhenNewUntilIsInThePast(): void
+    public function getIsNewReturnsTrueWhenNewUntilIsInTheFuture(): void
     {
         $subject = new Page();
-        $subject->setNewUntil(time() - 3600);
+        $subject->setNewUntil(time() + 3600);
 
         self::assertTrue($subject->getIsNew());
     }
 
     #[Test]
-    public function getIsNewReturnsFalseWhenNewUntilIsInTheFuture(): void
+    public function getIsNewReturnsFalseWhenNewUntilIsInThePast(): void
     {
         $subject = new Page();
-        $subject->setNewUntil(time() + 3600);
+        $subject->setNewUntil(time() - 3600);
 
         self::assertFalse($subject->getIsNew());
     }
