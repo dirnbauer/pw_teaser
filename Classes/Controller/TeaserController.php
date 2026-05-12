@@ -329,10 +329,10 @@ class TeaserController extends ActionController
     private function getViewTemplatePaths(): TemplatePaths
     {
         $view = $this->view;
-        if ($view instanceof \TYPO3Fluid\Fluid\View\AbstractTemplateView) {
+        if (method_exists($view, 'getRenderingContext')) {
             return $view->getRenderingContext()->getTemplatePaths();
         }
-        throw new \RuntimeException('View is not an AbstractTemplateView instance');
+        throw new \RuntimeException('View does not provide getRenderingContext()');
     }
 
     private function getStringSetting(string $key, string $default = ''): string
