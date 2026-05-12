@@ -57,6 +57,18 @@ composer require t3/pw_teaser:^7.0
 After installation, include the static TypoScript record **PwTeaser** in your
 site template so the default view configuration and template presets are loaded.
 
+For TYPO3 v13+ you can also add the **t3/pw-teaser** site set to your site
+configuration's `dependencies` instead:
+
+```yaml
+# config/sites/<site>/config.yaml
+dependencies:
+  - t3/pw-teaser
+```
+
+The site set provides the same TypoScript presets and works alongside or as a
+replacement for the static include.
+
 ## Template Modes
 
 pw_teaser offers three ways to control how teasers are rendered. You select the
