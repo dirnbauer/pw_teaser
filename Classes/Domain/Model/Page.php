@@ -463,6 +463,20 @@ class Page extends AbstractEntity
         return $this->pageRow;
     }
 
+    /**
+     * Pre-populates the raw page row so getGet() doesn't need a DB query.
+     * Called by PageRepository after bulk-loading.
+     *
+     * @param array<string, mixed> $pageRow
+     */
+    public function setPageRow(array $pageRow): void
+    {
+        $this->pageRow = [];
+        foreach ($pageRow as $key => $value) {
+            $this->pageRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
+        }
+    }
+
     public function getSorting(): int
     {
         return $this->sorting;

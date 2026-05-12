@@ -6,6 +6,9 @@ namespace PwTeaserTeam\PwTeaser\Domain\Repository;
 
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
@@ -58,7 +61,9 @@ final class ContentRepository extends Repository
                 'sorting' => QueryInterface::ORDER_ASCENDING
             ]
         );
-        return $query->execute();
+        $result = $query->execute();
+        $this->enrichWithContentRows($result);
+        return $result;
     }
 
     /**
@@ -85,6 +90,57 @@ final class ContentRepository extends Repository
 
         $query->matching($query->logicalOr(...$constraints));
 
-        return $query->execute();
+        $result = $query->execute();
+        $this->enrichWithContentRows($result);
+        return $result;
+    }
+
+    /**
+     * Bulk-loads raw tt_content rows and sets contentRow on each model,
+     * so __call() doesn't need separate DB queries.
+     */
+    protected function enrichWithContentRows(QueryResultInterface $result): void
+    {
+        $items = $result->toArray();
+        if ($items === []) {
+            return;
+        }
+
+        $uids = [];
+        foreach ($items as $content) {
+            $uid = $content->getUid();
+            if ($uid !== null) {
+                $uids[] = $uid;
+            }
+        }
+        if ($uids === []) {
+            return;
+        }
+
+        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $pool->getQueryBuilderForTable('tt_content');
+        $rows = $queryBuilder
+            ->select('*')
+            ->from('tt_content')
+            ->where(
+                $queryBuilder->expr()->in(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uids, Connection::PARAM_INT_ARRAY)
+                )
+            )
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $rowsByUid = [];
+        foreach ($rows as $row) {
+            $rowsByUid[(int)$row['uid']] = $row;
+        }
+
+        foreach ($items as $content) {
+            $uid = $content->getUid();
+            if ($uid !== null && isset($rowsByUid[$uid])) {
+                $content->setContentRow($rowsByUid[$uid]);
+            }
+        }
     }
 }

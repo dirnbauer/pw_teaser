@@ -319,7 +319,59 @@ final class PageRepository extends Repository
         $this->resetQuery();
 
         $queryResult = $this->handlePageLocalization($queryResult);
+        $this->enrichWithPageRows($queryResult);
+
         return $queryResult;
+    }
+
+    /**
+     * Bulk-loads raw page rows and sets pageRow on each model,
+     * so getGet() / __call() don't need separate DB queries.
+     *
+     * @param array<Page> $pages
+     */
+    protected function enrichWithPageRows(array $pages): void
+    {
+        if ($pages === []) {
+            return;
+        }
+
+        $uids = [];
+        foreach ($pages as $page) {
+            $uid = $page->getUid();
+            if ($uid !== null) {
+                $uids[] = $uid;
+            }
+        }
+        if ($uids === []) {
+            return;
+        }
+
+        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $pool->getQueryBuilderForTable('pages');
+        $rows = $queryBuilder
+            ->select('*')
+            ->from('pages')
+            ->where(
+                $queryBuilder->expr()->in(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uids, Connection::PARAM_INT_ARRAY)
+                )
+            )
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $rowsByUid = [];
+        foreach ($rows as $row) {
+            $rowsByUid[(int)$row['uid']] = $row;
+        }
+
+        foreach ($pages as $page) {
+            $uid = $page->getUid();
+            if ($uid !== null && isset($rowsByUid[$uid])) {
+                $page->setPageRow($rowsByUid[$uid]);
+            }
+        }
     }
 
     /**
