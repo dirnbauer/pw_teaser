@@ -247,4 +247,18 @@ class Content extends AbstractEntity
     {
         return $this->contentRow;
     }
+
+    /**
+     * Pre-populates the raw content row so __call() doesn't need a DB query.
+     * Called by ContentRepository after bulk-loading.
+     *
+     * @param array<string, mixed> $contentRow
+     */
+    public function setContentRow(array $contentRow): void
+    {
+        $this->contentRow = [];
+        foreach ($contentRow as $key => $value) {
+            $this->contentRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
+        }
+    }
 }
