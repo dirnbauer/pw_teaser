@@ -361,9 +361,15 @@ final class PageRepository extends Repository
             ->executeQuery()
             ->fetchAllAssociative();
 
+        /** @var array<int, array<string, mixed>> $rowsByUid */
         $rowsByUid = [];
         foreach ($rows as $row) {
-            $rowsByUid[(int)$row['uid']] = $row;
+            $uid = $row['uid'] ?? null;
+            if (is_int($uid)) {
+                $rowsByUid[$uid] = $row;
+            } elseif (is_string($uid) && ctype_digit($uid)) {
+                $rowsByUid[(int)$uid] = $row;
+            }
         }
 
         foreach ($pages as $page) {

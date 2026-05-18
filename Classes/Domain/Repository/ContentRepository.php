@@ -98,6 +98,8 @@ final class ContentRepository extends Repository
     /**
      * Bulk-loads raw tt_content rows and sets contentRow on each model,
      * so __call() doesn't need separate DB queries.
+     *
+     * @param QueryResultInterface<int, Content> $result
      */
     protected function enrichWithContentRows(QueryResultInterface $result): void
     {
@@ -131,9 +133,15 @@ final class ContentRepository extends Repository
             ->executeQuery()
             ->fetchAllAssociative();
 
+        /** @var array<int, array<string, mixed>> $rowsByUid */
         $rowsByUid = [];
         foreach ($rows as $row) {
-            $rowsByUid[(int)$row['uid']] = $row;
+            $uid = $row['uid'] ?? null;
+            if (is_int($uid)) {
+                $rowsByUid[$uid] = $row;
+            } elseif (is_string($uid) && ctype_digit($uid)) {
+                $rowsByUid[(int)$uid] = $row;
+            }
         }
 
         foreach ($items as $content) {
