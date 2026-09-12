@@ -58,7 +58,6 @@ final class PageTest extends TestCase
     {
         $subject = new Page();
         $property = new \ReflectionProperty($subject, 'keywords');
-        $property->setAccessible(true);
         $property->setValue($subject, null);
 
         self::assertSame([], $subject->getKeywords());

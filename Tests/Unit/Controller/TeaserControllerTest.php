@@ -92,7 +92,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['myKey' => 'myValue']);
 
         $method = new \ReflectionMethod($subject, 'getStringSetting');
-        $method->setAccessible(true);
 
         self::assertSame('myValue', $method->invoke($subject, 'myKey'));
     }
@@ -103,7 +102,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController([]);
 
         $method = new \ReflectionMethod($subject, 'getStringSetting');
-        $method->setAccessible(true);
 
         self::assertSame('', $method->invoke($subject, 'missing'));
         self::assertSame('fallback', $method->invoke($subject, 'missing', 'fallback'));
@@ -115,7 +113,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['arr' => ['nested']]);
 
         $method = new \ReflectionMethod($subject, 'getStringSetting');
-        $method->setAccessible(true);
 
         self::assertSame('', $method->invoke($subject, 'arr'));
     }
@@ -126,7 +123,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['num' => 42]);
 
         $method = new \ReflectionMethod($subject, 'getStringSetting');
-        $method->setAccessible(true);
 
         self::assertSame('42', $method->invoke($subject, 'num'));
     }
@@ -137,7 +133,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['limit' => 25]);
 
         $method = new \ReflectionMethod($subject, 'getIntSetting');
-        $method->setAccessible(true);
 
         self::assertSame(25, $method->invoke($subject, 'limit'));
     }
@@ -148,7 +143,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController([]);
 
         $method = new \ReflectionMethod($subject, 'getIntSetting');
-        $method->setAccessible(true);
 
         self::assertSame(0, $method->invoke($subject, 'missing'));
         self::assertSame(10, $method->invoke($subject, 'missing', 10));
@@ -160,7 +154,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['limit' => '15']);
 
         $method = new \ReflectionMethod($subject, 'getIntSetting');
-        $method->setAccessible(true);
 
         self::assertSame(15, $method->invoke($subject, 'limit'));
     }
@@ -171,7 +164,6 @@ final class TeaserControllerTest extends TestCase
         $subject = $this->createController(['limit' => 'abc']);
 
         $method = new \ReflectionMethod($subject, 'getIntSetting');
-        $method->setAccessible(true);
 
         self::assertSame(0, $method->invoke($subject, 'limit'));
     }
@@ -189,7 +181,6 @@ final class TeaserControllerTest extends TestCase
         }
 
         $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, $pages);
 
         self::assertCount(20, $result);
@@ -208,7 +199,6 @@ final class TeaserControllerTest extends TestCase
         }
 
         $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, $pages);
 
         self::assertCount(3, $result);
@@ -226,7 +216,6 @@ final class TeaserControllerTest extends TestCase
         $pages = [$page1, $page2];
 
         $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, $pages);
 
         self::assertCount(2, $result);
@@ -262,7 +251,6 @@ final class TeaserControllerTest extends TestCase
         $this->writeProperty($subject, 'request', $request);
 
         $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-        $method->setAccessible(true);
 
         self::assertSame(123, $method->invoke($subject));
     }
@@ -290,7 +278,6 @@ final class TeaserControllerTest extends TestCase
         $this->writeProperty($subject, 'request', $request);
 
         $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-        $method->setAccessible(true);
 
         self::assertSame(456, $method->invoke($subject));
     }
@@ -304,7 +291,6 @@ final class TeaserControllerTest extends TestCase
         $this->writeProperty($subject, 'request', $request);
 
         $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-        $method->setAccessible(true);
 
         self::assertSame(0, $method->invoke($subject));
     }
@@ -318,7 +304,6 @@ final class TeaserControllerTest extends TestCase
         ]);
 
         $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
 
         self::assertSame(['/path/one', '/path/two'], $result);
@@ -333,7 +318,6 @@ final class TeaserControllerTest extends TestCase
         ]);
 
         $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
 
         self::assertSame(['/single/path'], $result);
@@ -346,7 +330,6 @@ final class TeaserControllerTest extends TestCase
         $this->writeProperty($subject, 'viewSettings', []);
 
         $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $method->setAccessible(true);
         $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
 
         self::assertSame([], $result);
@@ -373,7 +356,6 @@ final class TeaserControllerTest extends TestCase
         $childA->setSorting(256);
 
         $method = new \ReflectionMethod($subject, 'fillChildPagesRecursively');
-        $method->setAccessible(true);
         $method->invoke($subject, $parent, [$childB, $childA]);
 
         $children = $parent->getChildPages();
@@ -385,14 +367,12 @@ final class TeaserControllerTest extends TestCase
     private function writeProperty(object $subject, string $propertyName, mixed $value): void
     {
         $property = new \ReflectionProperty($subject, $propertyName);
-        $property->setAccessible(true);
         $property->setValue($subject, $value);
     }
 
     private function readProperty(object $subject, string $propertyName): mixed
     {
         $property = new \ReflectionProperty($subject, $propertyName);
-        $property->setAccessible(true);
 
         return $property->getValue($subject);
     }
@@ -400,14 +380,12 @@ final class TeaserControllerTest extends TestCase
     private function writeUid(object $entity, int $uid): void
     {
         $property = new \ReflectionProperty($entity, 'uid');
-        $property->setAccessible(true);
         $property->setValue($entity, $uid);
     }
 
     private function writePid(object $entity, int $pid): void
     {
         $property = new \ReflectionProperty($entity, 'pid');
-        $property->setAccessible(true);
         $property->setValue($entity, $pid);
     }
 }

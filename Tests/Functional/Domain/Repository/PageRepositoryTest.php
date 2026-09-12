@@ -31,7 +31,6 @@ final class PageRepositoryTest extends FunctionalTestCase
     public function collectRecursivePageIdsSkipsDeletedPages(): void
     {
         $method = new \ReflectionMethod(PageRepository::class, 'collectRecursivePageIds');
-        $method->setAccessible(true);
 
         $pageIds = $method->invoke($this->subject, 1, 1, 2);
         sort($pageIds);
@@ -43,7 +42,6 @@ final class PageRepositoryTest extends FunctionalTestCase
     public function pageHasTranslationIgnoresDeletedTranslationRows(): void
     {
         $method = new \ReflectionMethod(PageRepository::class, 'pageHasTranslation');
-        $method->setAccessible(true);
 
         self::assertTrue($method->invoke($this->subject, 2, 1));
         self::assertFalse($method->invoke($this->subject, 3, 1));
@@ -134,7 +132,6 @@ final class PageRepositoryTest extends FunctionalTestCase
     public function setOrderByIgnoresRandomValue(): void
     {
         $property = new \ReflectionProperty(PageRepository::class, 'orderBy');
-        $property->setAccessible(true);
 
         $this->subject->setOrderBy('title');
         self::assertSame('title', $property->getValue($this->subject));
@@ -147,7 +144,6 @@ final class PageRepositoryTest extends FunctionalTestCase
     public function setOrderDirectionSetsDescending(): void
     {
         $property = new \ReflectionProperty(PageRepository::class, 'orderDirection');
-        $property->setAccessible(true);
 
         $this->subject->setOrderDirection('desc');
         self::assertSame('DESC', $property->getValue($this->subject));
@@ -160,7 +156,6 @@ final class PageRepositoryTest extends FunctionalTestCase
     public function setOrderDirectionAcceptsIntegerValues(): void
     {
         $property = new \ReflectionProperty(PageRepository::class, 'orderDirection');
-        $property->setAccessible(true);
 
         $this->subject->setOrderDirection(1);
         self::assertSame('DESC', $property->getValue($this->subject));
