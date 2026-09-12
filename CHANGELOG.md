@@ -39,9 +39,9 @@ notes for versions before 7.0 live in `Documentation/Versions/Index.rst`.
 
 ### Removed
 
-- Remotion product-tour video sources (`remotion/`), narration and music
-  generation scripts (`scripts/`), `package.json` and the video thumbnail.
-  The npm ecosystem was dropped from Dependabot.
+- Product-tour video material: the video composition sources, the narration
+  and music generation scripts (`scripts/`), `package.json` and the video
+  thumbnail. The npm ecosystem was dropped from Dependabot.
 - Audit reports under `Build/Reports/` are no longer versioned.
 - Orphaned screenshot of the removed static-template include.
 

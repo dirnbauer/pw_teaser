@@ -21,7 +21,7 @@ Versions
 - [TASK] CI matrix: PHP 8.3/8.4 with TYPO3 13.4, PHP 8.4/8.5 with TYPO3 14.3;
   jobs lint, cgl, phpstan, unit and functional
 - [TASK] Use PHPUnit stubs where tests assert no expectations
-- [TASK] Remove the Remotion product-tour video sources and npm tooling
+- [TASK] Remove the product-tour video sources and npm tooling
 - [DOCS] Condense the README, move the details into this manual, add
   ``CHANGELOG.md``
 
