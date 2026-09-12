@@ -10,25 +10,13 @@ env:
   COMPOSER_NO_AUDIT: 1
 
 jobs:
-  unit:
+  lint:
+    name: "Lint (PHP ${{ matrix.php-version }})"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - php-version: '8.2'
-            typo3-version: '^13.4'
-          - php-version: '8.3'
-            typo3-version: '^13.4'
-          - php-version: '8.4'
-            typo3-version: '^13.4'
-          - php-version: '8.2'
-            typo3-version: '^14.0'
-          - php-version: '8.3'
-            typo3-version: '^14.0'
-          - php-version: '8.4'
-            typo3-version: '^14.0'
-    name: "Unit (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
+        php-version: ['8.3', '8.4', '8.5']
     steps:
       - uses: actions/checkout@v4
 
@@ -36,26 +24,93 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "${{ matrix.php-version }}"
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-lock
+
+      - name: PHP syntax check
+        run: find Classes Configuration Tests ext_emconf.php ext_localconf.php -name '*.php' -print0 | xargs -0 -n1 -P4 php -l
+
+  cgl:
+    name: "CGL (php-cs-fixer dry-run)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
 
       - name: Install dependencies
-        run: |
-          composer require typo3/cms-core:${{ matrix.typo3-version }} --no-update
-          composer update --no-interaction --prefer-dist
+        run: composer update --prefer-dist
+
+      - name: Check coding guidelines
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+  phpstan:
+    name: "PHPStan level 8 (TYPO3 ${{ matrix.typo3-version }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typo3-version: ['^13.4', '^14.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --with typo3/cms-core:${{ matrix.typo3-version }}
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress
+
+  unit:
+    name: "Unit (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php-version: '8.3', typo3-version: '^13.4', experimental: false }
+          - { php-version: '8.4', typo3-version: '^13.4', experimental: false }
+          - { php-version: '8.4', typo3-version: '^14.3', experimental: false }
+          - { php-version: '8.5', typo3-version: '^14.3', experimental: true }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "${{ matrix.php-version }}"
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --with typo3/cms-core:${{ matrix.typo3-version }}
 
       - name: Run unit tests
         run: vendor/bin/phpunit -c Tests/UnitTests.xml
 
   functional:
+    name: "Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - php-version: '8.2'
-            typo3-version: '^13.4'
-          - php-version: '8.3'
-            typo3-version: '^14.0'
-    name: "Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
+          - { php-version: '8.3', typo3-version: '^13.4', experimental: false }
+          - { php-version: '8.4', typo3-version: '^13.4', experimental: false }
+          - { php-version: '8.4', typo3-version: '^14.3', experimental: false }
+          - { php-version: '8.5', typo3-version: '^14.3', experimental: true }
     services:
       mysql:
         image: mysql:8.0
@@ -83,42 +138,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "${{ matrix.php-version }}"
+          coverage: none
 
       - name: Install dependencies
-        run: |
-          composer require typo3/cms-core:${{ matrix.typo3-version }} --no-update
-          composer update --no-interaction --prefer-dist
+        run: composer update --prefer-dist --with typo3/cms-core:${{ matrix.typo3-version }}
 
       - name: Run functional tests
         run: vendor/bin/phpunit -c Tests/FunctionalTests.xml
-
-  phpstan:
-    runs-on: ubuntu-latest
-    name: "PHPStan (Level 9)"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-
-      - name: Install dependencies
-        run: composer update --no-interaction --prefer-dist
-
-      - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --no-progress
-
-  composer-validate:
-    runs-on: ubuntu-latest
-    name: "Composer Validate"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-
-      - name: Validate composer.json
-        run: composer validate --strict --no-check-lock
