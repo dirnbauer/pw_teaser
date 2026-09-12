@@ -14,9 +14,8 @@ final class SettingsTest extends TestCase
     #[Test]
     public function renderConfigurationArrayReturnsPlainValues(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([]);
 
         $subject = new Settings($configurationManager);
@@ -29,9 +28,8 @@ final class SettingsTest extends TestCase
     #[Test]
     public function renderConfigurationArrayFallsBackToTypoScriptForEmptyValues(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([
                 'plugin.' => [
                     'tx_pwteaser.' => [
@@ -53,9 +51,8 @@ final class SettingsTest extends TestCase
     #[Test]
     public function renderConfigurationArraySkipsCObjRenderingWithoutContentObject(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([]);
 
         $subject = new Settings($configurationManager);
@@ -74,9 +71,8 @@ final class SettingsTest extends TestCase
     #[Test]
     public function renderConfigurationArrayHandlesNestedArrays(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([]);
 
         $subject = new Settings($configurationManager);

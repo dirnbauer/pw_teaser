@@ -26,7 +26,7 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function constructorAcceptsExplicitConfigurationManager(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $subject = new ItemsProcFunc($configurationManager);
 
         self::assertInstanceOf(ItemsProcFunc::class, $subject);
@@ -35,9 +35,8 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function getAvailableTemplatePresetsAddsPresetsToItems(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([
                 'plugin.' => [
                     'tx_pwteaser.' => [
@@ -63,7 +62,7 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function getAvailableTemplatePresetsInitializesItemsWhenNotSet(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
             ->willReturn([
                 'plugin.' => [
@@ -88,7 +87,7 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function getAvailableTemplatePresetsSkipsNonArrayPresets(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
             ->willReturn([
                 'plugin.' => [
@@ -114,7 +113,7 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function getAvailableTemplatePresetsUsesKeyAsLabelFallback(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
             ->willReturn([
                 'plugin.' => [
@@ -140,9 +139,8 @@ final class ItemsProcFuncTest extends TestCase
     #[Test]
     public function getAvailableTemplatePresetsHandlesMissingConfiguration(): void
     {
-        $configurationManager = $this->createMock(ConfigurationManagerInterface::class);
+        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
             ->willReturn([]);
 
         $subject = new ItemsProcFunc($configurationManager);

@@ -15,7 +15,7 @@ final class ModifyPagesEventTest extends TestCase
     #[Test]
     public function pagesCanBeReadAndReplaced(): void
     {
-        $controller = $this->createMock(TeaserController::class);
+        $controller = self::createStub(TeaserController::class);
         $event = new ModifyPagesEvent(['page1', 'page2'], $controller);
 
         self::assertSame(['page1', 'page2'], $event->getPages());
@@ -27,7 +27,7 @@ final class ModifyPagesEventTest extends TestCase
     #[Test]
     public function getTeaserControllerReturnsInjectedController(): void
     {
-        $controller = $this->createMock(TeaserController::class);
+        $controller = self::createStub(TeaserController::class);
         $event = new ModifyPagesEvent([], $controller);
 
         self::assertSame($controller, $event->getTeaserController());
@@ -36,7 +36,7 @@ final class ModifyPagesEventTest extends TestCase
     #[Test]
     public function eventCanBeConstructedWithEmptyPages(): void
     {
-        $controller = $this->createMock(TeaserController::class);
+        $controller = self::createStub(TeaserController::class);
         $event = new ModifyPagesEvent([], $controller);
 
         self::assertSame([], $event->getPages());
@@ -45,7 +45,7 @@ final class ModifyPagesEventTest extends TestCase
     #[Test]
     public function pagesCanBeFilteredViaEventListener(): void
     {
-        $controller = $this->createMock(TeaserController::class);
+        $controller = self::createStub(TeaserController::class);
 
         $page1 = new Page();
         $page1->setTitle('Visible');
@@ -70,7 +70,7 @@ final class ModifyPagesEventTest extends TestCase
     #[Test]
     public function pagesCanBeEnrichedViaEventListener(): void
     {
-        $controller = $this->createMock(TeaserController::class);
+        $controller = self::createStub(TeaserController::class);
 
         $page = new Page();
         $page->setTitle('Original');
