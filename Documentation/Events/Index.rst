@@ -9,32 +9,44 @@ Events
 ModifyPagesEvent
 ----------------
 
-pw_teaser provides an event to modify the pages array result, before reaching to view.
+pw_teaser dispatches ``PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent`` after
+the pages have been loaded and before they are passed to the view. Listeners
+can filter, sort or enrich the result:
 
-For this, you need to provide an EventListener in your extension. For example:
+- ``getPages()`` / ``setPages(array $pages)`` – the ``Page`` models to render
+- ``getTeaserController()`` – the dispatching ``TeaserController``
 
+Register a listener with the ``AsEventListener`` attribute (TYPO3 13 and 14):
 
 .. code-block:: php
-	<?php
-	namespace VendorName\YourExtension\EventListener;
 
-	use PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent;
+   <?php
 
-	class YourListener
-	{
-		public function modifyPages(ModifyPagesEvent $event): void
-		{
-			$event->setPages(array_reverse($event->getPages()));
-		}
-	}
+   declare(strict_types=1);
 
-Also, you need to register ``YourListener`` in EventDispatcher. You can do this in the ``Configuration/Services.yaml`` file:
+   namespace VendorName\YourExtension\EventListener;
+
+   use PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent;
+   use TYPO3\CMS\Core\Attribute\AsEventListener;
+
+   #[AsEventListener(identifier: 'your-extension/modify-teaser-pages')]
+   final class ModifyTeaserPagesListener
+   {
+       public function __invoke(ModifyPagesEvent $event): void
+       {
+           $pages = $event->getPages();
+           // filter, sort or add data ...
+           $event->setPages(array_reverse($pages));
+       }
+   }
+
+Alternatively register the listener in your ``Configuration/Services.yaml``:
 
 .. code-block:: yaml
-	services:
-	  VendorName\YourExtension\EventListener\YourListener:
-		tags:
-		  - name: event.listener
-			identifier: 'yourlistener-modifypages'
-			method: 'modifyPages'
-			event: PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent
+
+   services:
+     VendorName\YourExtension\EventListener\ModifyTeaserPagesListener:
+       tags:
+         - name: event.listener
+           identifier: 'your-extension/modify-teaser-pages'
+           event: PwTeaserTeam\PwTeaser\Event\ModifyPagesEvent

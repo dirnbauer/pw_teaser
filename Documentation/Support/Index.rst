@@ -33,3 +33,12 @@ Testing
 
 See :ref:`testing` for the complete testing guide, including local DDEV
 commands, CI matrix details, and current test suite coverage.
+
+
+Links
+-----
+
+- Git repository: https://github.com/dirnbauer/pw_teaser
+- Changelog: https://github.com/dirnbauer/pw_teaser/blob/master/CHANGELOG.md
+- TER: https://extensions.typo3.org/extension/pw_teaser
+- Original author: https://v.ieweg.de

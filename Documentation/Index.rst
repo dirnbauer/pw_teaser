@@ -40,8 +40,18 @@ Page Teaser (with Fluid)
 	:Rendered:
 		|today|
 
-	This manual documents the TYPO3 13 LTS / 14 baseline of
-	``pw_teaser`` (version 7.x). PHP 8.2 or newer is required.
+	This manual documents the TYPO3 13.4 LTS / 14.3 LTS baseline of
+	``pw_teaser`` (version 7.1). PHP 8.3 or newer is required.
+
+	**Features**
+
+	- Six page sources: direct children, recursive trees or hand-picked pages
+	- Category filter with AND, OR and NOT logic
+	- Ordering by title, dates, manual sorting, custom fields or random
+	- Three template modes (preset, file, directory) for Fluid templates
+	- Built-in pagination (``SimplePagination``, optional
+	  ``georgringer/numbered-pagination``)
+	- PSR-14 ``ModifyPagesEvent`` to filter, sort or enrich the result
 
 	The content of this document is related to TYPO3,
 	a GNU/GPL CMS/Framework available from `www.typo3.org <https://www.typo3.org/>`_.

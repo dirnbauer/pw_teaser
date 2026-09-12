@@ -8,6 +8,23 @@ Versions
 
 .. contents:: :local:
 
+7.1.0
+-----
+
+- [FEATURE] Confirm TYPO3 14.3 LTS support (``typo3/cms-core ^13.4 || ^14.3``)
+- [FEATURE] PHP 8.5 support; PHP 8.3 is now the minimum version
+- [!!!][TASK] Remove the static TypoScript template registration; include the
+  site set ``t3/pw-teaser`` or ``@import`` the setup file instead
+  (see :ref:`installation-typoscript`)
+- [TASK] PHPStan level 8, TYPO3 coding standards (php-cs-fixer) and Composer
+  ``ci:*`` scripts
+- [TASK] CI matrix: PHP 8.3/8.4 with TYPO3 13.4, PHP 8.4/8.5 with TYPO3 14.3;
+  jobs lint, cgl, phpstan, unit and functional
+- [TASK] Use PHPUnit stubs where tests assert no expectations
+- [TASK] Remove the Remotion product-tour video sources and npm tooling
+- [DOCS] Condense the README, move the details into this manual, add
+  ``CHANGELOG.md``
+
 7.0.0
 -----
 
