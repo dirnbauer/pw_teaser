@@ -11,7 +11,6 @@ namespace PwTeaserTeam\PwTeaser\Controller;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
-use Exception;
 use Psr\Http\Message\ResponseInterface;
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
@@ -47,14 +46,10 @@ class TeaserController extends ActionController
     /** @var array<string, mixed> */
     protected array $viewSettings = [];
 
-    public function __construct(protected PageRepository $pageRepository, protected ContentRepository $contentRepository, protected CategoryRepository $categoryRepository, protected Settings $settingsUtility)
-    {
-    }
+    public function __construct(protected PageRepository $pageRepository, protected ContentRepository $contentRepository, protected CategoryRepository $categoryRepository, protected Settings $settingsUtility) {}
 
     /**
      * Initialize Action will get performed before each action will be executed
-     *
-     * @return void
      */
     public function initializeAction(): void
     {
@@ -102,7 +97,6 @@ class TeaserController extends ActionController
 
     /**
      * Displays teasers
-     *
      */
     public function indexAction(): ResponseInterface
     {
@@ -216,17 +210,15 @@ class TeaserController extends ActionController
      *
      * @param Page $a
      * @param Page $b
-     * @return integer
+     * @return int
      */
-    protected function sortByRecursivelySorting(Page $a, Page $b)
+    protected function sortByRecursivelySorting(Page $a, Page $b): int
     {
         return $a->getRecursiveRootLineOrdering() <=> $b->getRecursiveRootLineOrdering();
     }
 
     /**
      * Sets ordering and limitation settings from $this->settings
-     *
-     * @return void
      */
     protected function setOrderingAndLimitation(): void
     {
@@ -254,7 +246,7 @@ class TeaserController extends ActionController
      * Sets the fluid template to file if file is selected in flexform
      * configuration and file exists
      *
-     * @return boolean Returns TRUE if templateType is file and exists,
+     * @return bool Returns TRUE if templateType is file and exists,
      *         otherwise returns FALSE
      */
     protected function performTemplatePathAndFilename(): bool
@@ -289,7 +281,7 @@ class TeaserController extends ActionController
         if ($templateType !== 'preset' && $templateRootPaths !== []) {
             $firstPath = reset($templateRootPaths);
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
-                throw new Exception('Template folder "' . $firstPath . '" not found!');
+                throw new \Exception('Template folder "' . $firstPath . '" not found!');
             }
             $this->getViewTemplatePaths()->setTemplateRootPaths($templateRootPaths);
         }
@@ -297,14 +289,14 @@ class TeaserController extends ActionController
         if ($layoutRootPaths !== []) {
             $firstPath = reset($layoutRootPaths);
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
-                throw new Exception('Layout folder "' . $firstPath . '" not found!');
+                throw new \Exception('Layout folder "' . $firstPath . '" not found!');
             }
             $this->getViewTemplatePaths()->setLayoutRootPaths($layoutRootPaths);
         }
         if ($partialRootPaths !== []) {
             $firstPath = reset($partialRootPaths);
             if (!file_exists(GeneralUtility::getFileAbsFileName($firstPath))) {
-                throw new Exception('Partial folder "' . $firstPath . '" not found!');
+                throw new \Exception('Partial folder "' . $firstPath . '" not found!');
             }
             $this->getViewTemplatePaths()->setPartialRootPaths($partialRootPaths);
         }
@@ -365,10 +357,8 @@ class TeaserController extends ActionController
 
     /**
      * Performs configurations from plugin settings (flexform)
-     *
-     * @return void
      */
-    protected function performPluginConfigurations()
+    protected function performPluginConfigurations(): void
     {
         $this->pageRepository->setShowNavHiddenItems($this->getStringSetting('showNavHiddenItems') === '1');
         $this->pageRepository->setFilteredDokType(

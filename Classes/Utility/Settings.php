@@ -74,7 +74,7 @@ final class Settings
      * @param string $extKey
      * @return array<string, mixed> enhanced settings
      */
-    protected function enhanceSettingsWithTypoScript(
+    private function enhanceSettingsWithTypoScript(
         array $settings,
         string $section = 'settings.',
         string $extKey = 'tx_pwteaser'
@@ -103,7 +103,7 @@ final class Settings
      * @param array<string, mixed> $configuration settings array to make renderable
      * @return array<string, mixed> the renderable settings
      */
-    protected function makeConfigurationArrayRenderable(array $configuration): array
+    private function makeConfigurationArrayRenderable(array $configuration): array
     {
         $dottedConfiguration = [];
         foreach ($configuration as $key => $value) {

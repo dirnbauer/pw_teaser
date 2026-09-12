@@ -26,9 +26,6 @@ final class GetContentViewHelper extends AbstractViewHelper
 {
     protected $escapeOutput = false;
 
-    /**
-     * @return void
-     */
     public function initializeArguments(): void
     {
         parent::initializeArguments();

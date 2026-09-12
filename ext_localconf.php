@@ -32,4 +32,3 @@ ExtensionManagementUtility::addTypoScript(
     'tt_content.list.20.pwteaser_pi1 =< tt_content.pwteaser_pi1',
     'defaultContentRendering'
 );
-

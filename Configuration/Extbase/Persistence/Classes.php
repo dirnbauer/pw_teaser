@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
+use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 
 return [
     Page::class => [

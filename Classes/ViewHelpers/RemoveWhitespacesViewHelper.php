@@ -21,7 +21,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  */
 final class RemoveWhitespacesViewHelper extends AbstractViewHelper
 {
-
     /**
      * Returns the content without dispensable whitespaces
      *

@@ -16,9 +16,7 @@ final class ModifyPagesEvent
     /**
      * @param array<int, mixed> $pages
      */
-    public function __construct(private array $pages, private readonly TeaserController $teaserController)
-    {
-    }
+    public function __construct(private array $pages, private readonly TeaserController $teaserController) {}
 
     /**
      * @return array<int, mixed>

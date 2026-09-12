@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
-use ReflectionProperty;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 
@@ -58,7 +57,7 @@ final class PageTest extends TestCase
     public function getKeywordsReturnsEmptyArrayForMissingKeywords(): void
     {
         $subject = new Page();
-        $property = new ReflectionProperty($subject, 'keywords');
+        $property = new \ReflectionProperty($subject, 'keywords');
         $property->setAccessible(true);
         $property->setValue($subject, null);
 

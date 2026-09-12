@@ -40,6 +40,7 @@
 		"phpunit/phpunit": "^11.5 || ^12.0",
 		"saschaegerer/phpstan-typo3": "^3.0",
 		"ssch/typo3-rector": "^3.12",
+		"typo3/coding-standards": "^0.9",
 		"typo3/testing-framework": "^9.0"
 	},
 	"config": {
@@ -49,5 +50,12 @@
 			"typo3/class-alias-loader": true
 		},
 		"sort-packages": true
+	},
+	"scripts": {
+		"ci:lint": "find Classes Configuration Tests ext_emconf.php ext_localconf.php -name '*.php' -print0 | xargs -0 -n1 -P4 php -l",
+		"ci:cgl": "php-cs-fixer fix --dry-run --diff",
+		"ci:phpstan": "phpstan analyse --no-progress",
+		"ci:test:unit": "phpunit -c Tests/UnitTests.xml",
+		"ci:test:functional": "phpunit -c Tests/FunctionalTests.xml"
 	}
 }

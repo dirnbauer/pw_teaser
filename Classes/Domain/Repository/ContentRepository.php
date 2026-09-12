@@ -31,11 +31,8 @@ use TYPO3\CMS\Extbase\Persistence\Repository;
  */
 final class ContentRepository extends Repository
 {
-
     /**
      * Initializes the repository.
-     *
-     * @return void
      */
     public function initializeObject(): void
     {
@@ -48,7 +45,7 @@ final class ContentRepository extends Repository
      * Returns all objects of this repository which matches the given pid. This
      * overwritten method exists, to perform sorting
      *
-     * @param integer $pid Pid to search for
+     * @param int $pid Pid to search for
      * @return QueryResultInterface<int, Content> All found objects, will be
      *         empty if there are no objects
      */
@@ -58,7 +55,7 @@ final class ContentRepository extends Repository
         $query->matching($query->equals('pid', $pid));
         $query->setOrderings(
             [
-                'sorting' => QueryInterface::ORDER_ASCENDING
+                'sorting' => QueryInterface::ORDER_ASCENDING,
             ]
         );
         $result = $query->execute();
