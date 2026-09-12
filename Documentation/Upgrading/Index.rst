@@ -9,6 +9,38 @@ Upgrading
 .. contents:: :local:
 
 
+Upgrading to version 7.1
+------------------------
+
+Version 7.1 confirms support for TYPO3 **13.4 LTS and 14.3 LTS** and requires
+**PHP 8.3 or newer** (8.3, 8.4, 8.5). PHP 8.2 is no longer supported.
+
+
+Static TypoScript template removed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The static template :guilabel:`PwTeaser` (``Configuration/TCA/Overrides/
+sys_template.php``) is no longer registered. Include the TypoScript through
+the site set ``t3/pw-teaser`` or, in ``sys_template`` based setups, with
+
+.. code-block:: typoscript
+
+   @import 'EXT:pw_teaser/Configuration/TypoScript/setup.typoscript'
+
+See :ref:`installation-typoscript`. Without one of these the template preset
+dropdown is empty and the plugin renders nothing.
+
+
+Other changes
+~~~~~~~~~~~~~
+
+- ``composer.json`` requires ``php: ^8.3`` and
+  ``typo3/cms-core: ^13.4 || ^14.3``
+- ``ext_emconf.php`` declares ``php: 8.3.0-8.5.99``
+- No template, TypoScript or PHP API changes: custom templates and event
+  listeners written for 7.0 keep working
+
+
 Upgrading to version 7.0
 ------------------------
 
@@ -33,6 +65,17 @@ If you use **custom Fluid templates**, verify that:
 2. Custom ViewHelpers register arguments via ``initializeArguments()``
    instead of ``render()`` method parameters
 3. No CDATA sections are used (they are no longer stripped in Fluid 5.0)
+
+
+CategoryRepository shim
+~~~~~~~~~~~~~~~~~~~~~~~
+
+TYPO3 removed ``TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository``
+from the core in version 12. Because pw_teaser looks up ``Category`` objects
+by UID for its category filter, the extension ships a minimal replacement at
+``Classes/Domain/Repository/CategoryRepository.php`` (an Extbase
+``Repository`` with object type ``Category``). It is an internal helper; do
+not rely on it from your own code.
 
 
 CType migration wizard
