@@ -18,9 +18,9 @@ return RectorConfig::configure()
         __DIR__ . '/Resources',
         __DIR__ . '/Tests',
     ])
-    ->withPhpVersion(PhpVersion::PHP_82)
+    ->withPhpVersion(PhpVersion::PHP_83)
     ->withSets([
-        LevelSetList::UP_TO_PHP_82,
+        LevelSetList::UP_TO_PHP_83,
         Typo3LevelSetList::UP_TO_TYPO3_13,
         Typo3SetList::TYPO3_13,
     ])
