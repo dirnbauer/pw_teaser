@@ -8,7 +8,7 @@ Versions
 
 .. contents:: :local:
 
-7.1.0
+8.0.0
 -----
 
 - [FEATURE] Confirm TYPO3 14.3 LTS support (``typo3/cms-core ^13.4 || ^14.3``)

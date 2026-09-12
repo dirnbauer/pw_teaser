@@ -3,7 +3,7 @@
 All notable changes to `t3/pw_teaser` are documented in this file. Release
 notes for versions before 7.0 live in `Documentation/Versions/Index.rst`.
 
-## 7.1.0 – 2026-09-12
+## 8.0.0 – 2026-09-12
 
 ### Added
 
