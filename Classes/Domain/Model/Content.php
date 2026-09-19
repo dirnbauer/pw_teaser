@@ -11,8 +11,7 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
-use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
+use PwTeaserTeam\PwTeaser\Database\RecordRowLoader;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
@@ -20,10 +19,8 @@ use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
 use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 
 /**
- * Content model
- *
- * @copyright Copyright belongs to the respective authors
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * A content element of a teased page (plugin setting "loadContents").
+ * Every other column of tt_content is available through {content.get.columnName}.
  */
 class Content extends AbstractEntity
 {
@@ -50,7 +47,7 @@ class Content extends AbstractEntity
      */
     protected ObjectStorage $categories;
 
-    /** @var array<string, mixed>|null */
+    /** @var array<string, mixed>|null Raw tt_content row with lowerCamelCase keys */
     protected ?array $contentRow = null;
 
     public function __construct()
@@ -91,11 +88,7 @@ class Content extends AbstractEntity
      */
     public function getImageFiles(): array
     {
-        $imageFiles = [];
-        foreach ($this->getImage() as $image) {
-            $imageFiles[] = $image->getOriginalResource()->toArray();
-        }
-        return $imageFiles;
+        return $this->toFileArrays($this->image);
     }
 
     /**
@@ -129,11 +122,7 @@ class Content extends AbstractEntity
      */
     public function getAssetsFiles(): array
     {
-        $assetsFiles = [];
-        foreach ($this->getAssets() as $assets) {
-            $assetsFiles[] = $assets->getOriginalResource()->toArray();
-        }
-        return $assetsFiles;
+        return $this->toFileArrays($this->assets);
     }
 
     public function setBodytext(string $bodytext): void
@@ -203,39 +192,25 @@ class Content extends AbstractEntity
     }
 
     /**
-     * @deprecated Use typed getters instead. Falls back to raw database row.
+     * All columns of the tt_content row (lowerCamelCase keys).
+     * Used in Fluid as {content.get.columnName}.
+     *
+     * @return array<string, mixed>
+     */
+    public function getGet(): array
+    {
+        $this->contentRow ??= GeneralUtility::makeInstance(RecordRowLoader::class)->loadByUid('tt_content', (int)$this->getUid());
+        return $this->contentRow;
+    }
+
+    /**
+     * @deprecated Use getGet()['columnName'] instead; Fluid never calls this method.
      * @param array<int, mixed> $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
-        if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
-            $attributeName = lcfirst(substr($name, 3));
-
-            if ($this->contentRow === null) {
-                $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-                $queryBuilder = $pool->getQueryBuilderForTable('tt_content');
-                $contentRow = $queryBuilder
-                    ->select('*')
-                    ->from('tt_content')
-                    ->where(
-                        $queryBuilder->expr()->eq(
-                            'uid',
-                            $queryBuilder->createNamedParameter($this->getUid(), Connection::PARAM_INT)
-                        ),
-                        $queryBuilder->expr()->eq(
-                            'deleted',
-                            $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
-                        )
-                    )
-                    ->setMaxResults(1)
-                    ->executeQuery()
-                    ->fetchAssociative() ?: [];
-                $this->contentRow = [];
-                foreach ($contentRow as $key => $value) {
-                    $this->contentRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
-                }
-            }
-            return $this->contentRow[$attributeName] ?? null;
+        if (str_starts_with($name, 'get') && strlen($name) > 3) {
+            return $this->getGet()[lcfirst(substr($name, 3))] ?? null;
         }
         return null;
     }
@@ -249,16 +224,26 @@ class Content extends AbstractEntity
     }
 
     /**
-     * Pre-populates the raw content row so __call() doesn't need a DB query.
-     * Called by ContentRepository after bulk-loading.
+     * Pre-populates the raw row (lowerCamelCase keys, see RecordRowLoader) so
+     * getGet() needs no query of its own.
      *
      * @param array<string, mixed> $contentRow
      */
     public function setContentRow(array $contentRow): void
     {
-        $this->contentRow = [];
-        foreach ($contentRow as $key => $value) {
-            $this->contentRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
+        $this->contentRow = $contentRow;
+    }
+
+    /**
+     * @param ObjectStorage<FileReference> $fileReferences
+     * @return array<int, array<string, mixed>>
+     */
+    private function toFileArrays(ObjectStorage $fileReferences): array
+    {
+        $files = [];
+        foreach ($fileReferences as $fileReference) {
+            $files[] = $fileReference->getOriginalResource()->toArray();
         }
+        return $files;
     }
 }

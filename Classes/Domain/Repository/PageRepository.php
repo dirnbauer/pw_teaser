@@ -11,632 +11,311 @@ namespace PwTeaserTeam\PwTeaser\Domain\Repository;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use PwTeaserTeam\PwTeaser\Database\RecordRowLoader;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
-use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
 
 /**
- * Repository for Page model
+ * Loads the pages of a teaser. Every find method builds its own query from the
+ * given PageFilter, so the repository holds no request state.
  *
  * @extends Repository<Page>
- *
- * @copyright Copyright belongs to the respective authors
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
  */
 final class PageRepository extends Repository
 {
-    /** Category Mode: Or */
-    public const CATEGORY_MODE_OR = 1;
-    /** Category Mode: And */
-    public const CATEGORY_MODE_AND = 2;
-    /** Category Mode: Or Not */
-    public const CATEGORY_MODE_OR_NOT = 3;
-    /** Category Mode: And Not */
-    public const CATEGORY_MODE_AND_NOT = 4;
-
-    protected string $orderBy = 'uid';
-
-    protected string $orderDirection = QueryInterface::ORDER_ASCENDING;
-
-    /** @var QueryInterface<Page>|null */
-    protected ?QueryInterface $query = null;
-
-    /**
-     * @var list<ConstraintInterface>
-     */
-    protected array $queryConstraints = [];
-
-    /**
-     * Initializes the repository.
-     */
-    public function initializeObject(): void
-    {
-        $querySettings = $this->createQuery()->getQuerySettings();
-        $querySettings->setRespectStoragePage(false);
-        $this->setDefaultQuerySettings($querySettings);
-        $this->query = $this->createQuery();
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+        private readonly Context $context,
+        private readonly RecordRowLoader $rowLoader,
+    ) {
+        parent::__construct();
     }
 
     /**
-     * Returns all objects of this repository which match the pid
+     * Teaser pages live anywhere in the page tree, never below the storage pid.
+     * Built per query so every query sees the language of the current request.
      *
-     * @param int $pid the pid to search for
-     * @return array<int, Page> All found pages, will be empty if the result is empty
+     * @return QueryInterface<Page>
      */
-    public function findByPid(int $pid): array
+    public function createQuery(): QueryInterface
     {
-        assert($this->query !== null);
-        $translatedPid = $this->translatePids([$pid]);
-
-        $this->addQueryConstraint($this->query->equals('pid', (int)reset($translatedPid)));
-        return $this->executeQuery();
+        $query = parent::createQuery();
+        $query->getQuerySettings()->setRespectStoragePage(false);
+        return $query;
     }
 
     /**
-     * Returns all objects of this repository which are children of the matched
-     * pid (recursively)
+     * Direct children of the given pages.
      *
-     * @param int $pid the pid to search for recursively
-     * @param int $recursionDepthFrom Start of recursion depth
-     * @param int $recursionDepth Depth of recursion
-     * @return array<int, Page> All found pages, will be empty if the result is empty
+     * @param list<int> $parentUids
+     * @return list<Page>
      */
-    public function findByPidRecursively(int $pid, int $recursionDepthFrom, int $recursionDepth): array
+    public function findChildren(array $parentUids, PageFilter $filter): array
     {
-        return $this->findChildrenRecursivelyByPidList((string)$pid, $recursionDepthFrom, $recursionDepth);
-    }
-
-    /**
-     * Returns all objects of this repository which are in the pidlist
-     *
-     * @param string $pidlist comma seperated list of pids to search for
-     * @param bool $orderByPlugin setting of ordering by plugin
-     * @return array<int, Page> All found pages, will be empty if the result is empty
-     */
-    public function findByPidList(string $pidlist, bool $orderByPlugin = false): array
-    {
-        assert($this->query !== null);
-        $pagePids = GeneralUtility::intExplode(',', $pidlist, true);
-
-        // early return when list is empty to prevent sql exception
-        if (empty($pagePids)) {
+        if ($parentUids === []) {
             return [];
         }
-
-        $query = $this->query;
-        $this->addQueryConstraint($query->in('uid', $this->translatePids($pagePids)));
-        $query->matching($query->logicalAnd(...$this->queryConstraints));
-
-        if ($orderByPlugin === false) {
-            $this->handleOrdering($query);
-            $results = $query->execute();
-            $this->resetQuery();
-            return $this->handlePageLocalization($results);
-        }
-        $results = $query->execute();
-        $this->resetQuery();
-        return $this->orderByPlugin($pagePids, $this->handlePageLocalization($results));
-
+        $query = $this->createQuery();
+        return $this->execute($query, $query->in('pid', $parentUids), $filter);
     }
 
     /**
-     * Creates array of result items, with the order of given pagePids
+     * Descendants of the given pages between the two depth levels (1 = direct children).
+     * With $depthFrom = 0 the given pages themselves are part of the result.
      *
-     * @param array<int> $pagePids pagePids to order for
-     * @param array<int, Page> $results results to reorder
-     * @return array<int, Page> results ordered by plugin
+     * @param list<int> $rootUids
+     * @return list<Page>
      */
-    protected function orderByPlugin(array $pagePids, array $results): array
+    public function findDescendants(array $rootUids, int $depthFrom, int $depth, PageFilter $filter): array
     {
-        $sortedResults = [];
-        foreach ($pagePids as $pagePid) {
-            foreach ($results as $result) {
-                if ($pagePid === $result->getUid()) {
-                    $sortedResults[] = $result;
-                    continue;
-                }
-            }
-        }
-        return $sortedResults;
-    }
-
-    /**
-     * Returns all objects of this repository which are in the pidlist
-     *
-     * @param string $pidlist comma seperated list of pids to search for
-     * @return array<int, Page> All found pages, will be empty if the result is empty
-     */
-    public function findChildrenByPidList(string $pidlist): array
-    {
-        assert($this->query !== null);
-        $pagePids = GeneralUtility::intExplode(',', $pidlist, true);
-
-        // early return when list is empty to prevent sql exception
-        if (empty($pagePids)) {
+        $uids = $this->collectDescendantUids($rootUids, $depthFrom, $depth);
+        if ($uids === []) {
             return [];
         }
-
-        $this->addQueryConstraint($this->query->in('pid', $this->translatePids($pagePids)));
-        return $this->executeQuery();
+        $query = $this->createQuery();
+        return $this->execute($query, $query->in('uid', $this->translateUids($uids)), $filter);
     }
 
     /**
-     * Returns all objects of this repository which are children of pages in the
-     * pidlist (recursively)
+     * The given pages themselves, ordered by the filter or - with $keepGivenOrder - as listed.
      *
-     * @param string $pidlist comma seperated list of pids to search for
-     * @param int $recursionDepthFrom Start level for recursion
-     * @param int $recursionDepth Depth of recursion
-     * @return array<int, Page> All found pages, will be empty if the result is empty
+     * @param list<int> $uids
+     * @return list<Page>
      */
-    public function findChildrenRecursivelyByPidList(string $pidlist, int $recursionDepthFrom, int $recursionDepth): array
+    public function findByUids(array $uids, bool $keepGivenOrder, PageFilter $filter): array
     {
-        assert($this->query !== null);
-        $pagePids = $this->getRecursivePageList($pidlist, $recursionDepthFrom, $recursionDepth);
-        $translatedPids = $this->translatePids($pagePids);
-        if (!empty($translatedPids)) {
-            $this->addQueryConstraint($this->query->in('uid', $translatedPids));
-        } else {
-            $this->addQueryConstraint($this->query->in('uid', $pagePids));
+        if ($uids === []) {
+            return [];
         }
-
-        return $this->executeQuery();
+        $query = $this->createQuery();
+        $pages = $this->execute($query, $query->in('uid', $this->translateUids($uids)), $filter, !$keepGivenOrder);
+        return $keepGivenOrder ? $this->sortByUidList($pages, $uids) : $pages;
     }
 
     /**
-     * @param array<int> $pidList
-     * @return array<int>
+     * @param QueryInterface<Page> $query
+     * @return list<Page>
      */
-    protected function translatePids(array $pidList, ?int $languageUid = null): array
+    private function execute(QueryInterface $query, ConstraintInterface $selection, PageFilter $filter, bool $orderInDatabase = true): array
     {
-        if (empty($pidList)) {
-            return $pidList;
+        $query->matching($query->logicalAnd($selection, ...$this->filterConstraints($query, $filter)));
+        if ($orderInDatabase) {
+            $query->setOrderings([
+                $filter->orderBy => $filter->descending ? QueryInterface::ORDER_DESCENDING : QueryInterface::ORDER_ASCENDING,
+            ]);
+        }
+        if ($filter->limit > 0) {
+            $query->setLimit($filter->limit);
         }
 
-        if ($languageUid === null) {
-            /** @var Context $context */
-            $context = GeneralUtility::makeInstance(Context::class);
-            $languageUid = $context->getPropertyFromAspect('language', 'id');
-        }
-
-        /** @var ConnectionPool $pool */
-        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-
-        $translatedPidList = [];
-        foreach ($pidList as $pid) {
-            $queryBuilder = $pool->getQueryBuilderForTable('pages');
-            $translatedRow = $queryBuilder->select('*')
-                ->from('pages')
-                ->where(
-                    $queryBuilder->expr()->eq(
-                        'l10n_parent',
-                        $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)
-                    ),
-                    $queryBuilder->expr()->eq(
-                        'sys_language_uid',
-                        $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
-                    ),
-                    $queryBuilder->expr()->eq(
-                        'deleted',
-                        $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
-                    )
-                )
-                ->setMaxResults(1)
-                ->executeQuery()
-                ->fetchAssociative();
-            if ($translatedRow) {
-                $uid = $translatedRow['uid'];
-                $translatedPidList[$pid] = is_int($uid) ? $uid : (is_string($uid) || is_float($uid) ? (int)$uid : $pid);
-            } else {
-                $translatedPidList[$pid] = $pid;
-            }
-        }
-
-        return array_values($translatedPidList);
+        $pages = $this->filterByTranslationVisibility($query->execute()->toArray());
+        $this->attachRawRows($pages);
+        return $pages;
     }
 
     /**
-     * Adds query constraint to array
-     *
-     * @param ConstraintInterface $constraint Constraint to add
-     */
-    protected function addQueryConstraint(ConstraintInterface $constraint): void
-    {
-        $this->queryConstraints[] = $constraint;
-    }
-
-    /**
-     * Add category constraint
-     *
-     * @param array<int, mixed> $categories
-     * @param bool $isAnd If TRUE categories get a logicalAnd. Otherwise a logicalOr.
-     * @param bool $isNot If TRUE categories get a logicalNot operator. Otherwise not.
-     */
-    public function addCategoryConstraint(array $categories, bool $isAnd = true, bool $isNot = false): void
-    {
-        assert($this->query !== null);
-        if ($isAnd === true && $isNot === false) {
-            $this->queryConstraints[] = $this->query->logicalAnd(...$this->buildCategoryConstraint($categories));
-        }
-        if ($isAnd === true && $isNot === true) {
-            $this->queryConstraints[] = $this->query->logicalNot(
-                $this->query->logicalAnd(
-                    ...$this->buildCategoryConstraint($categories)
-                )
-            );
-        }
-        if ($isAnd === false && $isNot === false) {
-            $this->queryConstraints[] = $this->query->logicalOr(...$this->buildCategoryConstraint($categories));
-        }
-        if ($isAnd === false && $isNot === true) {
-            $this->queryConstraints[] = $this->query->logicalNot(
-                $this->query->logicalOr(
-                    ...$this->buildCategoryConstraint($categories)
-                )
-            );
-        }
-    }
-
-    /**
-     * Build category constraint for each category (contains)
-     *
-     * @param array<int, mixed> $categories
+     * @param QueryInterface<Page> $query
      * @return list<ConstraintInterface>
      */
-    protected function buildCategoryConstraint(array $categories): array
+    private function filterConstraints(QueryInterface $query, PageFilter $filter): array
     {
-        assert($this->query !== null);
         $constraints = [];
-        foreach ($categories as $category) {
-            $constraints[] = $this->query->contains('categories', $category);
+        if (!$filter->showNavHiddenItems) {
+            $constraints[] = $query->equals('nav_hide', 0);
+        }
+        if ($filter->doktypes !== []) {
+            $constraints[] = $query->in('doktype', $filter->doktypes);
+        }
+        foreach ($filter->ignoredUids as $uid) {
+            $constraints[] = $query->logicalNot($query->equals('uid', $uid));
+            $constraints[] = $query->logicalNot($query->equals('l10n_parent', $uid));
+        }
+        if ($filter->categoryUids !== [] && $filter->categoryMode !== null) {
+            $categoryConstraints = array_map(
+                static fn(int $categoryUid): ConstraintInterface => $query->contains('categories', $categoryUid),
+                $filter->categoryUids
+            );
+            $combined = $filter->categoryMode->isAnd()
+                ? $query->logicalAnd(...$categoryConstraints)
+                : $query->logicalOr(...$categoryConstraints);
+            $constraints[] = $filter->categoryMode->isNegated() ? $query->logicalNot($combined) : $combined;
         }
         return $constraints;
     }
 
     /**
-     * Finalize given query constraints and executes the query
+     * Applies the l18n_cfg flags of each page for the current language, like the page tree does.
      *
-     * @return array<Page> Result of query
+     * @param array<int, Page> $pages
+     * @return list<Page>
      */
-    protected function executeQuery(): array
+    private function filterByTranslationVisibility(array $pages): array
     {
-        assert($this->query !== null);
-        $query = $this->query;
-        $query->matching($query->logicalAnd(...$this->queryConstraints));
-        $this->handleOrdering($query);
+        $languageUid = $this->context->getAspect('language')->getId();
+        if ($languageUid === 0) {
+            return array_values(array_filter(
+                $pages,
+                static fn(Page $page): bool => !$page->getTranslationVisibility()->shouldBeHiddenInDefaultLanguage()
+            ));
+        }
 
-        $queryResult = $query->execute();
-        $this->resetQuery();
+        $uidsRequiringTranslation = [];
+        foreach ($pages as $page) {
+            if ($page->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists()) {
+                $uidsRequiringTranslation[] = (int)$page->getUid();
+            }
+        }
+        $translated = $this->findTranslations($uidsRequiringTranslation, $languageUid);
 
-        $queryResult = $this->handlePageLocalization($queryResult);
-        $this->enrichWithPageRows($queryResult);
-
-        return $queryResult;
+        return array_values(array_filter(
+            $pages,
+            static fn(Page $page): bool => !$page->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists()
+                || isset($translated[(int)$page->getUid()])
+        ));
     }
 
     /**
-     * Bulk-loads raw page rows and sets pageRow on each model,
-     * so getGet() / __call() don't need separate DB queries.
+     * Replaces default-language uids with the uid of their translation in the current
+     * language, so translated pages are found when selecting pages by uid. Page
+     * translations keep the pid of their original, so pids are never translated.
      *
-     * @param array<Page> $pages
+     * @param list<int> $uids
+     * @return list<int>
      */
-    protected function enrichWithPageRows(array $pages): void
+    private function translateUids(array $uids): array
     {
-        if ($pages === []) {
-            return;
+        $languageUid = $this->context->getAspect('language')->getId();
+        if ($languageUid === 0) {
+            return $uids;
         }
+        $translations = $this->findTranslations($uids, $languageUid);
+        return array_map(static fn(int $uid): int => $translations[$uid] ?? $uid, $uids);
+    }
 
-        $uids = [];
-        foreach ($pages as $page) {
-            $uid = $page->getUid();
-            if ($uid !== null) {
-                $uids[] = $uid;
-            }
+    /**
+     * @param list<int> $defaultLanguageUids
+     * @return array<int, int> Translated uid, indexed by default-language uid
+     */
+    private function findTranslations(array $defaultLanguageUids, int $languageUid): array
+    {
+        if ($defaultLanguageUids === []) {
+            return [];
         }
-        if ($uids === []) {
-            return;
-        }
-
-        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-        $queryBuilder = $pool->getQueryBuilderForTable('pages');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
         $rows = $queryBuilder
-            ->select('*')
+            ->select('uid', 'l10n_parent')
             ->from('pages')
             ->where(
                 $queryBuilder->expr()->in(
-                    'uid',
-                    $queryBuilder->createNamedParameter($uids, Connection::PARAM_INT_ARRAY)
-                )
-            )
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        /** @var array<int, array<string, mixed>> $rowsByUid */
-        $rowsByUid = [];
-        foreach ($rows as $row) {
-            $uid = $row['uid'] ?? null;
-            if (is_int($uid)) {
-                $rowsByUid[$uid] = $row;
-            } elseif (is_string($uid) && ctype_digit($uid)) {
-                $rowsByUid[(int)$uid] = $row;
-            }
-        }
-
-        foreach ($pages as $page) {
-            $uid = $page->getUid();
-            if ($uid !== null && isset($rowsByUid[$uid])) {
-                $page->setPageRow($rowsByUid[$uid]);
-            }
-        }
-    }
-
-    /**
-     * Handles page localization
-     *
-     * @param QueryResultInterface<int, Page> $pages
-     * @return array<int, Page>
-     */
-    protected function handlePageLocalization(QueryResultInterface $pages): array
-    {
-        /** @var Context $context */
-        $context = GeneralUtility::makeInstance(Context::class);
-        $currentLangUid = $context->getPropertyFromAspect('language', 'id');
-        $displayedPages = [];
-
-        /** @var Page $page */
-        foreach ($pages as $page) {
-            if ($currentLangUid === 0) {
-                if ($page->getL18nConfiguration() !== Page::L18N_HIDE_DEFAULT_LANGUAGE
-                    && $page->getL18nConfiguration() !== Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS) {
-                    $displayedPages[] = $page;
-                }
-            } else {
-                $pageUid = $page->getUid();
-                $langUid = is_int($currentLangUid) ? $currentLangUid : (is_string($currentLangUid) || is_float($currentLangUid) ? (int)$currentLangUid : 0);
-                $translationExists = $pageUid !== null && $this->pageHasTranslation($pageUid, $langUid);
-                $requiresTranslation = in_array(
-                    $page->getL18nConfiguration(),
-                    [
-                        Page::L18N_HIDE_IF_NO_TRANSLATION_EXISTS,
-                        Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS,
-                    ],
-                    true
-                );
-
-                if (!$requiresTranslation || $translationExists) {
-                    $displayedPages[] = $page;
-                }
-            }
-        }
-        return $displayedPages;
-    }
-
-    /**
-     * Get subpages recursivley of given pid(s).
-     *
-     * @param string $pidlist List of pageUids to get subpages of. May contain a single uid.
-     * @param int $recursionDepthFrom Start of recursion depth
-     * @param int $recursionDepth Depth of recursion
-     * @return array<int> Found subpages, recursivley
-     */
-    protected function getRecursivePageList(string $pidlist, int $recursionDepthFrom, int $recursionDepth): array
-    {
-        $pagePids = [];
-        $pids = GeneralUtility::intExplode(',', $pidlist, true);
-        foreach ($pids as $pid) {
-            $pageList = $this->collectRecursivePageIds($pid, (int)$recursionDepthFrom, (int)$recursionDepth);
-            $pagePids = array_merge($pagePids, $pageList);
-            if ($recursionDepthFrom === 0) {
-                array_unshift($pagePids, $pid);
-            }
-        }
-        return array_unique($pagePids);
-    }
-
-    /**
-     * Sets the order by which is used by all find methods
-     *
-     * @param string $orderBy property to order by
-     */
-    public function setOrderBy(string $orderBy): void
-    {
-        if ($orderBy !== 'random') {
-            $this->orderBy = $orderBy;
-        }
-    }
-
-    /**
-     * Sets the order direction which is used by all find methods
-     *
-     * @param string $orderDirection the direction to order, may be desc or asc
-     */
-    public function setOrderDirection(string|int $orderDirection): void
-    {
-        if ($orderDirection === 'desc' || $orderDirection === 1) {
-            $this->orderDirection = QueryInterface::ORDER_DESCENDING;
-        } else {
-            $this->orderDirection = QueryInterface::ORDER_ASCENDING;
-        }
-    }
-
-    /**
-     * Sets the query limit
-     *
-     * @param int $limit The limit of elements to show
-     */
-    public function setLimit(int $limit): void
-    {
-        assert($this->query !== null);
-        $this->query->setLimit($limit);
-    }
-
-    /**
-     * Sets the nav_hide_state flag
-     *
-     * @param bool $showNavHiddenItems If TRUE lets show items which should not be visible in navigation.
-     *        Default is FALSE.
-     */
-    public function setShowNavHiddenItems(bool $showNavHiddenItems): void
-    {
-        assert($this->query !== null);
-        if ($showNavHiddenItems === true) {
-            $this->addQueryConstraint($this->query->in('nav_hide', [0, 1]));
-        } else {
-            $this->addQueryConstraint($this->query->in('nav_hide', [0]));
-        }
-    }
-
-    /**
-     * Sets doktypes to filter for
-     *
-     * @param array<int> $dokTypesToFilterFor doktypes as array, may be empty
-     */
-    public function setFilteredDokType(array $dokTypesToFilterFor): void
-    {
-        assert($this->query !== null);
-        if (count($dokTypesToFilterFor) > 0) {
-            $this->addQueryConstraint($this->query->in('doktype', $dokTypesToFilterFor));
-        }
-    }
-
-    /**
-     * Ignores given uid
-     *
-     * @param int $currentPageUid Uid to ignore
-     */
-    public function setIgnoreOfUid(int $currentPageUid): void
-    {
-        assert($this->query !== null);
-        $query = $this->query;
-        $this->addQueryConstraint($query->logicalNot($query->equals('uid', $currentPageUid)));
-        $this->addQueryConstraint($query->logicalNot($query->equals('l10n_parent', $currentPageUid)));
-    }
-
-    /**
-     * Adds handle of ordering to query object
-     *
-     * @param QueryInterface<Page> $query
-     */
-    protected function handleOrdering(QueryInterface $query): void
-    {
-        $query->setOrderings([$this->orderBy => $this->orderDirection]);
-    }
-
-    /**
-     * Resets query and queryConstraints after execution
-     */
-    protected function resetQuery(): void
-    {
-        unset($this->query);
-        $this->query = $this->createQuery();
-        unset($this->queryConstraints);
-        $this->queryConstraints = [];
-    }
-
-    protected function pageHasTranslation(int $pageUid, int $languageUid): bool
-    {
-        /** @var ConnectionPool $pool */
-        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-        $queryBuilder = $pool->getQueryBuilderForTable('pages');
-
-        $translatedRow = $queryBuilder
-            ->select('uid')
-            ->from('pages')
-            ->where(
-                $queryBuilder->expr()->eq(
                     'l10n_parent',
-                    $queryBuilder->createNamedParameter($pageUid, Connection::PARAM_INT)
+                    $queryBuilder->createNamedParameter($defaultLanguageUids, Connection::PARAM_INT_ARRAY)
                 ),
                 $queryBuilder->expr()->eq(
                     'sys_language_uid',
                     $queryBuilder->createNamedParameter($languageUid, Connection::PARAM_INT)
-                ),
-                $queryBuilder->expr()->eq(
-                    'deleted',
-                    $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                 )
             )
-            ->setMaxResults(1)
+            ->orderBy('uid')
             ->executeQuery()
-            ->fetchOne();
+            ->fetchAllAssociative();
 
-        return $translatedRow !== false;
+        $translations = [];
+        foreach ($rows as $row) {
+            $translations[self::int($row['l10n_parent'] ?? 0)] ??= self::int($row['uid'] ?? 0);
+        }
+        return $translations;
     }
 
     /**
-     * @return array<int>
+     * Uids of all (not deleted, not hidden) default-language descendants, level by level.
+     *
+     * @param list<int> $rootUids
+     * @return list<int>
      */
-    protected function collectRecursivePageIds(int $rootPid, int $recursionDepthFrom, int $recursionDepth): array
+    private function collectDescendantUids(array $rootUids, int $depthFrom, int $depth): array
     {
-        if ($recursionDepth < 1) {
+        $uids = $depthFrom === 0 ? $rootUids : [];
+        $level = $rootUids;
+        for ($currentDepth = 1; $currentDepth <= $depth && $level !== []; $currentDepth++) {
+            $level = $this->findChildUids($level);
+            if ($currentDepth >= $depthFrom) {
+                $uids = [...$uids, ...$level];
+            }
+        }
+        return array_values(array_unique($uids));
+    }
+
+    /**
+     * @param list<int> $parentUids
+     * @return list<int>
+     */
+    private function findChildUids(array $parentUids): array
+    {
+        if ($parentUids === []) {
             return [];
         }
-
-        $pageIds = [];
-        $this->collectDescendantPageIds($rootPid, 1, $recursionDepthFrom, $recursionDepth, $pageIds);
-
-        return $pageIds;
-    }
-
-    /**
-     * @param array<int> $pageIds
-     */
-    protected function collectDescendantPageIds(
-        int $parentPid,
-        int $currentDepth,
-        int $recursionDepthFrom,
-        int $recursionDepth,
-        array &$pageIds
-    ): void {
-        if ($currentDepth > $recursionDepth) {
-            return;
-        }
-
-        foreach ($this->getDirectChildPageIds($parentPid) as $childPid) {
-            if ($currentDepth >= $recursionDepthFrom) {
-                $pageIds[] = $childPid;
-            }
-            $this->collectDescendantPageIds($childPid, $currentDepth + 1, $recursionDepthFrom, $recursionDepth, $pageIds);
-        }
-    }
-
-    /**
-     * @return array<int>
-     */
-    protected function getDirectChildPageIds(int $parentPid): array
-    {
-        /** @var ConnectionPool $pool */
-        $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-        $queryBuilder = $pool->getQueryBuilderForTable('pages');
-
-        $childPageIds = $queryBuilder
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+        $childUids = $queryBuilder
             ->select('uid')
             ->from('pages')
             ->where(
-                $queryBuilder->expr()->eq(
+                $queryBuilder->expr()->in(
                     'pid',
-                    $queryBuilder->createNamedParameter($parentPid, Connection::PARAM_INT)
-                ),
-                $queryBuilder->expr()->eq(
-                    'deleted',
-                    $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
+                    $queryBuilder->createNamedParameter($parentUids, Connection::PARAM_INT_ARRAY)
                 ),
                 $queryBuilder->expr()->eq(
                     'sys_language_uid',
                     $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
                 )
             )
+            ->orderBy('sorting')
             ->executeQuery()
             ->fetchFirstColumn();
 
-        return array_map(static function (mixed $v): int {
-            return is_int($v) ? $v : (is_string($v) || is_float($v) ? (int)$v : 0);
-        }, $childPageIds);
+        return array_map(self::int(...), $childUids);
+    }
+
+    /**
+     * @param list<Page> $pages
+     */
+    private function attachRawRows(array $pages): void
+    {
+        $rows = $this->rowLoader->loadByUids(
+            'pages',
+            array_map(static fn(Page $page): int => (int)$page->getUid(), $pages)
+        );
+        foreach ($pages as $page) {
+            $page->setPageRow($rows[(int)$page->getUid()] ?? []);
+        }
+    }
+
+    /**
+     * @param list<Page> $pages
+     * @param list<int> $uids
+     * @return list<Page>
+     */
+    private function sortByUidList(array $pages, array $uids): array
+    {
+        $pagesByUid = [];
+        foreach ($pages as $page) {
+            $pagesByUid[(int)$page->getUid()] = $page;
+        }
+        $sorted = [];
+        foreach ($uids as $uid) {
+            if (isset($pagesByUid[$uid])) {
+                $sorted[] = $pagesByUid[$uid];
+            }
+        }
+        return $sorted;
+    }
+
+    private static function int(mixed $value): int
+    {
+        return is_numeric($value) ? (int)$value : 0;
     }
 }

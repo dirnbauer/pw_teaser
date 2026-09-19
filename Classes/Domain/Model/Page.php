@@ -11,35 +11,26 @@ namespace PwTeaserTeam\PwTeaser\Domain\Model;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use PwTeaserTeam\PwTeaser\Database\RecordRowLoader;
 use TYPO3\CMS\Core\Context\Context;
-use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Type\Bitmask\PageTranslationVisibility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
-use TYPO3\CMS\Extbase\Annotation\Validate as ValidateAttribute;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
 use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 
 /**
- * Page model
- *
- * @copyright Copyright belongs to the respective authors
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ * A teased page. Modelled columns have typed getters; every other column of
+ * the pages table is available through {page.get.columnName}.
  */
 class Page extends AbstractEntity
 {
-    public const L18N_SHOW_ALWAYS = 0;
-    public const L18N_HIDE_DEFAULT_LANGUAGE = 1;
-    public const L18N_HIDE_IF_NO_TRANSLATION_EXISTS = 2;
-    public const L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS = 3;
-
     protected int $doktype = 0;
 
     protected bool $isCurrentPage = false;
 
-    #[ValidateAttribute(['validator' => 'NotEmpty'])]
     protected string $title = '';
 
     protected string $subtitle = '';
@@ -51,8 +42,6 @@ class Page extends AbstractEntity
     protected string $description = '';
 
     protected string $abstract = '';
-
-    protected string $alias = '';
 
     /**
      * @var ObjectStorage<FileReference>
@@ -93,8 +82,14 @@ class Page extends AbstractEntity
     /** @var array<string, mixed> */
     protected array $customAttributes = [];
 
-    /** @var array<string, mixed>|null */
+    /** @var array<string, mixed>|null Raw pages row with lowerCamelCase keys */
     protected ?array $pageRow = null;
+
+    public function __construct()
+    {
+        $this->categories = new ObjectStorage();
+        $this->media = new ObjectStorage();
+    }
 
     public function setCustomAttribute(string $key, mixed $value): void
     {
@@ -103,10 +98,7 @@ class Page extends AbstractEntity
 
     public function getCustomAttribute(string $key): mixed
     {
-        if ($key !== '' && $this->hasCustomAttribute($key)) {
-            return $this->customAttributes[$key];
-        }
-        return null;
+        return $this->customAttributes[$key] ?? null;
     }
 
     public function hasCustomAttribute(string $key): bool
@@ -115,54 +107,27 @@ class Page extends AbstractEntity
     }
 
     /**
+     * All columns of the pages row (lowerCamelCase keys) plus the custom attributes.
+     * Used in Fluid as {page.get.columnName}.
+     *
      * @return array<string, mixed>
      */
     public function getGet(): array
     {
-        if ($this->pageRow === null) {
-            $pool = GeneralUtility::makeInstance(ConnectionPool::class);
-            $queryBuilder = $pool->getQueryBuilderForTable('pages');
-            $pageRow = $queryBuilder
-                ->select('*')
-                ->from('pages')
-                ->where(
-                    $queryBuilder->expr()->eq(
-                        'uid',
-                        $queryBuilder->createNamedParameter($this->getUid(), Connection::PARAM_INT)
-                    ),
-                    $queryBuilder->expr()->eq(
-                        'deleted',
-                        $queryBuilder->createNamedParameter(0, Connection::PARAM_INT)
-                    )
-                )
-                ->setMaxResults(1)
-                ->executeQuery()
-                ->fetchAssociative() ?: [];
-            $this->pageRow = [];
-            foreach ($pageRow as $key => $value) {
-                $this->pageRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
-            }
-        }
+        $this->pageRow ??= GeneralUtility::makeInstance(RecordRowLoader::class)->loadByUid('pages', (int)$this->getUid());
         return array_merge($this->customAttributes, $this->pageRow);
     }
 
     /**
-     * @deprecated Use getGet() instead (in Fluid: {page.get.attributeName})
+     * @deprecated Use getGet()['columnName'] instead; Fluid never calls this method.
      * @param array<int, mixed> $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
-        if (str_starts_with(strtolower($name), 'get') && strlen($name) > 3) {
-            $attributeName = lcfirst(substr($name, 3));
-            return $this->getGet()[$attributeName] ?? null;
+        if (str_starts_with($name, 'get') && strlen($name) > 3) {
+            return $this->getGet()[lcfirst(substr($name, 3))] ?? null;
         }
         return null;
-    }
-
-    public function __construct()
-    {
-        $this->categories = new ObjectStorage();
-        $this->media = new ObjectStorage();
     }
 
     /**
@@ -227,16 +192,6 @@ class Page extends AbstractEntity
     public function getDescription(): string
     {
         return $this->description;
-    }
-
-    public function setAlias(string $alias): void
-    {
-        $this->alias = $alias;
-    }
-
-    public function getAlias(): string
-    {
-        return $this->alias;
     }
 
     public function setNavTitle(string $navTitle): void
@@ -317,10 +272,7 @@ class Page extends AbstractEntity
 
     public function getIsNew(): bool
     {
-        if ($this->newUntil !== 0) {
-            return $this->newUntil > time();
-        }
-        return false;
+        return $this->newUntil !== 0 && $this->newUntil > time();
     }
 
     public function setCreationDate(int $creationDate): void
@@ -393,14 +345,22 @@ class Page extends AbstractEntity
         $this->doktype = $doktype;
     }
 
+    /**
+     * Raw l18n_cfg bitmask of the page.
+     */
     public function getL18nConfiguration(): int
     {
         return $this->l18nConfiguration;
     }
 
-    public function setL18nConfiguration(int $l18nCfg): void
+    public function setL18nConfiguration(int $l18nConfiguration): void
     {
-        $this->l18nConfiguration = $l18nCfg;
+        $this->l18nConfiguration = $l18nConfiguration;
+    }
+
+    public function getTranslationVisibility(): PageTranslationVisibility
+    {
+        return new PageTranslationVisibility($this->l18nConfiguration);
     }
 
     /**
@@ -435,7 +395,7 @@ class Page extends AbstractEntity
     public function getRootLine(): array
     {
         $context = GeneralUtility::makeInstance(Context::class);
-        $rootline = GeneralUtility::makeInstance(RootlineUtility::class, $this->getUid(), '', $context);
+        $rootline = GeneralUtility::makeInstance(RootlineUtility::class, (int)$this->getUid(), '', $context);
         return $rootline->get();
     }
 
@@ -444,15 +404,18 @@ class Page extends AbstractEntity
         return count($this->getRootLine());
     }
 
+    /**
+     * Sorting key that orders pages like the page tree: the zero-padded sorting
+     * values from the root page down to this page, joined with "-".
+     */
     public function getRecursiveRootLineOrdering(): string
     {
-        $recursiveOrdering = [];
-        foreach ($this->getRootLine() as $pageRootPart) {
-            $sorting = $pageRootPart['sorting'] ?? 0;
-            $sortingStr = is_scalar($sorting) ? (string)$sorting : '0';
-            array_unshift($recursiveOrdering, str_pad($sortingStr, 11, '0', STR_PAD_LEFT));
+        $ordering = [];
+        foreach ($this->getRootLine() as $rootLinePage) {
+            $sorting = $rootLinePage['sorting'] ?? 0;
+            array_unshift($ordering, str_pad(is_scalar($sorting) ? (string)$sorting : '0', 11, '0', STR_PAD_LEFT));
         }
-        return implode('-', $recursiveOrdering);
+        return implode('-', $ordering);
     }
 
     /**
@@ -464,17 +427,14 @@ class Page extends AbstractEntity
     }
 
     /**
-     * Pre-populates the raw page row so getGet() doesn't need a DB query.
-     * Called by PageRepository after bulk-loading.
+     * Pre-populates the raw row (lowerCamelCase keys, see RecordRowLoader) so
+     * getGet() needs no query of its own.
      *
      * @param array<string, mixed> $pageRow
      */
     public function setPageRow(array $pageRow): void
     {
-        $this->pageRow = [];
-        foreach ($pageRow as $key => $value) {
-            $this->pageRow[GeneralUtility::underscoredToLowerCamelCase((string)$key)] = $value;
-        }
+        $this->pageRow = $pageRow;
     }
 
     public function getSorting(): int

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace PwTeaserTeam\PwTeaser\ViewHelpers;
 
-use PwTeaserTeam\PwTeaser\Domain\Model\Content;
-use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
-
 /*  | This extension is made with love for TYPO3 CMS and is licensed
  *  | under GNU General Public License.
  *  |
@@ -14,13 +11,16 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *  |     2016 Tim Klein-Hitpass <tim.klein-hitpass@diemedialen.de>
  *  |     2016 Kai Ratzeburg <kai.ratzeburg@diemedialen.de>
  */
+use PwTeaserTeam\PwTeaser\Domain\Model\Content;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * This class creates links to social bookmark services, recommending the
- * current front-end page.
+ * Renders its children once for every content element of {page.contents}
+ * that matches the given column and content type:
  *
- * @copyright Copyright belongs to the respective authors
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License, version 3 or later
+ *   <pw:getContent contents="{page.contents}" as="content" colPos="0" cType="image" index="0">
+ *       <f:image src="{content.imageFiles.0.url}" />
+ *   </pw:getContent>
  */
 final class GetContentViewHelper extends AbstractViewHelper
 {
@@ -28,73 +28,41 @@ final class GetContentViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        parent::initializeArguments();
-        $this->registerArgument('contents', 'array', 'Content elements');
-        $this->registerArgument('as', 'string', 'the name of the iteration variable', true);
-        $this->registerArgument('colPos', 'integer', 'column position to get content elements from', false, 0);
-        $this->registerArgument('cType', 'string', 'the cType to filter content elements for');
-        $this->registerArgument('index', 'integer', 'limits the output to n-th element');
+        $this->registerArgument('contents', 'array', 'Content elements of a page ({page.contents})');
+        $this->registerArgument('as', 'string', 'Variable name of the current content element', true);
+        $this->registerArgument('colPos', 'integer', 'Column position to take content elements from', false, 0);
+        $this->registerArgument('cType', 'string', 'Only content elements of this CType; empty for all');
+        $this->registerArgument('index', 'integer', 'Only the n-th matching content element (0 = first)');
     }
 
     public function render(): string
     {
         $contents = $this->arguments['contents'];
-        if ($contents === null || !is_array($contents)) {
-            return '';
-        }
-
         $as = $this->arguments['as'];
-        if (!is_string($as)) {
+        if (!is_array($contents) || !is_string($as) || $as === '' || $this->renderingContext === null) {
             return '';
         }
+        $colPos = is_numeric($this->arguments['colPos']) ? (int)$this->arguments['colPos'] : 0;
+        $cType = is_string($this->arguments['cType']) && $this->arguments['cType'] !== '' ? $this->arguments['cType'] : null;
+        $index = is_numeric($this->arguments['index']) ? (int)$this->arguments['index'] : null;
 
-        $output = '';
-        $indexCount = 0;
-        $breakNow = false;
-        $asHasBeenSet = false;
-
-        if ($this->renderingContext === null) {
-            return '';
+        $matches = array_values(array_filter(
+            $contents,
+            static fn(mixed $content): bool => $content instanceof Content
+                && $content->getColPos() === $colPos
+                && ($cType === null || $content->getCtype() === $cType)
+        ));
+        if ($index !== null) {
+            $matches = isset($matches[$index]) ? [$matches[$index]] : [];
         }
+
         $variableProvider = $this->renderingContext->getVariableProvider();
-        $colPos = is_int($this->arguments['colPos'] ?? null) ? $this->arguments['colPos'] : 0;
-        $cType = $this->arguments['cType'];
-        $index = $this->arguments['index'];
-
-        /** @var Content $content */
-        foreach ($contents as $content) {
-            if (!$content instanceof Content) {
-                continue;
-            }
-            $contentCtype = $content->getCtype();
-            $contentColPos = $content->getColPos();
-            $matchesType = $cType === null || $contentCtype === $cType;
-            $matchesColumn = $contentColPos === $colPos;
-
-            if ($matchesColumn && $matchesType) {
-                if ($index === null) {
-                    $variableProvider->add($as, $content);
-                    $asHasBeenSet = true;
-                } elseif (is_int($index) && $indexCount === $index) {
-                    $variableProvider->add($as, $content);
-                    $asHasBeenSet = true;
-                    $breakNow = true;
-                }
-            }
-
-            if ($asHasBeenSet) {
-                $children = $this->renderChildren();
-                $output .= is_string($children) ? $children : (is_scalar($children) ? (string)$children : '');
-                $variableProvider->remove($as);
-                $asHasBeenSet = false;
-            }
-
-            if ($breakNow) {
-                break;
-            }
-            if ($matchesColumn && $matchesType) {
-                $indexCount++;
-            }
+        $output = '';
+        foreach ($matches as $content) {
+            $variableProvider->add($as, $content);
+            $children = $this->renderChildren();
+            $output .= is_scalar($children) ? (string)$children : '';
+            $variableProvider->remove($as);
         }
         return $output;
     }

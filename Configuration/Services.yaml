@@ -7,3 +7,9 @@ services:
     PwTeaserTeam\PwTeaser\:
         resource: '../Classes/*'
         exclude: '../Classes/Domain/Model/*'
+
+    # Instantiated via GeneralUtility::makeInstance() by FormEngine (itemsProcFunc) and the domain models
+    PwTeaserTeam\PwTeaser\UserFunction\ItemsProcFunc:
+        public: true
+    PwTeaserTeam\PwTeaser\Database\RecordRowLoader:
+        public: true

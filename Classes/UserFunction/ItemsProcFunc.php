@@ -9,39 +9,39 @@ namespace PwTeaserTeam\PwTeaser\UserFunction;
  *  |
  *  | (c) 2011-2022 Armin Vieweg <armin@v.ieweg.de>
  */
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
+/**
+ * Fills the "Template preset" dropdown of the plugin with the presets
+ * configured in plugin.tx_pwteaser.view.presets.
+ */
 final readonly class ItemsProcFunc
 {
-    private ConfigurationManagerInterface $configurationManager;
-
-    public function __construct(?ConfigurationManagerInterface $configurationManager = null)
-    {
-        $this->configurationManager = $configurationManager ?? GeneralUtility::makeInstance(ConfigurationManagerInterface::class);
-    }
+    public function __construct(private ConfigurationManagerInterface $configurationManager) {}
 
     /**
-     * @param array<string, mixed> &$parameters
+     * @param array<string, mixed> $parameters
      */
     public function getAvailableTemplatePresets(array &$parameters): void
     {
-        $config = $this->configurationManager->getConfiguration(ConfigurationManager::CONFIGURATION_TYPE_FULL_TYPOSCRIPT);
-        $pluginConfig = is_array($config['plugin.'] ?? null) ? $config['plugin.'] : [];
-        $extConfig = is_array($pluginConfig['tx_pwteaser.'] ?? null) ? $pluginConfig['tx_pwteaser.'] : [];
-        $viewConfig = is_array($extConfig['view.'] ?? null) ? $extConfig['view.'] : [];
-        $presets = is_array($viewConfig['presets.'] ?? null) ? $viewConfig['presets.'] : [];
+        $typoScript = $this->configurationManager->getConfiguration(
+            ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
+        );
+        $presets = $typoScript['plugin.']['tx_pwteaser.']['view.']['presets.'] ?? null;
 
         if (!isset($parameters['items']) || !is_array($parameters['items'])) {
             $parameters['items'] = [];
         }
-        foreach ($presets as $key => $preset) {
+        foreach (is_array($presets) ? $presets : [] as $key => $preset) {
             if (!is_array($preset)) {
                 continue;
             }
-            $label = is_string($preset['label'] ?? null) ? $preset['label'] : (string)$key;
-            $parameters['items'][] = ['label' => $label, 'value' => rtrim((string)$key, '.')];
+            $key = rtrim((string)$key, '.');
+            $label = $preset['label'] ?? null;
+            $parameters['items'][] = [
+                'label' => is_string($label) && $label !== '' ? $label : $key,
+                'value' => $key,
+            ];
         }
     }
 }

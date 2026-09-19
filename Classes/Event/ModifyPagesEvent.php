@@ -10,16 +10,21 @@ namespace PwTeaserTeam\PwTeaser\Event;
  *  | (c) 2022 Armin Vieweg <armin@v.ieweg.de>
  */
 use PwTeaserTeam\PwTeaser\Controller\TeaserController;
+use PwTeaserTeam\PwTeaser\Domain\Model\Page;
 
+/**
+ * Dispatched after the pages of a teaser have been loaded and before they are
+ * passed to the view. Listeners may filter, sort or enrich the pages.
+ */
 final class ModifyPagesEvent
 {
     /**
-     * @param array<int, mixed> $pages
+     * @param list<Page> $pages
      */
     public function __construct(private array $pages, private readonly TeaserController $teaserController) {}
 
     /**
-     * @return array<int, mixed>
+     * @return list<Page>
      */
     public function getPages(): array
     {
@@ -27,7 +32,7 @@ final class ModifyPagesEvent
     }
 
     /**
-     * @param array<int, mixed> $pages
+     * @param list<Page> $pages
      */
     public function setPages(array $pages): void
     {
