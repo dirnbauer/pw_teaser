@@ -8,4 +8,4 @@ export typo3DatabasePassword=root
 export typo3DatabasePort=3306
 export typo3DatabaseDriver=mysqli
 
-vendor/bin/phpunit -c Tests/FunctionalTests.xml
+vendor/bin/phpunit -c Build/phpunit/FunctionalTests.xml

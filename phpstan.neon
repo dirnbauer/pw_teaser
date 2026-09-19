@@ -1,10 +1,14 @@
 includes:
     - vendor/saschaegerer/phpstan-typo3/extension.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
 
 parameters:
     level: 8
     paths:
         - Classes
-    excludePaths:
-        - Classes/Domain/Repository/CategoryRepository.php
+        - Configuration
+        - Tests
+        - ext_emconf.php
+        - ext_localconf.php
     treatPhpDocTypesAsCertain: false

@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -97,7 +97,7 @@ jobs:
         run: composer update --prefer-dist --with typo3/cms-core:${{ matrix.typo3-version }}
 
       - name: Run unit tests
-        run: vendor/bin/phpunit -c Tests/UnitTests.xml
+        run: vendor/bin/phpunit -c Build/phpunit/UnitTests.xml
 
   functional:
     name: "Functional (PHP ${{ matrix.php-version }}, TYPO3 ${{ matrix.typo3-version }})"
@@ -112,15 +112,15 @@ jobs:
           - { php-version: '8.4', typo3-version: '^14.3', experimental: false }
           - { php-version: '8.5', typo3-version: '^14.3', experimental: true }
     services:
-      mysql:
-        image: mysql:8.0
+      mariadb:
+        image: mariadb:10.11
         env:
-          MYSQL_DATABASE: test
-          MYSQL_ROOT_PASSWORD: root
+          MARIADB_DATABASE: test
+          MARIADB_ROOT_PASSWORD: root
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -144,4 +144,4 @@ jobs:
         run: composer update --prefer-dist --with typo3/cms-core:${{ matrix.typo3-version }}
 
       - name: Run functional tests
-        run: vendor/bin/phpunit -c Tests/FunctionalTests.xml
+        run: vendor/bin/phpunit -c Build/phpunit/FunctionalTests.xml

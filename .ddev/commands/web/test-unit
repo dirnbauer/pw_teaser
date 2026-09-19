@@ -1,4 +1,4 @@
 #!/bin/bash
 set -euo pipefail
 
-vendor/bin/phpunit -c Tests/UnitTests.xml
+vendor/bin/phpunit -c Build/phpunit/UnitTests.xml
