@@ -11,141 +11,80 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 final class ItemsProcFuncTest extends TestCase
 {
-    #[Test]
-    public function constructorAcceptsNullForFlexFormInstantiation(): void
-    {
-        $constructor = new \ReflectionMethod(ItemsProcFunc::class, '__construct');
-        $params = $constructor->getParameters();
-
-        self::assertCount(1, $params);
-        self::assertTrue($params[0]->allowsNull(), 'ConfigurationManager parameter must be nullable');
-        self::assertTrue($params[0]->isDefaultValueAvailable(), 'ConfigurationManager parameter must have a default value');
-        self::assertNull($params[0]->getDefaultValue(), 'ConfigurationManager default must be null');
-    }
-
-    #[Test]
-    public function constructorAcceptsExplicitConfigurationManager(): void
-    {
-        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $subject = new ItemsProcFunc($configurationManager);
-
-        self::assertInstanceOf(ItemsProcFunc::class, $subject);
-    }
-
-    #[Test]
-    public function getAvailableTemplatePresetsAddsPresetsToItems(): void
+    /**
+     * @param array<string, mixed> $presets plugin.tx_pwteaser.view.presets in TypoScript notation
+     */
+    private function createSubject(?array $presets): ItemsProcFunc
     {
         $configurationManager = self::createStub(ConfigurationManagerInterface::class);
         $configurationManager->method('getConfiguration')
-            ->willReturn([
-                'plugin.' => [
-                    'tx_pwteaser.' => [
-                        'view.' => [
-                            'presets.' => [
-                                'default.' => ['label' => 'Default Template'],
-                                'grid.' => ['label' => 'Grid Layout'],
-                            ],
-                        ],
-                    ],
-                ],
-            ]);
+            ->willReturn($presets === null ? [] : ['plugin.' => ['tx_pwteaser.' => ['view.' => ['presets.' => $presets]]]]);
 
-        $subject = new ItemsProcFunc($configurationManager);
-        $parameters = ['items' => []];
-        $subject->getAvailableTemplatePresets($parameters);
-
-        self::assertCount(2, $parameters['items']);
-        self::assertSame(['label' => 'Default Template', 'value' => 'default'], $parameters['items'][0]);
-        self::assertSame(['label' => 'Grid Layout', 'value' => 'grid'], $parameters['items'][1]);
+        return new ItemsProcFunc($configurationManager);
     }
 
     #[Test]
-    public function getAvailableTemplatePresetsInitializesItemsWhenNotSet(): void
+    public function presetsAreAddedAsItems(): void
     {
-        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $configurationManager->method('getConfiguration')
-            ->willReturn([
-                'plugin.' => [
-                    'tx_pwteaser.' => [
-                        'view.' => [
-                            'presets.' => [
-                                'default.' => ['label' => 'Default'],
-                            ],
-                        ],
-                    ],
-                ],
-            ]);
+        $parameters = ['items' => [['label' => 'Keep me', 'value' => '']]];
 
-        $subject = new ItemsProcFunc($configurationManager);
+        $this->createSubject([
+            'default.' => ['label' => 'Default Template'],
+            'grid.' => ['label' => 'Grid Layout'],
+        ])->getAvailableTemplatePresets($parameters);
+
+        self::assertSame([
+            ['label' => 'Keep me', 'value' => ''],
+            ['label' => 'Default Template', 'value' => 'default'],
+            ['label' => 'Grid Layout', 'value' => 'grid'],
+        ], $parameters['items']);
+    }
+
+    #[Test]
+    public function itemsAreInitializedWhenMissing(): void
+    {
         $parameters = [];
-        $subject->getAvailableTemplatePresets($parameters);
 
-        self::assertArrayHasKey('items', $parameters);
-        self::assertCount(1, $parameters['items']);
+        $this->createSubject(['default.' => ['label' => 'Default']])->getAvailableTemplatePresets($parameters);
+
+        self::assertSame([['label' => 'Default', 'value' => 'default']], $parameters['items']);
     }
 
     #[Test]
-    public function getAvailableTemplatePresetsSkipsNonArrayPresets(): void
+    public function scalarPresetEntriesAreSkipped(): void
     {
-        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $configurationManager->method('getConfiguration')
-            ->willReturn([
-                'plugin.' => [
-                    'tx_pwteaser.' => [
-                        'view.' => [
-                            'presets.' => [
-                                'valid.' => ['label' => 'Valid'],
-                                'scalarValue' => 'not-an-array',
-                            ],
-                        ],
-                    ],
-                ],
-            ]);
-
-        $subject = new ItemsProcFunc($configurationManager);
         $parameters = ['items' => []];
-        $subject->getAvailableTemplatePresets($parameters);
 
-        self::assertCount(1, $parameters['items']);
-        self::assertSame('Valid', $parameters['items'][0]['label']);
+        $this->createSubject([
+            'valid.' => ['label' => 'Valid'],
+            'scalarValue' => 'not-an-array',
+        ])->getAvailableTemplatePresets($parameters);
+
+        self::assertSame([['label' => 'Valid', 'value' => 'valid']], $parameters['items']);
     }
 
     #[Test]
-    public function getAvailableTemplatePresetsUsesKeyAsLabelFallback(): void
+    public function presetKeyIsTheLabelFallback(): void
     {
-        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $configurationManager->method('getConfiguration')
-            ->willReturn([
-                'plugin.' => [
-                    'tx_pwteaser.' => [
-                        'view.' => [
-                            'presets.' => [
-                                'noLabel.' => ['templateRootFile' => 'some/path'],
-                            ],
-                        ],
-                    ],
-                ],
-            ]);
-
-        $subject = new ItemsProcFunc($configurationManager);
         $parameters = ['items' => []];
-        $subject->getAvailableTemplatePresets($parameters);
 
-        self::assertCount(1, $parameters['items']);
-        self::assertSame('noLabel.', $parameters['items'][0]['label']);
-        self::assertSame('noLabel', $parameters['items'][0]['value']);
+        $this->createSubject([
+            'noLabel.' => ['templateRootFile' => 'some/path'],
+            'emptyLabel.' => ['label' => ''],
+        ])->getAvailableTemplatePresets($parameters);
+
+        self::assertSame([
+            ['label' => 'noLabel', 'value' => 'noLabel'],
+            ['label' => 'emptyLabel', 'value' => 'emptyLabel'],
+        ], $parameters['items']);
     }
 
     #[Test]
-    public function getAvailableTemplatePresetsHandlesMissingConfiguration(): void
+    public function missingTypoScriptAddsNothing(): void
     {
-        $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $configurationManager->method('getConfiguration')
-            ->willReturn([]);
-
-        $subject = new ItemsProcFunc($configurationManager);
         $parameters = ['items' => []];
-        $subject->getAvailableTemplatePresets($parameters);
+
+        $this->createSubject(null)->getAvailableTemplatePresets($parameters);
 
         self::assertSame([], $parameters['items']);
     }

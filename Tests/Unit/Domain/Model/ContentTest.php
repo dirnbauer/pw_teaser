@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
+use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 
 final class ContentTest extends TestCase
@@ -17,9 +18,6 @@ final class ContentTest extends TestCase
     {
         $subject = new Content();
 
-        self::assertInstanceOf(ObjectStorage::class, $subject->getImage());
-        self::assertInstanceOf(ObjectStorage::class, $subject->getAssets());
-        self::assertInstanceOf(ObjectStorage::class, $subject->getCategories());
         self::assertCount(0, $subject->getImage());
         self::assertCount(0, $subject->getAssets());
         self::assertCount(0, $subject->getCategories());
@@ -80,11 +78,7 @@ final class ContentTest extends TestCase
         $cat1 = new Category();
         $cat2 = new Category();
 
-        $storage = new ObjectStorage();
-        $storage->attach($cat1);
-        $storage->attach($cat2);
-
-        $subject->setCategories($storage);
+        $subject->setCategories(self::storage($cat1, $cat2));
         self::assertCount(2, $subject->getCategories());
     }
 
@@ -92,7 +86,7 @@ final class ContentTest extends TestCase
     public function imageCollectionCanBeReplacedWithObjectStorage(): void
     {
         $subject = new Content();
-        $storage = new ObjectStorage();
+        $storage = self::storage(new FileReference());
 
         $subject->setImage($storage);
         self::assertSame($storage, $subject->getImage());
@@ -102,7 +96,7 @@ final class ContentTest extends TestCase
     public function assetsCollectionCanBeReplacedWithObjectStorage(): void
     {
         $subject = new Content();
-        $storage = new ObjectStorage();
+        $storage = self::storage(new FileReference());
 
         $subject->setAssets($storage);
         self::assertSame($storage, $subject->getAssets());
@@ -121,5 +115,41 @@ final class ContentTest extends TestCase
 
         $subject->setColPos(200);
         self::assertSame(200, $subject->getColPos());
+    }
+
+    #[Test]
+    public function getGetReturnsThePreloadedRow(): void
+    {
+        $subject = new Content();
+        $subject->setContentRow(['uid' => 7, 'layout' => 3]);
+
+        self::assertSame(['uid' => 7, 'layout' => 3], $subject->getGet());
+    }
+
+    #[Test]
+    public function deprecatedMagicGettersReadFromThePreloadedRow(): void
+    {
+        $subject = new Content();
+        $subject->setContentRow(['layout' => 3]);
+
+        // called through __call(), which is what Fluid does for {content.layout}
+        self::assertSame(3, $subject->__call('getLayout', []));
+        self::assertNull($subject->__call('getMissingColumn', []));
+        self::assertNull($subject->__call('somethingElse', []));
+    }
+
+    /**
+     * @template T of object
+     * @param T ...$objects
+     * @return ObjectStorage<T>
+     */
+    private static function storage(object ...$objects): ObjectStorage
+    {
+        /** @var ObjectStorage<T> $storage */
+        $storage = new ObjectStorage();
+        foreach ($objects as $object) {
+            $storage->attach($object);
+        }
+        return $storage;
     }
 }

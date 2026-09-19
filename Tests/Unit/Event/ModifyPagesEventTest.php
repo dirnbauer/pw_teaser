@@ -16,12 +16,15 @@ final class ModifyPagesEventTest extends TestCase
     public function pagesCanBeReadAndReplaced(): void
     {
         $controller = self::createStub(TeaserController::class);
-        $event = new ModifyPagesEvent(['page1', 'page2'], $controller);
+        $page1 = new Page();
+        $page2 = new Page();
+        $page3 = new Page();
+        $event = new ModifyPagesEvent([$page1, $page2], $controller);
 
-        self::assertSame(['page1', 'page2'], $event->getPages());
+        self::assertSame([$page1, $page2], $event->getPages());
 
-        $event->setPages(['page3']);
-        self::assertSame(['page3'], $event->getPages());
+        $event->setPages([$page3]);
+        self::assertSame([$page3], $event->getPages());
     }
 
     #[Test]
@@ -78,9 +81,7 @@ final class ModifyPagesEventTest extends TestCase
         $event = new ModifyPagesEvent([$page], $controller);
 
         foreach ($event->getPages() as $p) {
-            if ($p instanceof Page) {
-                $p->setCustomAttribute('enriched', true);
-            }
+            $p->setCustomAttribute('enriched', true);
         }
 
         self::assertTrue($event->getPages()[0]->getCustomAttribute('enriched'));

@@ -5,7 +5,6 @@
 		<body>
 			<trans-unit id="general"><source>General preferences</source></trans-unit>
 			<trans-unit id="ordering"><source>Visibility options</source></trans-unit>
-			<trans-unit id="enableFields"><source>EnableFields</source></trans-unit>
 			<trans-unit id="template"><source>Template</source></trans-unit>
 
 			<trans-unit id="default"><source>[Defined by TypoScript]</source></trans-unit>

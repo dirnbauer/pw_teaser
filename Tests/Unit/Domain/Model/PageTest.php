@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PwTeaserTeam\PwTeaser\Tests\Unit\Domain\Model;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PwTeaserTeam\PwTeaser\Domain\Model\Content;
@@ -19,8 +18,6 @@ final class PageTest extends TestCase
     {
         $subject = new Page();
 
-        self::assertInstanceOf(ObjectStorage::class, $subject->getMedia());
-        self::assertInstanceOf(ObjectStorage::class, $subject->getCategories());
         self::assertCount(0, $subject->getMedia());
         self::assertCount(0, $subject->getCategories());
     }
@@ -37,7 +34,6 @@ final class PageTest extends TestCase
         self::assertSame('', $subject->getNavTitle());
         self::assertSame('', $subject->getDescription());
         self::assertSame('', $subject->getAbstract());
-        self::assertSame('', $subject->getAlias());
         self::assertSame('', $subject->getAuthor());
         self::assertSame('', $subject->getAuthorEmail());
         self::assertSame(0, $subject->getSorting());
@@ -101,15 +97,6 @@ final class PageTest extends TestCase
 
         self::assertTrue($subject->hasCustomAttribute('myKey'));
         self::assertSame('myValue', $subject->getCustomAttribute('myKey'));
-    }
-
-    #[Test]
-    public function getCustomAttributeReturnsNullForEmptyKey(): void
-    {
-        $subject = new Page();
-        $subject->setCustomAttribute('', 'value');
-
-        self::assertNull($subject->getCustomAttribute(''));
     }
 
     #[Test]
@@ -231,11 +218,7 @@ final class PageTest extends TestCase
         $cat1 = new Category();
         $cat2 = new Category();
 
-        $storage = new ObjectStorage();
-        $storage->attach($cat1);
-        $storage->attach($cat2);
-
-        $subject->setCategories($storage);
+        $subject->setCategories(self::storage($cat1, $cat2));
         self::assertCount(2, $subject->getCategories());
     }
 
@@ -249,7 +232,6 @@ final class PageTest extends TestCase
         $subject->setNavTitle('My Nav');
         $subject->setDescription('My Description');
         $subject->setAbstract('My Abstract');
-        $subject->setAlias('my-alias');
         $subject->setAuthor('John Doe');
         $subject->setAuthorEmail('john@example.com');
 
@@ -258,7 +240,6 @@ final class PageTest extends TestCase
         self::assertSame('My Nav', $subject->getNavTitle());
         self::assertSame('My Description', $subject->getDescription());
         self::assertSame('My Abstract', $subject->getAbstract());
-        self::assertSame('my-alias', $subject->getAlias());
         self::assertSame('John Doe', $subject->getAuthor());
         self::assertSame('john@example.com', $subject->getAuthorEmail());
     }
@@ -290,22 +271,62 @@ final class PageTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('l18nConstantsProvider')]
-    public function l18nConstantsHaveExpectedValues(int $expected, int $actual): void
+    public function translationVisibilityReflectsTheL18nConfigurationBitmask(): void
     {
-        self::assertSame($expected, $actual);
+        $subject = new Page();
+
+        $subject->setL18nConfiguration(0);
+        self::assertFalse($subject->getTranslationVisibility()->shouldBeHiddenInDefaultLanguage());
+        self::assertFalse($subject->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists());
+
+        $subject->setL18nConfiguration(1);
+        self::assertTrue($subject->getTranslationVisibility()->shouldBeHiddenInDefaultLanguage());
+        self::assertFalse($subject->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists());
+
+        $subject->setL18nConfiguration(2);
+        self::assertFalse($subject->getTranslationVisibility()->shouldBeHiddenInDefaultLanguage());
+        self::assertTrue($subject->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists());
+
+        $subject->setL18nConfiguration(3);
+        self::assertTrue($subject->getTranslationVisibility()->shouldBeHiddenInDefaultLanguage());
+        self::assertTrue($subject->getTranslationVisibility()->shouldHideTranslationIfNoTranslatedRecordExists());
+    }
+
+    #[Test]
+    public function getGetMergesCustomAttributesIntoThePreloadedRow(): void
+    {
+        $subject = new Page();
+        $subject->setPageRow(['uid' => 5, 'layout' => 2, 'txMyextField' => 'value']);
+        $subject->setCustomAttribute('computed', 'yes');
+        $subject->setCustomAttribute('layout', 'overridden');
+
+        self::assertSame(['computed' => 'yes', 'layout' => 2, 'uid' => 5, 'txMyextField' => 'value'], $subject->getGet());
+    }
+
+    #[Test]
+    public function deprecatedMagicGettersReadFromThePreloadedRow(): void
+    {
+        $subject = new Page();
+        $subject->setPageRow(['layout' => 2]);
+
+        // called through __call(), which is what Fluid does for {page.layout}
+        self::assertSame(2, $subject->__call('getLayout', []));
+        self::assertNull($subject->__call('getMissingColumn', []));
+        self::assertNull($subject->__call('somethingElse', []));
     }
 
     /**
-     * @return array<string, array{int, int}>
+     * @template T of object
+     * @param T ...$objects
+     * @return ObjectStorage<T>
      */
-    public static function l18nConstantsProvider(): array
+    private static function storage(object ...$objects): ObjectStorage
     {
-        return [
-            'SHOW_ALWAYS' => [0, Page::L18N_SHOW_ALWAYS],
-            'HIDE_DEFAULT_LANGUAGE' => [1, Page::L18N_HIDE_DEFAULT_LANGUAGE],
-            'HIDE_IF_NO_TRANSLATION_EXISTS' => [2, Page::L18N_HIDE_IF_NO_TRANSLATION_EXISTS],
-            'HIDE_ALWAYS_BUT_TRANSLATION_EXISTS' => [3, Page::L18N_HIDE_ALWAYS_BUT_TRANSLATION_EXISTS],
-        ];
+        /** @var ObjectStorage<T> $storage */
+        $storage = new ObjectStorage();
+        foreach ($objects as $object) {
+            $storage->attach($object);
+        }
+        return $storage;
     }
 }

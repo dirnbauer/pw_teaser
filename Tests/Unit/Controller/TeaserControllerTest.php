@@ -8,384 +8,228 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use PwTeaserTeam\PwTeaser\Controller\TeaserController;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
-use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\ContentRepository;
 use PwTeaserTeam\PwTeaser\Domain\Repository\PageRepository;
-use PwTeaserTeam\PwTeaser\Utility\Settings;
+use PwTeaserTeam\PwTeaser\Settings\SettingsRenderer;
+use PwTeaserTeam\PwTeaser\Settings\TeaserSettings;
+use TYPO3\CMS\Core\Pagination\ArrayPaginator;
+use TYPO3\CMS\Core\Pagination\SimplePagination;
+use TYPO3\CMS\Core\Pagination\SlidingWindowPagination;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
+use TYPO3\CMS\Frontend\Page\PageInformation;
 
 final class TeaserControllerTest extends TestCase
 {
-    private function createController(array $settings = []): TeaserController
+    private function createController(): TeaserController
     {
         $configurationManager = self::createStub(ConfigurationManagerInterface::class);
-        $configurationManager->method('getConfiguration')
-            ->willReturn([]);
+        $configurationManager->method('getConfiguration')->willReturn([]);
 
-        $pageRepository = (new \ReflectionClass(PageRepository::class))->newInstanceWithoutConstructor();
-        $contentRepository = (new \ReflectionClass(ContentRepository::class))->newInstanceWithoutConstructor();
-
-        $subject = new TeaserController(
-            $pageRepository,
-            $contentRepository,
-            new CategoryRepository(),
-            new Settings($configurationManager)
+        return new TeaserController(
+            (new \ReflectionClass(PageRepository::class))->newInstanceWithoutConstructor(),
+            (new \ReflectionClass(ContentRepository::class))->newInstanceWithoutConstructor(),
+            new SettingsRenderer($configurationManager)
         );
+    }
 
-        if ($settings !== []) {
-            $this->writeProperty($subject, 'settings', $settings);
+    /**
+     * @param array<string, mixed> $settings
+     */
+    private function createSettings(array $settings, int $currentPageUid = 1): TeaserSettings
+    {
+        return TeaserSettings::fromArray(array_replace(TeaserSettings::DEFAULTS, $settings), $currentPageUid);
+    }
+
+    private function createPage(int $uid, ?int $pid = null, string $title = '', int $sorting = 0): Page
+    {
+        $page = new Page();
+        $page->_setProperty('uid', $uid);
+        if ($pid !== null) {
+            $page->_setProperty('pid', $pid);
         }
-
-        return $subject;
+        $page->setTitle($title !== '' ? $title : 'Page ' . $uid);
+        $page->setSorting($sorting);
+        return $page;
     }
 
     #[Test]
-    public function initializeActionAppliesDefaultsWhenViewConfigurationIsMissing(): void
+    public function initializeActionAppliesDefaultsAndRendersViewSettings(): void
     {
-        $settingsConfigurationManager = $this->createMock(ConfigurationManagerInterface::class);
-        $settingsConfigurationManager->expects($this->once())
-            ->method('getConfiguration')
-            ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
-            ->willReturn([]);
-
-        $pageRepository = (new \ReflectionClass(PageRepository::class))->newInstanceWithoutConstructor();
-        $contentRepository = (new \ReflectionClass(ContentRepository::class))->newInstanceWithoutConstructor();
-
-        $subject = new TeaserController(
-            $pageRepository,
-            $contentRepository,
-            new CategoryRepository(),
-            new Settings($settingsConfigurationManager)
-        );
+        $subject = $this->createController();
 
         $frameworkConfigurationManager = $this->createMock(ConfigurationManagerInterface::class);
         $frameworkConfigurationManager->expects($this->once())
             ->method('getConfiguration')
             ->with(ConfigurationManagerInterface::CONFIGURATION_TYPE_FRAMEWORK)
-            ->willReturn([]);
+            ->willReturn(['view' => ['templateType' => 'preset', 'presets' => ['default' => ['label' => 'Default']]]]);
         $this->writeProperty($subject, 'configurationManager', $frameworkConfigurationManager);
 
         $request = self::createStub(RequestInterface::class);
-        $request->method('getAttribute')
-            ->willReturn(null);
-
+        $request->method('getAttribute')->willReturn(null);
         $this->writeProperty($subject, 'request', $request);
         $this->writeProperty($subject, 'settings', ['loadContents' => '1']);
 
         $subject->initializeAction();
 
         $settings = $this->readProperty($subject, 'settings');
-        $viewSettings = $this->readProperty($subject, 'viewSettings');
-
+        self::assertIsArray($settings);
         self::assertSame('thisChildren', $settings['source']);
         self::assertSame('1', $settings['loadContents']);
-        self::assertSame('', $settings['showDoktypes']);
         self::assertSame(255, $settings['recursionDepth']);
         self::assertSame(1, $settings['enablePagination']);
-        self::assertSame(['presets' => []], $viewSettings);
+        self::assertSame(
+            ['templateType' => 'preset', 'presets' => ['default' => ['label' => 'Default']]],
+            $this->readProperty($subject, 'viewSettings')
+        );
     }
 
     #[Test]
-    public function getStringSettingReturnsStringValue(): void
-    {
-        $subject = $this->createController(['myKey' => 'myValue']);
-
-        $method = new \ReflectionMethod($subject, 'getStringSetting');
-
-        self::assertSame('myValue', $method->invoke($subject, 'myKey'));
-    }
-
-    #[Test]
-    public function getStringSettingReturnsDefaultForMissingKey(): void
-    {
-        $subject = $this->createController([]);
-
-        $method = new \ReflectionMethod($subject, 'getStringSetting');
-
-        self::assertSame('', $method->invoke($subject, 'missing'));
-        self::assertSame('fallback', $method->invoke($subject, 'missing', 'fallback'));
-    }
-
-    #[Test]
-    public function getStringSettingCastsNonScalarToDefault(): void
-    {
-        $subject = $this->createController(['arr' => ['nested']]);
-
-        $method = new \ReflectionMethod($subject, 'getStringSetting');
-
-        self::assertSame('', $method->invoke($subject, 'arr'));
-    }
-
-    #[Test]
-    public function getStringSettingCastsIntToString(): void
-    {
-        $subject = $this->createController(['num' => 42]);
-
-        $method = new \ReflectionMethod($subject, 'getStringSetting');
-
-        self::assertSame('42', $method->invoke($subject, 'num'));
-    }
-
-    #[Test]
-    public function getIntSettingReturnsIntValue(): void
-    {
-        $subject = $this->createController(['limit' => 25]);
-
-        $method = new \ReflectionMethod($subject, 'getIntSetting');
-
-        self::assertSame(25, $method->invoke($subject, 'limit'));
-    }
-
-    #[Test]
-    public function getIntSettingReturnsDefaultForMissingKey(): void
-    {
-        $subject = $this->createController([]);
-
-        $method = new \ReflectionMethod($subject, 'getIntSetting');
-
-        self::assertSame(0, $method->invoke($subject, 'missing'));
-        self::assertSame(10, $method->invoke($subject, 'missing', 10));
-    }
-
-    #[Test]
-    public function getIntSettingCastsNumericStringToInt(): void
-    {
-        $subject = $this->createController(['limit' => '15']);
-
-        $method = new \ReflectionMethod($subject, 'getIntSetting');
-
-        self::assertSame(15, $method->invoke($subject, 'limit'));
-    }
-
-    #[Test]
-    public function getIntSettingReturnsDefaultForNonNumeric(): void
-    {
-        $subject = $this->createController(['limit' => 'abc']);
-
-        $method = new \ReflectionMethod($subject, 'getIntSetting');
-
-        self::assertSame(0, $method->invoke($subject, 'limit'));
-    }
-
-    #[Test]
-    public function performSpecialOrderingsShufflesForRandom(): void
-    {
-        $subject = $this->createController(['orderBy' => 'random', 'limit' => '0', 'source' => 'thisChildren']);
-
-        $pages = [];
-        for ($i = 0; $i < 20; $i++) {
-            $page = new Page();
-            $page->setTitle('Page ' . $i);
-            $pages[] = $page;
-        }
-
-        $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $result = $method->invoke($subject, $pages);
-
-        self::assertCount(20, $result);
-    }
-
-    #[Test]
-    public function performSpecialOrderingsRespectsLimitForRandom(): void
-    {
-        $subject = $this->createController(['orderBy' => 'random', 'limit' => '3', 'source' => 'thisChildren']);
-
-        $pages = [];
-        for ($i = 0; $i < 10; $i++) {
-            $page = new Page();
-            $page->setTitle('Page ' . $i);
-            $pages[] = $page;
-        }
-
-        $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $result = $method->invoke($subject, $pages);
-
-        self::assertCount(3, $result);
-    }
-
-    #[Test]
-    public function performSpecialOrderingsPassesThroughForNonSpecialOrder(): void
-    {
-        $subject = $this->createController(['orderBy' => 'title', 'limit' => '0', 'source' => 'thisChildren']);
-
-        $page1 = new Page();
-        $page1->setTitle('B');
-        $page2 = new Page();
-        $page2->setTitle('A');
-        $pages = [$page1, $page2];
-
-        $method = new \ReflectionMethod($subject, 'performSpecialOrderings');
-        $result = $method->invoke($subject, $pages);
-
-        self::assertCount(2, $result);
-        self::assertSame('B', $result[0]->getTitle());
-    }
-
-    #[Test]
-    public function resolveCurrentPageUidPrefersFrontendPageInformationAttribute(): void
+    public function resolveCurrentPageUidReadsThePageInformationAttribute(): void
     {
         $subject = $this->createController();
-        $pageInformation = new class {
-            public function getId(): int
-            {
-                return 123;
-            }
-        };
-        $routing = new class {
-            public function getPageId(): int
-            {
-                return 999;
-            }
-        };
+        $pageInformation = new PageInformation();
+        $pageInformation->setId(123);
         $request = self::createStub(RequestInterface::class);
         $request->method('getAttribute')->willReturnCallback(
-            static function (string $name) use ($pageInformation, $routing): mixed {
-                return match ($name) {
-                    'frontend.page.information' => $pageInformation,
-                    'routing' => $routing,
-                    default => null,
-                };
-            }
+            static fn(string $name): ?PageInformation => $name === 'frontend.page.information' ? $pageInformation : null
         );
         $this->writeProperty($subject, 'request', $request);
 
-        $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-
-        self::assertSame(123, $method->invoke($subject));
+        self::assertSame(123, (new \ReflectionMethod($subject, 'resolveCurrentPageUid'))->invoke($subject));
     }
 
     #[Test]
-    public function resolveCurrentPageUidFallsBackToRoutingAttribute(): void
-    {
-        $subject = $this->createController();
-        $routing = new class {
-            public function getPageId(): int
-            {
-                return 456;
-            }
-        };
-        $request = self::createStub(RequestInterface::class);
-        $request->method('getAttribute')->willReturnCallback(
-            static function (string $name) use ($routing): mixed {
-                return match ($name) {
-                    'frontend.page.information' => null,
-                    'routing' => $routing,
-                    default => null,
-                };
-            }
-        );
-        $this->writeProperty($subject, 'request', $request);
-
-        $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-
-        self::assertSame(456, $method->invoke($subject));
-    }
-
-    #[Test]
-    public function resolveCurrentPageUidReturnsZeroWhenNoAttributesExist(): void
+    public function resolveCurrentPageUidReturnsZeroOutsideOfAPageRequest(): void
     {
         $subject = $this->createController();
         $request = self::createStub(RequestInterface::class);
         $request->method('getAttribute')->willReturn(null);
         $this->writeProperty($subject, 'request', $request);
 
-        $method = new \ReflectionMethod($subject, 'resolveCurrentPageUid');
-
-        self::assertSame(0, $method->invoke($subject));
+        self::assertSame(0, (new \ReflectionMethod($subject, 'resolveCurrentPageUid'))->invoke($subject));
     }
 
     #[Test]
-    public function resolveViewPathsReturnsPluralPaths(): void
+    public function randomOrderingShufflesAndLimitsThePages(): void
     {
         $subject = $this->createController();
-        $this->writeProperty($subject, 'viewSettings', [
-            'templateRootPaths' => ['/path/one', '/path/two'],
-        ]);
+        $pages = array_map(fn(int $uid): Page => $this->createPage($uid), range(1, 10));
 
-        $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
+        $method = new \ReflectionMethod($subject, 'applySpecialOrdering');
+        $all = $method->invoke($subject, $pages, $this->createSettings(['orderBy' => 'random']));
+        $limited = $method->invoke($subject, $pages, $this->createSettings(['orderBy' => 'random', 'limit' => '3']));
 
-        self::assertSame(['/path/one', '/path/two'], $result);
+        self::assertIsArray($all);
+        self::assertCount(10, $all);
+        self::assertIsArray($limited);
+        self::assertCount(3, $limited);
     }
 
     #[Test]
-    public function resolveViewPathsFallsBackToSingularPath(): void
+    public function databaseOrderingsPassThroughUnchanged(): void
     {
         $subject = $this->createController();
-        $this->writeProperty($subject, 'viewSettings', [
-            'templateRootPath' => '/single/path',
-        ]);
+        $pages = [$this->createPage(1, title: 'B'), $this->createPage(2, title: 'A')];
 
-        $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
+        $result = (new \ReflectionMethod($subject, 'applySpecialOrdering'))
+            ->invoke($subject, $pages, $this->createSettings(['orderBy' => 'title', 'limit' => '1']));
 
-        self::assertSame(['/single/path'], $result);
+        self::assertSame($pages, $result);
     }
 
     #[Test]
-    public function resolveViewPathsReturnsEmptyArrayWhenNothingConfigured(): void
+    public function sortingOfNonRecursiveSourcesIsLeftToTheDatabase(): void
     {
         $subject = $this->createController();
-        $this->writeProperty($subject, 'viewSettings', []);
+        $pages = [$this->createPage(1, sorting: 512), $this->createPage(2, sorting: 256)];
 
-        $method = new \ReflectionMethod($subject, 'resolveViewPaths');
-        $result = $method->invoke($subject, 'templateRootPaths', 'templateRootPath');
+        $result = (new \ReflectionMethod($subject, 'applySpecialOrdering'))
+            ->invoke($subject, $pages, $this->createSettings(['orderBy' => 'sorting', 'source' => 'thisChildren']));
 
-        self::assertSame([], $result);
+        self::assertSame($pages, $result);
     }
 
     #[Test]
-    public function fillChildPagesRecursivelySortsChildrenBySorting(): void
+    public function pageTreeAttachesChildrenSortedBySortingRecursively(): void
     {
         $subject = $this->createController();
+        $parent = $this->createPage(1);
+        $childB = $this->createPage(3, 1, 'Child B', 512);
+        $childA = $this->createPage(2, 1, 'Child A', 256);
+        $grandchild = $this->createPage(4, 2, 'Grandchild', 256);
 
-        $parent = new Page();
-        $this->writeUid($parent, 1);
-
-        $childB = new Page();
-        $this->writeUid($childB, 3);
-        $this->writePid($childB, 1);
-        $childB->setTitle('Child B');
-        $childB->setSorting(512);
-
-        $childA = new Page();
-        $this->writeUid($childA, 2);
-        $this->writePid($childA, 1);
-        $childA->setTitle('Child A');
-        $childA->setSorting(256);
-
-        $method = new \ReflectionMethod($subject, 'fillChildPagesRecursively');
-        $method->invoke($subject, $parent, [$childB, $childA]);
+        (new \ReflectionMethod($subject, 'attachChildPages'))->invoke($subject, $parent, [$grandchild, $childB, $childA]);
 
         $children = $parent->getChildPages();
         self::assertCount(2, $children);
         self::assertSame('Child A', $children[0]->getTitle());
         self::assertSame('Child B', $children[1]->getTitle());
+        self::assertSame([$grandchild], $children[0]->getChildPages());
+        self::assertSame([], $children[1]->getChildPages());
+    }
+
+    #[Test]
+    public function paginationUsesSimplePaginationByDefault(): void
+    {
+        $subject = $this->createController();
+        $request = self::createStub(RequestInterface::class);
+        $request->method('hasArgument')->willReturn(true);
+        $request->method('getArgument')->willReturn('2');
+        $this->writeProperty($subject, 'request', $request);
+        $pages = array_map(fn(int $uid): Page => $this->createPage($uid), range(1, 5));
+
+        $result = (new \ReflectionMethod($subject, 'buildPagination'))
+            ->invoke($subject, $pages, $this->createSettings(['itemsPerPage' => '2']));
+
+        self::assertIsArray($result);
+        self::assertSame(2, $result['currentPage']);
+        self::assertInstanceOf(ArrayPaginator::class, $result['paginator']);
+        self::assertSame(2, $result['paginator']->getCurrentPageNumber());
+        self::assertSame(3, $result['paginator']->getNumberOfPages());
+        self::assertInstanceOf(SimplePagination::class, $result['pagination']);
+    }
+
+    #[Test]
+    public function paginationUsesTheConfiguredPaginationClass(): void
+    {
+        $subject = $this->createController();
+        $request = self::createStub(RequestInterface::class);
+        $request->method('hasArgument')->willReturn(false);
+        $this->writeProperty($subject, 'request', $request);
+
+        $result = (new \ReflectionMethod($subject, 'buildPagination'))
+            ->invoke($subject, [$this->createPage(1)], $this->createSettings(['paginationClass' => SlidingWindowPagination::class]));
+
+        self::assertIsArray($result);
+        self::assertSame(1, $result['currentPage']);
+        self::assertInstanceOf(SlidingWindowPagination::class, $result['pagination']);
+    }
+
+    #[Test]
+    public function paginationIgnoresUnknownPaginationClassesAndInvalidPageArguments(): void
+    {
+        $subject = $this->createController();
+        $request = self::createStub(RequestInterface::class);
+        $request->method('hasArgument')->willReturn(true);
+        $request->method('getArgument')->willReturn('-7');
+        $this->writeProperty($subject, 'request', $request);
+
+        $result = (new \ReflectionMethod($subject, 'buildPagination'))
+            ->invoke($subject, [$this->createPage(1)], $this->createSettings(['paginationClass' => 'Vendor\\Missing']));
+
+        self::assertIsArray($result);
+        self::assertSame(1, $result['currentPage']);
+        self::assertInstanceOf(SimplePagination::class, $result['pagination']);
     }
 
     private function writeProperty(object $subject, string $propertyName, mixed $value): void
     {
-        $property = new \ReflectionProperty($subject, $propertyName);
-        $property->setValue($subject, $value);
+        (new \ReflectionProperty($subject, $propertyName))->setValue($subject, $value);
     }
 
     private function readProperty(object $subject, string $propertyName): mixed
     {
-        $property = new \ReflectionProperty($subject, $propertyName);
-
-        return $property->getValue($subject);
-    }
-
-    private function writeUid(object $entity, int $uid): void
-    {
-        $property = new \ReflectionProperty($entity, 'uid');
-        $property->setValue($entity, $uid);
-    }
-
-    private function writePid(object $entity, int $pid): void
-    {
-        $property = new \ReflectionProperty($entity, 'pid');
-        $property->setValue($entity, $pid);
+        return (new \ReflectionProperty($subject, $propertyName))->getValue($subject);
     }
 }

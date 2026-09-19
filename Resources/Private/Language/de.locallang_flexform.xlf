@@ -5,7 +5,6 @@
 		<body>
 			<trans-unit id="general"><target>Allgemein Einstellungen</target></trans-unit>
 			<trans-unit id="ordering"><target>Anzeige Einstellungen</target></trans-unit>
-			<trans-unit id="enableFields"><target>Aktivierungsfelder</target></trans-unit>
 			<trans-unit id="template"><target>Template</target></trans-unit>
 
 			<trans-unit id="default"><target>[Durch TypoScript definiert]</target></trans-unit>

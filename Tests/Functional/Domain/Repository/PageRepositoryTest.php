@@ -6,176 +6,202 @@ namespace PwTeaserTeam\PwTeaser\Tests\Functional\Domain\Repository;
 
 use PHPUnit\Framework\Attributes\Test;
 use PwTeaserTeam\PwTeaser\Domain\Model\Page;
+use PwTeaserTeam\PwTeaser\Domain\Repository\CategoryMode;
+use PwTeaserTeam\PwTeaser\Domain\Repository\PageFilter;
 use PwTeaserTeam\PwTeaser\Domain\Repository\PageRepository;
+use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Context\LanguageAspect;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class PageRepositoryTest extends FunctionalTestCase
 {
     protected array $coreExtensionsToLoad = ['extbase', 'fluid', 'frontend'];
 
-    protected array $testExtensionsToLoad = [
-        'typo3conf/ext/pw_teaser',
-    ];
+    protected array $testExtensionsToLoad = ['typo3conf/ext/pw_teaser'];
 
     private PageRepository $subject;
 
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->importCSVDataSet(__DIR__ . '/Fixtures/pages.csv');
         $this->subject = $this->get(PageRepository::class);
     }
 
-    #[Test]
-    public function collectRecursivePageIdsSkipsDeletedPages(): void
+    /**
+     * @param list<Page> $pages
+     * @return list<int>
+     */
+    private static function uids(array $pages): array
     {
-        $method = new \ReflectionMethod(PageRepository::class, 'collectRecursivePageIds');
+        return array_map(static fn(Page $page): int => (int)$page->getUid(), $pages);
+    }
 
-        $pageIds = $method->invoke($this->subject, 1, 1, 2);
-        sort($pageIds);
-
-        self::assertSame([2, 3, 4], $pageIds);
+    private function switchToGerman(): void
+    {
+        $this->get(Context::class)->setAspect('language', new LanguageAspect(1, 1, LanguageAspect::OVERLAYS_MIXED));
     }
 
     #[Test]
-    public function pageHasTranslationIgnoresDeletedTranslationRows(): void
+    public function findChildrenReturnsVisibleDefaultLanguageChildrenOrderedByUid(): void
     {
-        $method = new \ReflectionMethod(PageRepository::class, 'pageHasTranslation');
+        $result = $this->subject->findChildren([1], new PageFilter());
 
-        self::assertTrue($method->invoke($this->subject, 2, 1));
-        self::assertFalse($method->invoke($this->subject, 3, 1));
+        // no deleted (5), nav_hide (8) or "hidden in default language" (10) pages, no translations (6)
+        self::assertSame([2, 3, 9, 11, 12], self::uids($result));
     }
 
     #[Test]
-    public function findByPidReturnsDirectChildren(): void
+    public function findChildrenReturnsEmptyForUnknownOrNoParents(): void
     {
-        $result = $this->subject->findByPid(1);
-
-        $titles = array_map(static fn(Page $p) => $p->getTitle(), $result);
-        sort($titles);
-
-        self::assertContains('Child A', $titles);
-        self::assertContains('Child B', $titles);
-        self::assertNotContains('Deleted Child', $titles);
+        self::assertSame([], $this->subject->findChildren([9999], new PageFilter()));
+        self::assertSame([], $this->subject->findChildren([], new PageFilter()));
     }
 
     #[Test]
-    public function findByPidReturnsEmptyForNonExistentPid(): void
+    public function findChildrenAppliesOrderingAndLimit(): void
     {
-        $result = $this->subject->findByPid(9999);
+        $result = $this->subject->findChildren([1], new PageFilter(orderBy: 'sorting', descending: true, limit: 2));
 
-        self::assertSame([], $result);
+        self::assertSame([12, 11], self::uids($result));
     }
 
     #[Test]
-    public function findByPidListReturnsMatchingPages(): void
+    public function filterCanIncludeNavigationHiddenPages(): void
     {
-        $result = $this->subject->findByPidList('2,3');
+        $result = $this->subject->findChildren([1], new PageFilter(showNavHiddenItems: true));
 
-        $uids = array_map(static fn(Page $p) => $p->getUid(), $result);
-        sort($uids);
-
-        self::assertSame([2, 3], $uids);
+        self::assertContains(8, self::uids($result));
     }
 
     #[Test]
-    public function findByPidListReturnsEmptyForEmptyInput(): void
+    public function filterRestrictsDoktypes(): void
     {
-        $result = $this->subject->findByPidList('');
+        $result = $this->subject->findChildren([1], new PageFilter(doktypes: [4]));
 
-        self::assertSame([], $result);
+        self::assertSame([9], self::uids($result));
     }
 
     #[Test]
-    public function findByPidListWithPluginOrderingPreservesOrder(): void
+    public function filterIgnoresPages(): void
     {
-        $result = $this->subject->findByPidList('3,2', true);
+        $result = $this->subject->findChildren([1], new PageFilter(ignoredUids: [2, 9]));
 
-        self::assertCount(2, $result);
-        self::assertSame(3, $result[0]->getUid());
-        self::assertSame(2, $result[1]->getUid());
+        self::assertSame([3, 11, 12], self::uids($result));
     }
 
     #[Test]
-    public function findChildrenByPidListReturnsChildrenOfMultipleParents(): void
+    public function filterByCategoriesSupportsAllFourModes(): void
     {
-        $result = $this->subject->findChildrenByPidList('1');
+        $or = $this->subject->findChildren([1], new PageFilter(categoryUids: [1, 2], categoryMode: CategoryMode::Or));
+        $and = $this->subject->findChildren([1], new PageFilter(categoryUids: [1, 2], categoryMode: CategoryMode::And));
+        $orNot = $this->subject->findChildren([1], new PageFilter(categoryUids: [1, 2], categoryMode: CategoryMode::OrNot));
+        $andNot = $this->subject->findChildren([1], new PageFilter(categoryUids: [1, 2], categoryMode: CategoryMode::AndNot));
 
-        $titles = array_map(static fn(Page $p) => $p->getTitle(), $result);
-
-        self::assertContains('Child A', $titles);
-        self::assertContains('Child B', $titles);
-        self::assertNotContains('Deleted Child', $titles);
+        self::assertSame([2, 3, 12], self::uids($or));
+        self::assertSame([12], self::uids($and));
+        self::assertSame([9, 11], self::uids($orNot));
+        self::assertSame([2, 3, 9, 11], self::uids($andNot));
     }
 
     #[Test]
-    public function findChildrenByPidListReturnsEmptyForEmptyInput(): void
+    public function categoriesWithoutModeAreIgnored(): void
     {
-        $result = $this->subject->findChildrenByPidList('');
+        $result = $this->subject->findChildren([1], new PageFilter(categoryUids: [1]));
 
-        self::assertSame([], $result);
+        self::assertSame([2, 3, 9, 11, 12], self::uids($result));
     }
 
     #[Test]
-    public function findByPidRecursivelyReturnsDescendants(): void
+    public function findDescendantsIncludesTheRootWhenStartingAtDepthZero(): void
     {
-        $result = $this->subject->findByPidRecursively(1, 0, 2);
+        $result = $this->subject->findDescendants([1], 0, 2, new PageFilter());
 
-        $titles = array_map(static fn(Page $p) => $p->getTitle(), $result);
-
-        self::assertContains('Child A', $titles);
-        self::assertContains('Grandchild', $titles);
+        self::assertSame([1, 2, 3, 4, 9, 11, 12], self::uids($result));
     }
 
     #[Test]
-    public function setOrderByIgnoresRandomValue(): void
+    public function findDescendantsRespectsDepthRange(): void
     {
-        $property = new \ReflectionProperty(PageRepository::class, 'orderBy');
+        $onlyGrandchildren = $this->subject->findDescendants([1], 2, 2, new PageFilter());
+        $onlyChildren = $this->subject->findDescendants([1], 1, 1, new PageFilter());
 
-        $this->subject->setOrderBy('title');
-        self::assertSame('title', $property->getValue($this->subject));
-
-        $this->subject->setOrderBy('random');
-        self::assertSame('title', $property->getValue($this->subject));
+        self::assertSame([4], self::uids($onlyGrandchildren));
+        self::assertSame([2, 3, 9, 11, 12], self::uids($onlyChildren));
     }
 
     #[Test]
-    public function setOrderDirectionSetsDescending(): void
+    public function findDescendantsReturnsEmptyWithoutDepthOrRoots(): void
     {
-        $property = new \ReflectionProperty(PageRepository::class, 'orderDirection');
-
-        $this->subject->setOrderDirection('desc');
-        self::assertSame('DESC', $property->getValue($this->subject));
-
-        $this->subject->setOrderDirection('asc');
-        self::assertSame('ASC', $property->getValue($this->subject));
+        self::assertSame([], $this->subject->findDescendants([1], 1, 0, new PageFilter()));
+        self::assertSame([], $this->subject->findDescendants([], 0, 5, new PageFilter()));
     }
 
     #[Test]
-    public function setOrderDirectionAcceptsIntegerValues(): void
+    public function findByUidsOrdersByFilterOrByTheGivenList(): void
     {
-        $property = new \ReflectionProperty(PageRepository::class, 'orderDirection');
+        $byFilter = $this->subject->findByUids([3, 2, 9999], false, new PageFilter(orderBy: 'title'));
+        $asGiven = $this->subject->findByUids([3, 2, 9999], true, new PageFilter(orderBy: 'title'));
 
-        $this->subject->setOrderDirection(1);
-        self::assertSame('DESC', $property->getValue($this->subject));
-
-        $this->subject->setOrderDirection(0);
-        self::assertSame('ASC', $property->getValue($this->subject));
+        self::assertSame([2, 3], self::uids($byFilter));
+        self::assertSame([3, 2], self::uids($asGiven));
+        self::assertSame([], $this->subject->findByUids([], true, new PageFilter()));
     }
 
     #[Test]
-    public function setShowNavHiddenItemsFiltersNavHidePages(): void
+    public function pagesCarryTheirRawRowForTemplateAccess(): void
     {
-        $this->importCSVDataSet(__DIR__ . '/Fixtures/pages-nav-hidden.csv');
+        $result = $this->subject->findChildren([1], new PageFilter(doktypes: [4]));
 
-        $this->subject->setShowNavHiddenItems(false);
-        $resultWithoutHidden = $this->subject->findByPid(100);
+        self::assertCount(1, $result);
+        self::assertSame(4, (int)$result[0]->getGet()['doktype']);
+        self::assertSame('/shortcut', $result[0]->getGet()['slug']);
+        self::assertSame(700, (int)$result[0]->getGet()['sorting']);
+    }
 
-        $subject2 = $this->get(PageRepository::class);
-        $subject2->setShowNavHiddenItems(true);
-        $resultWithHidden = $subject2->findByPid(100);
+    #[Test]
+    public function inAForeignLanguagePagesRequiringATranslationNeedATranslatedRecord(): void
+    {
+        $this->switchToGerman();
 
-        self::assertGreaterThanOrEqual(count($resultWithoutHidden), count($resultWithHidden));
+        $result = $this->subject->findChildren([1], new PageFilter());
+
+        // 10 is visible again (only hidden in default language), 11 has no translation and disappears.
+        // 2 is sorted behind 3 because the database orders by the uid of its translation (6).
+        self::assertSame([3, 2, 9, 10, 12], self::uids($result));
+    }
+
+    #[Test]
+    public function inAForeignLanguagePagesAreOverlaidWithTheirTranslation(): void
+    {
+        $this->switchToGerman();
+
+        $result = $this->subject->findByUids([2, 3], true, new PageFilter());
+
+        // page 2 is selected through its translation 6, the translation of page 3 is deleted
+        self::assertSame([2, 3], self::uids($result));
+        self::assertSame('Child A DE', $result[0]->getTitle());
+        self::assertSame('Child B', $result[1]->getTitle());
+    }
+
+    #[Test]
+    public function inAForeignLanguageTheChildrenOfATranslatedPageAreStillFound(): void
+    {
+        $this->switchToGerman();
+
+        // page 2 is translated by page 6; its child 4 still has pid 2, not pid 6
+        $result = $this->subject->findChildren([2], new PageFilter());
+
+        self::assertSame([4], self::uids($result));
+    }
+
+    #[Test]
+    public function repositoryHoldsNoStateBetweenQueries(): void
+    {
+        $this->subject->findChildren([1], new PageFilter(doktypes: [4], limit: 1));
+
+        $result = $this->subject->findChildren([1], new PageFilter());
+
+        self::assertSame([2, 3, 9, 11, 12], self::uids($result));
     }
 }
