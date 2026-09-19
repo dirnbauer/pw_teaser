@@ -1,5 +1,3 @@
-.. include:: ../Includes.txt
-
 .. _templates:
 
 
@@ -60,11 +58,11 @@ pw_teaser ships with three presets out of the box:
      - Headline only
      - Minimal list showing only page titles
 
-**How it works internally**: When an editor selects a preset, the controller
-resolves the preset's ``templateRootFile``, ``partialRootPaths``, and
-``layoutRootPaths`` from TypoScript, then switches to file-based rendering
-transparently. This means presets are really just a user-friendly wrapper
-around file mode.
+**How it works internally**: When an editor selects a preset,
+``PwTeaserTeam\PwTeaser\View\TemplateConfiguration`` resolves the preset's
+``templateRootFile``, ``partialRootPaths`` and ``layoutRootPaths`` from
+TypoScript and applies them to the Fluid view. A preset is therefore just a
+user-friendly wrapper around file mode.
 
 Registering custom presets in TypoScript
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -293,7 +291,9 @@ A more complete teaser card with image, title, and description:
 Page model properties
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ``Page`` model exposes all standard ``pages`` table fields:
+The ``Page`` model has typed getters for the columns below. Every other column
+of the ``pages`` table is reachable through ``{page.get.columnName}``, see
+:ref:`page-model-raw-row`.
 
 .. list-table::
    :header-rows: 1
@@ -330,28 +330,28 @@ The ``Page`` model exposes all standard ``pages`` table fields:
      - string
      - Keywords as comma-separated string
    * - ``media``
-     - FileReference[]
+     - ObjectStorage<FileReference>
      - Page media (images/files)
    * - ``newUntil``
-     - DateTime
-     - "New until" date
+     - int
+     - "New until" date as unix timestamp
    * - ``isNew``
      - bool
      - Whether the page is still marked as "new"
    * - ``creationDate``
-     - DateTime
+     - int
      - Creation timestamp
    * - ``tstamp``
-     - DateTime
+     - int
      - Last modification timestamp
    * - ``lastUpdated``
-     - DateTime
+     - int
      - "Last updated" field
    * - ``starttime``
-     - DateTime
+     - int
      - Publish start date
    * - ``endtime``
-     - DateTime
+     - int
      - Publish end date
    * - ``doktype``
      - int
@@ -360,7 +360,7 @@ The ``Page`` model exposes all standard ``pages`` table fields:
      - int
      - Sorting value
    * - ``categories``
-     - Category[]
+     - ObjectStorage<Category>
      - Assigned system categories
    * - ``isCurrentPage``
      - bool
@@ -377,17 +377,34 @@ The ``Page`` model exposes all standard ``pages`` table fields:
    * - ``childPages``
      - Page[]
      - Nested child pages (when ``pageMode = nested``)
+   * - ``translationVisibility``
+     - PageTranslationVisibility
+     - The ``l18n_cfg`` bitmask of the page
+   * - ``recursiveRootLineOrdering``
+     - string
+     - Sorting key that orders pages like the page tree
 
-**Accessing arbitrary page fields**: Use the ``get`` accessor for any column
-in the ``pages`` table, including custom fields from other extensions:
+All date columns are unix timestamps, so format them with
+``<f:format.date date="{page.tstamp}" format="d.m.Y" />``.
+
+.. _page-model-raw-row:
+
+Arbitrary page columns
+~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``get`` accessor for any column of the ``pages`` table, including
+custom fields of other extensions. Column names are converted to
+lowerCamelCase, so ``tx_myext_custom_field`` becomes:
 
 .. code-block:: html
 
-   {page.get.tx_myext_custom_field}
+   {page.get.txMyextCustomField}
+
+The same works on content elements as ``{content.get.columnName}``.
 
 .. note::
-   In Fluid 5.0 (TYPO3 14), the ``__call()`` magic method is no longer
-   supported. Always use ``{page.get.fieldname}`` for non-modeled fields.
+   The ``__call()`` magic method of the models (``{page.someColumn}``) is
+   deprecated. Always use ``{page.get.columnName}`` for non-modeled fields.
 
 
 getContent ViewHelper
@@ -403,13 +420,8 @@ elements from a page's ``contents`` array.
        <div class="page">
            <h3>{page.title}</h3>
            <pw:getContent contents="{page.contents}" as="content"
-                          colPos="0" cType="textpic" index="0">
-               <f:for each="{content.image}" as="image" iteration="iterator">
-                   <f:if condition="{iterator.isFirst} == 1">
-                       <f:image src="{image.uid}" treatIdAsReference="1"
-                                width="400c" height="100c" />
-                   </f:if>
-               </f:for>
+                          colPos="0" cType="textmedia" index="0">
+               <f:image image="{content.image.0}" width="400c" height="100c" />
            </pw:getContent>
        </div>
    </f:for>
@@ -429,9 +441,10 @@ elements from a page's ``contents`` array.
    * - ``as``
      - string
      - Variable name for the content element inside the ViewHelper
+       (**required**)
    * - ``colPos``
      - int
-     - Filter by column position (0 = default column)
+     - Filter by column position (default ``0``)
    * - ``cType``
      - string
      - Filter by content type (``image``, ``text``, ``textpic``, etc.)

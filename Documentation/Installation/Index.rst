@@ -1,5 +1,3 @@
-.. include:: ../Includes.txt
-
 .. _installation:
 
 
@@ -21,10 +19,10 @@ Requirements
    * - pw_teaser
      - TYPO3
      - PHP
-   * - 7.1
+   * - 8.x
      - 13.4 LTS, 14.3 LTS
      - 8.3, 8.4, 8.5
-   * - 7.0
+   * - 7.x
      - 13.4, 14.0
      - 8.2, 8.3, 8.4
    * - 6.x
@@ -85,7 +83,7 @@ sets import the setup file directly in their TypoScript template:
    @import 'EXT:pw_teaser/Configuration/TypoScript/setup.typoscript'
 
 .. important::
-   Since version 7.1 the static TypoScript template :guilabel:`PwTeaser` is no
+   Since version 8.0 the static TypoScript template :guilabel:`PwTeaser` is no
    longer registered (``ExtensionManagementUtility::addStaticFile()`` was
    removed). Installations that used :guilabel:`Include static (from
    extensions)` must switch to one of the two options above; otherwise the

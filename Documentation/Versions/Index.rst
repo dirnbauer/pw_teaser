@@ -1,12 +1,36 @@
-.. include:: ../Includes.txt
-
-
 .. _versions:
 
 Versions
 ========
 
 .. contents:: :local:
+
+8.1.0
+-----
+
+- [TASK] Extract the plugin settings into ``Settings\TeaserSettings``,
+  ``Settings\TeaserSource`` and ``Settings\SettingsRenderer``; remove
+  ``Utility\Settings``
+- [TASK] Rewrite ``PageRepository`` around a ``PageFilter`` value object and a
+  ``CategoryMode`` enum; the repository keeps no request state any more
+  (661 → 313 lines)
+- [TASK] Shrink ``TeaserController`` to orchestration only (498 → 221 lines)
+- [TASK] Resolve the three template modes in ``View\TemplateConfiguration``
+- [TASK] Load raw ``pages``/``tt_content`` rows through
+  ``Database\RecordRowLoader`` instead of one query per model
+- [TASK] Remove ``Domain\Repository\CategoryRepository``, the unused
+  ``formErrors.html`` and ``Widget/Paginate/Index.html`` partials and the
+  unused ``alias`` property and ``L18N_*`` constants of the page model
+- [TASK] Move the PHPUnit configurations to ``Build/phpunit/``
+- [BUGFIX] Find the child pages of a translated parent page again; page
+  translations keep the ``pid`` of their original, so the parent uid must not
+  be translated
+- [BUGFIX] Resolve hand-picked pages (source ``custom``) through their
+  translation in every language, not only in the default language
+- [BUGFIX] Drop non-numeric and ``0`` entries from ``customPages``,
+  ``ignoreUids``, ``showDoktypes`` and ``categoriesList``
+- [DOCS] Bring this manual in line with the code and drop the deleted
+  ``Includes.txt`` include
 
 8.0.0
 -----
@@ -16,8 +40,8 @@ Versions
 - [!!!][TASK] Remove the static TypoScript template registration; include the
   site set ``t3/pw-teaser`` or ``@import`` the setup file instead
   (see :ref:`installation-typoscript`)
-- [TASK] PHPStan level 8, TYPO3 coding standards (php-cs-fixer) and Composer
-  ``ci:*`` scripts
+- [TASK] PHPStan level 9 lowered to level 8, TYPO3 coding standards
+  (php-cs-fixer) and Composer ``ci:*`` scripts
 - [TASK] CI matrix: PHP 8.3/8.4 with TYPO3 13.4, PHP 8.4/8.5 with TYPO3 14.3;
   jobs lint, cgl, phpstan, unit and functional
 - [TASK] Use PHPUnit stubs where tests assert no expectations

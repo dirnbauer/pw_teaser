@@ -1,5 +1,3 @@
-.. include:: ../Includes.txt
-
 .. _testing:
 
 
@@ -8,8 +6,10 @@ Testing and development
 
 .. contents:: :local:
 
-pw_teaser ships 77 unit tests and 14 functional tests. The Composer scripts
-below wrap the tools that CI runs.
+Unit tests live in ``Tests/Unit``, functional tests in ``Tests/Functional``;
+their PHPUnit configurations are ``Build/phpunit/UnitTests.xml`` and
+``Build/phpunit/FunctionalTests.xml``. The Composer scripts below wrap the
+tools that CI runs.
 
 
 Set up
@@ -67,68 +67,32 @@ allow the ``db`` user to create the TYPO3 test databases:
    ddev mysql -e "GRANT ALL ON \`db_%\`.* TO 'db'@'%'; FLUSH PRIVILEGES;"
 
 
-Test coverage
--------------
+What is covered
+---------------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 25 12 8 55
+Unit tests cover the domain models (properties, custom attributes,
+``isNew``, collections, the raw-row accessor), ``ModifyPagesEvent``, the
+controller orchestration (special orderings, nesting, pagination, page uid
+resolution), the ``ItemsProcFunc`` preset dropdown, the ViewHelpers and the
+settings and view layer: ``TeaserSettings``, ``TeaserSource``,
+``SettingsRenderer``, ``CategoryMode`` and ``TemplateConfiguration``.
 
-   * - Component
-     - Type
-     - Tests
-     - What is covered
-   * - Page model
-     - Unit
-     - 21
-     - Properties, custom attributes, isNew logic, collections, L18N constants
-   * - Content model
-     - Unit
-     - 9
-     - Properties, ObjectStorage collections, category operations
-   * - ModifyPagesEvent
-     - Unit
-     - 5
-     - PSR-14 contract, filtering, enrichment patterns
-   * - TeaserController
-     - Unit
-     - 19
-     - Setting helpers, special orderings, view path resolution, nesting,
-       page UID resolution
-   * - ItemsProcFunc
-     - Unit
-     - 7
-     - DI fallback, FlexForm presets, edge cases
-   * - Settings utility
-     - Unit
-     - 4
-     - TypoScript rendering, fallbacks, nested arrays
-   * - GetContentViewHelper
-     - Unit
-     - 4
-     - Null handling, type/colPos filtering, index limiting, invalid entry guard
-   * - RemoveWhitespacesViewHelper
-     - Unit
-     - 2
-     - Whitespace removal, null children
-   * - StripTagsViewHelper
-     - Unit
-     - 3
-     - Tag stripping from argument and child content
-   * - PageRepository
-     - Functional
-     - 14
-     - findByPid, findByPidList, recursive queries, ordering, nav_hide
+Functional tests exercise the database layer against a real TYPO3 instance:
+``PageRepository`` (children, recursive descendants, hand-picked uids,
+ordering, limits, ``nav_hide``, doktypes, ignored uids, all four category
+modes, ``l18n_cfg`` translation visibility and language overlays),
+``ContentRepository`` and ``RecordRowLoader``.
 
 
 CI matrix
 ---------
 
-GitHub Actions (``.github/workflows/tests.yml``) runs on every push and pull
+GitHub Actions (``.github/workflows/ci.yml``) runs on every push and pull
 request:
 
 - **lint**: ``composer validate --strict`` and ``php -l`` on PHP 8.3, 8.4 and 8.5
 - **cgl**: php-cs-fixer dry-run with the TYPO3 coding standards
 - **phpstan**: level 8 against TYPO3 ^13.4 and ^14.3
 - **unit** and **functional**: PHP 8.3/8.4 with TYPO3 ^13.4 and PHP 8.4/8.5
-  with TYPO3 ^14.3 (PHP 8.5 is an allowed failure)
+  with TYPO3 ^14.3 (PHP 8.5 is an allowed failure). Functional tests run
+  against MariaDB 10.11.

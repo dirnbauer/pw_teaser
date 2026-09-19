@@ -1,13 +1,13 @@
-.. include:: ../Includes.txt
-
 .. _configuration:
 
 
 Configuration
 =============
 
-pw_teaser provides plugin settings, which can get preset by TypoScript. Settings set in plugin directly (FlexForm) will
-overwrite the TypoScript defaults.
+pw_teaser provides plugin settings that can be preset with TypoScript below
+``plugin.tx_pwteaser.settings``. A setting filled in the plugin (FlexForm) wins;
+a setting left **empty** in the plugin falls back to its TypoScript value —
+including TypoScript content objects, see :ref:`using-typoscript`.
 
 .. _configuration_reference:
 
@@ -23,9 +23,6 @@ Reference
 
 General preferences
 ~~~~~~~~~~~~~~~~~~~
-
-These options control where pages are loaded from and how the result set is
-prepared before rendering.
 
 ===================================== ============
 Property                               Type
@@ -101,7 +98,7 @@ recursionDepth
    Data type
       integer
    Default
-      0
+      255
    Description
       Depth of recursion. Just takes effect if source is ``thisChildrenRecursively`` or ``customChildrenRecursively``.
 
@@ -206,6 +203,8 @@ paginationClass
    Default
       *(empty — uses SimplePagination)*
    Description
+      **TypoScript only** — this setting has no FlexForm field.
+
       Fully qualified class name of a custom pagination implementation.
       When empty, TYPO3's built-in ``SimplePagination`` (previous/next) is used.
 
@@ -224,9 +223,6 @@ paginationClass
 
 Visibility options
 ~~~~~~~~~~~~~~~~~~
-
-These options control ordering, filtering, category constraints, and the final
-page selection shown in the teaser output.
 
 ===================================== ============
 Property                               Type
@@ -284,9 +280,10 @@ orderDirection
    Data type
       string
    Default
-      asc
+      *(empty — ascending)*
    Description
-      Controls the direction of ordering. May be: ``asc`` or ``desc``. Has no effect when orderBy is ``random``.
+      Controls the direction of ordering. Only the value ``desc`` reverses the
+      order, anything else sorts ascending. Has no effect when orderBy is ``random``.
 
 
 .. _limit:
@@ -334,7 +331,7 @@ hideCurrentPage
    Data type
       boolean
    Default
-      1
+      0
    Description
       If enabled the current page will be removed from result.
       This has no effect, if the current page is no part of results anyway.
@@ -352,9 +349,10 @@ showDoktypes
    Data type
       string
    Default
-      1,2
+      1,2 in the plugin, empty in TypoScript
    Description
-      Comma separated list of ``doktype`` to display.
+      Comma separated list of ``doktype`` to display. When empty, pages of
+      every doktype are shown.
 
 
 
@@ -401,8 +399,10 @@ categoryMode
 
       * ``1`` - Show pages with selected categories (OR)
       * ``2`` - Show pages with selected categories (AND)
-      * ``3`` - Do NOT show pages witch selected categories (OR)
-      * ``4`` - Do NOT show pages witch selected categories (AND)
+      * ``3`` - Do NOT show pages with the selected categories (OR)
+      * ``4`` - Do NOT show pages with the selected categories (AND)
+
+      The mode is ignored entirely when ``categoriesList`` is empty.
 
 .. _configuration-template:
 
@@ -410,9 +410,6 @@ Template view
 ~~~~~~~~~~~~~
 
 See :ref:`templates` for further details.
-
-These options switch between preset-based templates and custom Fluid template
-paths.
 
 ===================================== ============
 Property                               Type

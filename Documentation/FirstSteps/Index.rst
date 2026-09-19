@@ -1,5 +1,3 @@
-.. include:: ../Includes.txt
-
 .. _firstSteps:
 
 
@@ -9,51 +7,43 @@ First steps
 Create the first teaser
 -----------------------
 
-Go to any page you want to add a teaser list of pages, and **add a new page teaser plugin**:
+Open the page that should show the teaser list and add a new content element.
+In TYPO3 13 and 14 the plugin appears in the content element wizard as
+:guilabel:`Page Teaser (pw_teaser)`.
 
-In TYPO3 13/14, the plugin appears in the new content element wizard as
-``Page Teaser (pw_teaser)``.
-
-On tab "Plugin" you see all settings pw_teaser has:
-
-The editor UI groups the available settings into general, visibility, and
-template-related options.
+Its settings are split over three tabs: :guilabel:`General`,
+:guilabel:`Ordering` and :guilabel:`Template`.
 
 
-Define data source
-------------------
+Define the data source
+----------------------
 
-First, we define which pages we want to display. We can choose between those **teaser sources**:
+On the :guilabel:`General` tab, pick the **teaser source**:
 
-- Childpages of current page
-- Childpages of current page (recursively)
+- Child pages of the current page
+- Child pages of the current page (recursively)
 - Selected pages
-- Childpages of selected pages
-- Childpages of selected pages (recursively)
+- Child pages of selected pages
+- Child pages of selected pages (recursively)
 
-When you change the source to "selected pages", a new field **Custom pages** appears after reloading:
-
-TYPO3 then shows a page selector field so editors can choose the source pages
-explicitly from the page tree.
-
-Here you select page(s) from the page tree which should be used as the source for your teaser list.
+For every source except the first two, the field :guilabel:`Custom pages`
+appears after saving. It holds the pages you pick from the page tree.
 
 
 Make further options
 --------------------
 
-In visibility options, you can filter or change the ordering of pages in the result.
-Under tab "Template" you can choose from some template presets.
+The :guilabel:`General` tab also filters the result (categories, doktypes,
+ignored pages, hidden pages) and controls the pagination; the
+:guilabel:`Ordering` tab changes the order of the pages, and the
+:guilabel:`Template` tab selects one of the template presets.
+
+See :ref:`configuration_reference` for every single setting.
 
 
-See the teaser in frontend
---------------------------
+See the teaser in the frontend
+------------------------------
 
-**That's it!** Congratulations, you've configured your first page teaser!
+**That's it!** The shipped templates render a linked page list.
 
-In frontend you get a list with pages:
-
-The shipped templates render a linked page list by default and can be replaced
-with custom Fluid templates later on.
-
-Checkout :ref:`templates` for info about how to provide your own templates.
+See :ref:`templates` for how to provide your own Fluid templates.

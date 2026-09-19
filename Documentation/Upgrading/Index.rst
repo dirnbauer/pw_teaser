@@ -1,5 +1,3 @@
-.. include:: ../Includes.txt
-
 .. _upgrading:
 
 
@@ -9,10 +7,59 @@ Upgrading
 .. contents:: :local:
 
 
-Upgrading to version 7.1
+Upgrading to version 8.1
 ------------------------
 
-Version 7.1 confirms support for TYPO3 **13.4 LTS and 14.3 LTS** and requires
+Version 8.1 restructures the internals. Templates, TypoScript, FlexForm
+settings and the ``ModifyPagesEvent`` are unchanged; **only PHP code that
+called internal classes of the extension needs attention**.
+
+Internal classes that moved or disappeared
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 50 50
+
+   * - Removed in 8.1
+     - Replacement
+   * - ``Classes/Utility/Settings.php``
+     - ``Settings\SettingsRenderer`` (TypoScript fallback and cObject
+       rendering) and ``Settings\TeaserSettings`` (typed plugin settings)
+   * - ``Domain/Repository/CategoryRepository.php``
+     - none — the category filter is built directly in
+       ``PageRepository::filterConstraints()`` from the ``CategoryMode`` enum
+   * - all public ``PageRepository`` methods
+     - ``findChildren()``, ``findDescendants()``, ``findByUids()``, each
+       taking a ``Domain\Repository\PageFilter``
+   * - ``Resources/Private/Partials/formErrors.html``
+     - none — the partial was never rendered
+   * - ``Resources/Private/Templates/ViewHelpers/Widget/Paginate/Index.html``
+     - ``Resources/Private/Partials/Pagination.html``
+
+New classes: ``Database\RecordRowLoader`` (raw rows behind
+``{page.get.columnName}``), ``Domain\Repository\CategoryMode``,
+``Domain\Repository\PageFilter``, ``Settings\TeaserSource`` and
+``View\TemplateConfiguration``.
+
+Behaviour changes
+~~~~~~~~~~~~~~~~~
+
+- Pages selected with source ``custom`` are now resolved through their
+  translation in non-default languages, so a translated page is rendered with
+  its translated title instead of being dropped.
+- Child pages of a **translated** parent page are found again; previously the
+  parent uid was translated before being used as ``pid``, which returned no
+  results on multilingual sites.
+- Non-numeric and ``0`` entries in ``customPages``, ``ignoreUids``,
+  ``showDoktypes`` and ``categoriesList`` are dropped instead of being read as
+  uid ``0``.
+
+
+Upgrading to version 8.0
+------------------------
+
+Version 8.0 confirms support for TYPO3 **13.4 LTS and 14.3 LTS** and requires
 **PHP 8.3 or newer** (8.3, 8.4, 8.5). PHP 8.2 is no longer supported.
 
 
@@ -37,6 +84,7 @@ Other changes
 - ``composer.json`` requires ``php: ^8.3`` and
   ``typo3/cms-core: ^13.4 || ^14.3``
 - ``ext_emconf.php`` declares ``php: 8.3.0-8.5.99``
+- PHPStan runs at level 8 (was level 9)
 - No template, TypoScript or PHP API changes: custom templates and event
   listeners written for 7.0 keep working
 
@@ -65,17 +113,6 @@ If you use **custom Fluid templates**, verify that:
 2. Custom ViewHelpers register arguments via ``initializeArguments()``
    instead of ``render()`` method parameters
 3. No CDATA sections are used (they are no longer stripped in Fluid 5.0)
-
-
-CategoryRepository shim
-~~~~~~~~~~~~~~~~~~~~~~~
-
-TYPO3 removed ``TYPO3\CMS\Extbase\Domain\Repository\CategoryRepository``
-from the core in version 12. Because pw_teaser looks up ``Category`` objects
-by UID for its category filter, the extension ships a minimal replacement at
-``Classes/Domain/Repository/CategoryRepository.php`` (an Extbase
-``Repository`` with object type ``Category``). It is an internal helper; do
-not rely on it from your own code.
 
 
 CType migration wizard
@@ -171,4 +208,4 @@ Events
 
 Previous versions of pw_teaser provided a Signal to programmatically modify the
 page result array. Since version 6, those Signals have been replaced with
-`Events <events>`_.
+:ref:`events`.

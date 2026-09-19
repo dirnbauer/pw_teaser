@@ -1,6 +1,6 @@
 # pw_teaser – Page Teaser for TYPO3
 
-[![Tests](https://github.com/dirnbauer/pw_teaser/actions/workflows/tests.yml/badge.svg)](https://github.com/dirnbauer/pw_teaser/actions/workflows/tests.yml)
+[![CI](https://github.com/dirnbauer/pw_teaser/actions/workflows/ci.yml/badge.svg)](https://github.com/dirnbauer/pw_teaser/actions/workflows/ci.yml)
 
 Create dynamic page teasers from page properties and their content elements:
 child pages, recursive trees or hand-picked pages, filtered by categories,
@@ -9,14 +9,14 @@ sorted, paginated and rendered with Fluid. Built on Extbase.
 Maintained fork of [a-r-m-i-n/pw_teaser](https://github.com/a-r-m-i-n/pw_teaser)
 (upstream unmaintained since 2023).
 
-![Teaser frontend output](docs/screenshots/teaser-frontend-output.png)
+![Teaser frontend output](Documentation/Images/teaser-frontend-output.png)
 
 ## Requirements
 
 | pw_teaser | TYPO3              | PHP       |
 |-----------|--------------------|-----------|
-| 7.1       | 13.4 LTS, 14.3 LTS | 8.3 – 8.5 |
-| 7.0       | 13.4, 14.0         | 8.2 – 8.4 |
+| 8.x       | 13.4 LTS, 14.3 LTS | 8.3 – 8.5 |
+| 7.x       | 13.4, 14.0         | 8.2 – 8.4 |
 | 6.x       | 11 – 13            | 8.1 – 8.3 |
 
 ## Install
@@ -36,7 +36,7 @@ Classic installs: [EXT:pw_teaser in TER](https://extensions.typo3.org/extension/
 - **TypoScript** – add the site set `t3/pw-teaser` to `dependencies` in
   `config/sites/<site>/config.yaml`. Without site sets use
   `@import 'EXT:pw_teaser/Configuration/TypoScript/setup.typoscript'`
-  (the static template include was removed in 7.1).
+  (the static template include was removed in 8.0).
 - **Template modes** (plugin tab *Template*) – `preset`: editors pick a
   TypoScript-defined preset (`default`, `headlineAndImage`, `headlineOnly` or
   your own under `plugin.tx_pwteaser.view.presets`); `file`: one Fluid template
@@ -60,8 +60,9 @@ Full reference (settings, route enhancer, Page model, ViewHelpers):
    optionally category filters, ordering and limit.
 3. Pick a template preset on the *Template* tab.
 
-Custom Fluid templates receive `{pages}` (Page models; `{page.get.<column>}`
-reads any `pages` column) and `{pagination}`.
+Custom Fluid templates receive `{pages}` (Page models) and `{pagination}`.
+`{page.get.<column>}` reads any `pages` column, with the column name in
+lowerCamelCase: `tx_myext_field` becomes `{page.get.txMyextField}`.
 
 ## Develop
 
@@ -82,7 +83,7 @@ against `master` are welcome.
 
 - [Documentation/](Documentation/) – installation, configuration reference,
   templates, events, testing
-- [Upgrade notes 6.x → 7.x](Documentation/Upgrading/Index.rst)
+- [Upgrade notes](Documentation/Upgrading/Index.rst)
 - [CHANGELOG.md](CHANGELOG.md)
 
 ## License

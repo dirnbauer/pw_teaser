@@ -1,11 +1,11 @@
 <?php
 
 // phpcs:disable
-$EM_CONF[$_EXTKEY] = [
+$EM_CONF['pw_teaser'] = [
     'title' => 'Page Teaser (with Fluid)',
     'description' => 'Create powerful page teasers in TYPO3 CMS with data from page properties and its content elements. Based on Extbase and Fluid template engine.',
     'category' => 'plugin',
-    'version' => '8.0.0',
+    'version' => '8.1.0',
     'state' => 'stable',
     'author' => 'Armin Vieweg',
     'author_email' => 'info@v.ieweg.de',
