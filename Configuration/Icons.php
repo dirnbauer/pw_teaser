@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use TYPO3\CMS\Core\Imaging\IconProvider\BitmapIconProvider;
+use TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider;
 
 return [
     'ext-pwteaser-wizard-icon' => [
-        'provider' => BitmapIconProvider::class,
-        'source' => 'EXT:pw_teaser/Resources/Public/Icons/Extension_x2.png',
+        'provider' => SvgIconProvider::class,
+        'source' => 'EXT:pw_teaser/Resources/Public/Icons/Plugin.svg',
     ],
 ];
